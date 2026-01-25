@@ -4,43 +4,46 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 // Layouts
-import PublicLayout from "@/components/layout/PublicLayout";
+import MainLayout from "@/components/layout/MainLayout";
 
-// Public Pages
-import Home from "@/pages/Home";
+// Pages
+import HomeArabic from "@/pages/HomeArabic";
+import Destinations from "@/pages/Destinations";
+import CountryDetail from "@/pages/CountryDetail";
 import Auth from "@/pages/Auth";
-import VisaServices from "@/pages/VisaServices";
-import VisaDetail from "@/pages/VisaDetail";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes with Layout */}
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/visa-services" element={<VisaServices />} />
-              <Route path="/visa/:visaId" element={<VisaDetail />} />
-            </Route>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes with Main Layout */}
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<HomeArabic />} />
+                <Route path="/destinations" element={<Destinations />} />
+                <Route path="/country/:countryCode" element={<CountryDetail />} />
+              </Route>
 
-            {/* Auth Route (no layout) */}
-            <Route path="/auth" element={<Auth />} />
+              {/* Auth Route */}
+              <Route path="/auth" element={<Auth />} />
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 
