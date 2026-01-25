@@ -475,9 +475,14 @@ export default function VisaServices() {
                             </Badge>
                           </div>
                         </CardContent>
-                        <CardFooter className="pt-0">
-                          <Button className="w-full group-hover:bg-primary/90" asChild>
-                            <Link to={`/apply/${visa.id}`}>
+                        <CardFooter className="pt-0 gap-2">
+                          <Button variant="outline" className="flex-1" asChild>
+                            <Link to={`/visa/${visa.id}`}>
+                              Details
+                            </Link>
+                          </Button>
+                          <Button className="flex-1" asChild>
+                            <Link to={`/visa/${visa.id}`}>
                               Apply Now
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
