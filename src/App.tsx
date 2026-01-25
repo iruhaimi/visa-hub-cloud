@@ -14,6 +14,7 @@ import HomeArabic from "@/pages/HomeArabic";
 import Destinations from "@/pages/Destinations";
 import CountryDetail from "@/pages/CountryDetail";
 import Apply from "@/pages/Apply";
+import Pricing from "@/pages/Pricing";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentFailed from "@/pages/PaymentFailed";
 import Auth from "@/pages/Auth";
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="/country/:countryCode" element={<CountryDetail />} />
                 <Route path="/apply" element={<Apply />} />
                 <Route path="/apply/:countryCode" element={<Apply />} />
+                <Route path="/pricing" element={<Pricing />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/payment-failed" element={<PaymentFailed />} />
               </Route>
