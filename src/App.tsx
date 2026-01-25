@@ -11,6 +11,8 @@ import PublicLayout from "@/components/layout/PublicLayout";
 // Public Pages
 import Home from "@/pages/Home";
 import Auth from "@/pages/Auth";
+import VisaServices from "@/pages/VisaServices";
+import VisaDetail from "@/pages/VisaDetail";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
             {/* Public Routes with Layout */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/visa-services" element={<VisaServices />} />
+              <Route path="/visa/:visaId" element={<VisaDetail />} />
             </Route>
 
             {/* Auth Route (no layout) */}
