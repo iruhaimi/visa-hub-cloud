@@ -70,9 +70,17 @@ function AnimatedCounter({ value, suffix, duration = 2 }: { value: number; suffi
     return () => cancelAnimationFrame(animationFrame);
   }, [isInView, value, duration]);
 
+  // Format number in English
+  const formatNumber = (num: number) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(0) + 'K';
+    }
+    return num.toString();
+  };
+
   return (
     <span ref={ref}>
-      {count.toLocaleString('ar-SA')}
+      {formatNumber(count)}
       {suffix}
     </span>
   );

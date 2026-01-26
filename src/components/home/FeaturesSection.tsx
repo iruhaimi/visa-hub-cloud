@@ -135,38 +135,6 @@ export default function FeaturesSection({ t }: FeaturesSectionProps) {
             </motion.div>
           ))}
         </motion.div>
-
-        {/* Stats Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8"
-        >
-          {[
-            { value: '+10K', label: 'عميل سعيد' },
-            { value: '+50', label: 'وجهة سياحية' },
-            { value: '24/7', label: 'دعم متواصل' },
-            { value: '98%', label: 'نسبة الرضا' },
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ scale: 0.8, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 + index * 0.1 }}
-              className="text-center"
-            >
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-1">
-                {stat.value}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {stat.label}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
       </div>
     </section>
   );
