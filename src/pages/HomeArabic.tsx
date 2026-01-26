@@ -12,6 +12,7 @@ import HeroSection from '@/components/home/HeroSection';
 import CountriesSection from '@/components/home/CountriesSection';
 import HowItWorksSection from '@/components/home/HowItWorksSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
+import PartnersSection from '@/components/home/PartnersSection';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
 import CTASection from '@/components/home/CTASection';
 
@@ -55,6 +56,9 @@ export default function HomeArabic() {
 
       {/* Features */}
       <FeaturesSection t={t} />
+
+      {/* Partners */}
+      <PartnersSection />
 
       {/* Testimonials */}
       <TestimonialsSection />
