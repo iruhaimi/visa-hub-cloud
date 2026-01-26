@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Plane, Mail, Phone, MapPin, Clock, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Mail, Phone, Clock, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import logo from '@/assets/logo.jpeg';
 
 export default function FooterArabic() {
   const { t } = useLanguage();
@@ -28,10 +29,11 @@ export default function FooterArabic() {
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Plane className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-foreground">فيزاجو</span>
+              <img 
+                src={logo} 
+                alt="عطلات رحلاتكم" 
+                className="h-14 w-auto object-contain"
+              />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">
               {t('footer.about')}
@@ -74,23 +76,25 @@ export default function FooterArabic() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold text-foreground">{t('footer.contact')}</h3>
+            <h3 className="font-semibold text-foreground">تواصل معنا</h3>
             <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <a 
+                href="tel:920034158" 
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <span dir="ltr">+966 50 000 0000</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span dir="ltr">920034158</span>
+              </a>
+              <a 
+                href="mailto:info@rhalat.com"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <span>info@visago.sa</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span>الرياض، المملكة العربية السعودية</span>
-              </div>
+                <span>info@rhalat.com</span>
+              </a>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 flex-shrink-0" />
-                <span>{t('footer.workingHoursValue')}</span>
+                <span>السبت - الخميس: ١٢ ظ - ١٠ م</span>
               </div>
             </div>
           </div>
@@ -99,7 +103,7 @@ export default function FooterArabic() {
         {/* Bottom */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} فيزاجو. {t('footer.rights')}.
+            © {new Date().getFullYear()} عطلات رحلاتكم للسياحة والسفر. {t('footer.rights')}.
           </p>
           <div className="flex items-center gap-4">
             <a
