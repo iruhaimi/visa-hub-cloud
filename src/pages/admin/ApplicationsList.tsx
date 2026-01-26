@@ -25,10 +25,12 @@ import {
   Eye, 
   Filter,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import * as XLSX from 'xlsx';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'جميع الحالات' },
@@ -120,6 +122,21 @@ export default function ApplicationsList() {
     );
   });
 
+  const getStatusLabel = (status: string) => {
+    const statusLabels: Record<string, string> = {
+      draft: 'مسودة',
+      pending_payment: 'بانتظار الدفع',
+      submitted: 'مقدم',
+      under_review: 'قيد المراجعة',
+      documents_required: 'مستندات مطلوبة',
+      processing: 'قيد المعالجة',
+      approved: 'معتمد',
+      rejected: 'مرفوض',
+      cancelled: 'ملغي',
+    };
+    return statusLabels[status] || status;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
       draft: { label: 'مسودة', className: 'bg-muted text-muted-foreground' },
@@ -140,6 +157,38 @@ export default function ApplicationsList() {
     );
   };
 
+  const exportToExcel = () => {
+    const exportData = filteredApplications.map(app => ({
+      'رقم الطلب': app.id,
+      'اسم مقدم الطلب': app.profile?.full_name || 'غير محدد',
+      'رقم الجوال': app.profile?.phone || '-',
+      'الوجهة': app.visa_type?.country?.name || '-',
+      'نوع التأشيرة': app.visa_type?.name || '-',
+      'تاريخ الإنشاء': format(new Date(app.created_at), 'yyyy-MM-dd'),
+      'تاريخ السفر': app.travel_date ? format(new Date(app.travel_date), 'yyyy-MM-dd') : '-',
+      'الحالة': getStatusLabel(app.status),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'الطلبات');
+    
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 40 }, // رقم الطلب
+      { wch: 25 }, // اسم مقدم الطلب
+      { wch: 15 }, // رقم الجوال
+      { wch: 15 }, // الوجهة
+      { wch: 20 }, // نوع التأشيرة
+      { wch: 12 }, // تاريخ الإنشاء
+      { wch: 12 }, // تاريخ السفر
+      { wch: 15 }, // الحالة
+    ];
+
+    const fileName = `applications_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
@@ -147,10 +196,16 @@ export default function ApplicationsList() {
           <h2 className="text-2xl font-bold">إدارة الطلبات</h2>
           <p className="text-muted-foreground">عرض وإدارة جميع طلبات التأشيرات</p>
         </div>
-        <Button onClick={fetchApplications} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 ml-2" />
-          تحديث
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportToExcel} variant="outline" size="sm">
+            <Download className="h-4 w-4 ml-2" />
+            تصدير Excel
+          </Button>
+          <Button onClick={fetchApplications} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 ml-2" />
+            تحديث
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
