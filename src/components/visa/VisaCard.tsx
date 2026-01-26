@@ -40,11 +40,17 @@ export function VisaCard({ visa, country }: VisaCardProps) {
           <div>
             <CardTitle className="text-xl">{visa.name}</CardTitle>
             <CardDescription className="mt-1">
-              {visa.description || `تأشيرة ${visa.name} إلى ${country.name}`}
+              {visa.description || (direction === 'rtl' 
+                ? `تأشيرة ${visa.name} إلى ${country.name}`
+                : `${visa.name} to ${country.name}`
+              )}
             </CardDescription>
           </div>
           <Badge variant="outline" className="capitalize">
-            {visa.entry_type === 'single' ? 'دخول واحد' : 'دخول متعدد'}
+            {visa.entry_type === 'single' 
+              ? (direction === 'rtl' ? 'دخول واحد' : 'Single Entry')
+              : (direction === 'rtl' ? 'دخول متعدد' : 'Multiple Entry')
+            }
           </Badge>
         </div>
       </CardHeader>
@@ -53,20 +59,30 @@ export function VisaCard({ visa, country }: VisaCardProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <Clock className="h-5 w-5 mx-auto text-primary mb-1" />
-            <p className="text-xs text-muted-foreground">المعالجة</p>
-            <p className="font-semibold">{visa.processing_days} يوم</p>
+            <p className="text-xs text-muted-foreground">
+              {direction === 'rtl' ? 'المعالجة' : 'Processing'}
+            </p>
+            <p className="font-semibold">
+              {visa.processing_days} {direction === 'rtl' ? 'يوم' : 'days'}
+            </p>
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-center">
             <Calendar className="h-5 w-5 mx-auto text-primary mb-1" />
-            <p className="text-xs text-muted-foreground">الصلاحية</p>
-            <p className="font-semibold">{visa.validity_days || '-'} يوم</p>
+            <p className="text-xs text-muted-foreground">
+              {direction === 'rtl' ? 'الصلاحية' : 'Validity'}
+            </p>
+            <p className="font-semibold">
+              {visa.validity_days || '-'} {direction === 'rtl' ? 'يوم' : 'days'}
+            </p>
           </div>
         </div>
 
         {/* Requirements */}
         {requirements.length > 0 && (
           <div>
-            <p className="text-sm font-medium mb-2">المتطلبات الأساسية:</p>
+            <p className="text-sm font-medium mb-2">
+              {direction === 'rtl' ? 'المتطلبات الأساسية:' : 'Key Requirements:'}
+            </p>
             <ul className="space-y-1">
               {visibleRequirements.map((req, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -83,12 +99,15 @@ export function VisaCard({ visa, country }: VisaCardProps) {
                 {showAllRequirements ? (
                   <>
                     <ChevronUp className="h-4 w-4" />
-                    إخفاء المتطلبات
+                    {direction === 'rtl' ? 'إخفاء المتطلبات' : 'Hide requirements'}
                   </>
                 ) : (
                   <>
                     <ChevronDown className="h-4 w-4" />
-                    +{requirements.length - 3} متطلبات أخرى
+                    {direction === 'rtl' 
+                      ? `+${requirements.length - 3} متطلبات أخرى`
+                      : `+${requirements.length - 3} more requirements`
+                    }
                   </>
                 )}
               </button>
@@ -100,12 +119,16 @@ export function VisaCard({ visa, country }: VisaCardProps) {
         <div className="pt-4 border-t border-border">
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-xs text-muted-foreground">السعر يبدأ من</p>
-              <p className="text-2xl font-bold text-primary">{visa.price} ر.س</p>
+              <p className="text-xs text-muted-foreground">
+                {direction === 'rtl' ? 'السعر يبدأ من' : 'Starting from'}
+              </p>
+              <p className="text-2xl font-bold text-primary">
+                {visa.price} {direction === 'rtl' ? 'ر.س' : 'SAR'}
+              </p>
             </div>
             <Button asChild>
               <Link to={`/apply?country=${country.code}&visa=${visa.id}`}>
-                قدّم الآن
+                {direction === 'rtl' ? 'قدّم الآن' : 'Apply Now'}
                 <ArrowIcon className="h-4 w-4 ms-1 rtl-flip" />
               </Link>
             </Button>
