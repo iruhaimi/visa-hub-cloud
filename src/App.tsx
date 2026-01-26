@@ -8,6 +8,8 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 
 // Layouts
 import MainLayout from "@/components/layout/MainLayout";
+import AdminLayout from "@/components/admin/AdminLayout";
+import ProtectedRoute from "@/components/admin/ProtectedRoute";
 
 // Pages
 import HomeArabic from "@/pages/HomeArabic";
@@ -26,6 +28,12 @@ import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentFailed from "@/pages/PaymentFailed";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
+
+// Admin Pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import ApplicationsList from "@/pages/admin/ApplicationsList";
+import ApplicationDetail from "@/pages/admin/ApplicationDetail";
+import UsersManagement from "@/pages/admin/UsersManagement";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +67,35 @@ const App = () => (
 
               {/* Auth Route */}
               <Route path="/auth" element={<Auth />} />
+
+              {/* Admin Routes */}
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="applications" element={<ApplicationsList />} />
+                <Route path="applications/:id" element={<ApplicationDetail />} />
+                <Route path="users" element={<UsersManagement />} />
+              </Route>
+
+              {/* Agent Routes */}
+              <Route 
+                path="/agent" 
+                element={
+                  <ProtectedRoute allowedRoles={['agent', 'admin']}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="applications" element={<ApplicationsList />} />
+                <Route path="applications/:id" element={<ApplicationDetail />} />
+              </Route>
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
