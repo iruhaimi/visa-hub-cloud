@@ -79,17 +79,33 @@ export default function CountryDetail() {
       <div className="min-h-screen bg-background">
         <div className="container-section py-16 text-center">
           <AlertCircle className="h-16 w-16 mx-auto text-destructive mb-4" />
-          <h1 className="text-2xl font-bold mb-2">الدولة غير موجودة</h1>
+          <h1 className="text-2xl font-bold mb-2">{t('countries.notFound') || 'الدولة غير موجودة'}</h1>
           <p className="text-muted-foreground mb-6">
-            الدولة التي تبحث عنها غير متوفرة حالياً
+            {t('countries.notFoundDesc') || 'الدولة التي تبحث عنها غير متوفرة حالياً'}
           </p>
           <Button asChild>
-            <Link to="/destinations">عرض كل الدول</Link>
+            <Link to="/destinations">{t('countries.viewAll')}</Link>
           </Button>
         </div>
       </div>
     );
   }
+
+  const generalRequirements = direction === 'rtl' ? [
+    'جواز سفر ساري المفعول (6 أشهر على الأقل)',
+    'صور شخصية بخلفية بيضاء',
+    'كشف حساب بنكي آخر 3 أشهر',
+    'حجز فندقي مؤكد',
+    'حجز طيران ذهاب وعودة',
+    'تأمين سفر ساري',
+  ] : [
+    'Valid passport (6+ months validity)',
+    'Passport photos with white background',
+    'Bank statement for last 3 months',
+    'Confirmed hotel booking',
+    'Round-trip flight booking',
+    'Valid travel insurance',
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,7 +117,7 @@ export default function CountryDetail() {
             className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6"
           >
             <ArrowIcon className="h-4 w-4 rotate-180 rtl:rotate-0" />
-            عودة للدول
+            {direction === 'rtl' ? 'عودة للدول' : 'Back to Countries'}
           </Link>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -112,10 +128,13 @@ export default function CountryDetail() {
             />
             <div>
               <h1 className="text-3xl font-bold text-white sm:text-4xl">
-                تأشيرات {country.name}
+                {direction === 'rtl' ? `تأشيرات ${country.name}` : `${country.name} Visas`}
               </h1>
               <p className="text-lg text-white/80 mt-1">
-                {visaTypes.length} نوع تأشيرة متاح
+                {direction === 'rtl' 
+                  ? `${visaTypes.length} نوع تأشيرة متاح`
+                  : `${visaTypes.length} visa types available`
+                }
               </p>
             </div>
           </div>
@@ -125,13 +144,20 @@ export default function CountryDetail() {
       {/* Visa Types */}
       <section className="py-12">
         <div className="container-section">
-          <h2 className="text-2xl font-bold mb-6">أنواع التأشيرات المتاحة</h2>
+          <h2 className="text-2xl font-bold mb-6">
+            {direction === 'rtl' ? 'أنواع التأشيرات المتاحة' : 'Available Visa Types'}
+          </h2>
 
           {visaTypes.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">لا توجد تأشيرات متاحة حالياً لهذه الدولة</p>
+                <p className="text-muted-foreground">
+                  {direction === 'rtl' 
+                    ? 'لا توجد تأشيرات متاحة حالياً لهذه الدولة'
+                    : 'No visas currently available for this country'
+                  }
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -147,18 +173,13 @@ export default function CountryDetail() {
       {/* General Requirements */}
       <section className="py-12 bg-muted/50">
         <div className="container-section">
-          <h2 className="text-2xl font-bold mb-6">المتطلبات العامة</h2>
+          <h2 className="text-2xl font-bold mb-6">
+            {direction === 'rtl' ? 'المتطلبات العامة' : 'General Requirements'}
+          </h2>
           <Card>
             <CardContent className="py-6">
               <ul className="grid gap-3 sm:grid-cols-2">
-                {[
-                  'جواز سفر ساري المفعول (6 أشهر على الأقل)',
-                  'صور شخصية بخلفية بيضاء',
-                  'كشف حساب بنكي آخر 3 أشهر',
-                  'حجز فندقي مؤكد',
-                  'حجز طيران ذهاب وعودة',
-                  'تأمين سفر ساري',
-                ].map((req, i) => (
+                {generalRequirements.map((req, i) => (
                   <li key={i} className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
                     <span>{req}</span>
@@ -166,7 +187,10 @@ export default function CountryDetail() {
                 ))}
               </ul>
               <p className="mt-4 text-sm text-muted-foreground">
-                * قد تختلف المتطلبات حسب نوع التأشيرة والجنسية. سيتم عرض المتطلبات الكاملة أثناء عملية التقديم.
+                {direction === 'rtl' 
+                  ? '* قد تختلف المتطلبات حسب نوع التأشيرة والجنسية. سيتم عرض المتطلبات الكاملة أثناء عملية التقديم.'
+                  : '* Requirements may vary based on visa type and nationality. Full requirements will be shown during the application process.'
+                }
               </p>
             </CardContent>
           </Card>
