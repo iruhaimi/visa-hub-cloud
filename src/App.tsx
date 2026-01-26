@@ -16,6 +16,12 @@ import CountryDetail from "@/pages/CountryDetail";
 import Apply from "@/pages/Apply";
 import Pricing from "@/pages/Pricing";
 import TrackApplication from "@/pages/TrackApplication";
+import About from "@/pages/About";
+import Contact from "@/pages/Contact";
+import FAQ from "@/pages/FAQ";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
+import Refund from "@/pages/Refund";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentFailed from "@/pages/PaymentFailed";
 import Auth from "@/pages/Auth";
@@ -41,6 +47,12 @@ const App = () => (
                 <Route path="/apply/:countryCode" element={<Apply />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/track" element={<TrackApplication />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/refund" element={<Refund />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/payment-failed" element={<PaymentFailed />} />
               </Route>
