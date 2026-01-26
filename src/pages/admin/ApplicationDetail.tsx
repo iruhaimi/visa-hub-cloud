@@ -240,6 +240,18 @@ export default function ApplicationDetail() {
 
       if (error) throw error;
 
+      // Send notification to the newly assigned agent
+      if (selectedAgentId) {
+        const assignedAgent = agents.find(a => a.id === selectedAgentId);
+        await supabase.from('notifications').insert({
+          user_id: selectedAgentId,
+          title: 'طلب جديد تم تعيينه لك',
+          message: `تم تعيين طلب تأشيرة ${application.visa_type?.country?.name} - ${application.visa_type?.name} لك للمتابعة.`,
+          type: 'assignment',
+          action_url: `/agent/applications/${application.id}`,
+        });
+      }
+
       toast.success(selectedAgentId ? 'تم تعيين الوكيل بنجاح' : 'تم إلغاء تعيين الوكيل');
       setShowAgentDialog(false);
       fetchApplicationData();

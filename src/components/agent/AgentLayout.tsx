@@ -10,6 +10,7 @@ import {
   User
 } from 'lucide-react';
 import { useState } from 'react';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { cn } from '@/lib/utils';
 
 const agentNavItems = [
@@ -38,7 +39,7 @@ export default function AgentLayout() {
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
         <span className="font-semibold">لوحة الوكيل</span>
-        <div className="w-10" />
+        <NotificationBell />
       </header>
 
       <div className="flex">
@@ -82,9 +83,14 @@ export default function AgentLayout() {
 
           {/* User Section */}
           <div className="border-t p-4">
-            <div className="mb-3 text-sm">
-              <p className="font-medium">{user?.email}</p>
-              <p className="text-xs text-muted-foreground">وكيل</p>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-sm">
+                <p className="font-medium">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">وكيل</p>
+              </div>
+              <div className="hidden lg:block">
+                <NotificationBell />
+              </div>
             </div>
             <Button
               variant="outline"
