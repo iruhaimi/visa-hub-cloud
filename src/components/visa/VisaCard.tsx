@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SARSymbol from '@/components/ui/SARSymbol';
 import type { Country, VisaType } from '@/types/database';
 
 interface VisaCardProps {
@@ -122,8 +123,9 @@ export function VisaCard({ visa, country }: VisaCardProps) {
               <p className="text-xs text-muted-foreground">
                 {direction === 'rtl' ? 'السعر يبدأ من' : 'Starting from'}
               </p>
-              <p className="text-2xl font-bold text-primary">
-                {visa.price} {direction === 'rtl' ? 'ر.س' : 'SAR'}
+              <p className="text-2xl font-bold text-primary flex items-center gap-1">
+                {visa.price}
+                <SARSymbol size="md" className="text-primary" />
               </p>
             </div>
             <Button asChild>

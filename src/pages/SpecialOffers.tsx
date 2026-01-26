@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import SARSymbol from '@/components/ui/SARSymbol';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Offer {
@@ -212,17 +213,18 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
           </p>
 
           {/* Pricing */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-baseline gap-2">
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div className="flex items-center gap-1">
               <span className="text-3xl font-bold text-primary">{offer.salePrice}</span>
-              <span className="text-sm text-muted-foreground">ر.س</span>
+              <SARSymbol size="md" className="text-primary" />
             </div>
-            <div className="flex items-baseline gap-1 line-through text-muted-foreground">
+            <div className="flex items-center gap-1 line-through text-muted-foreground">
               <span className="text-lg">{offer.originalPrice}</span>
-              <span className="text-xs">ر.س</span>
+              <SARSymbol size="xs" className="text-muted-foreground" />
             </div>
-            <Badge variant="secondary" className="bg-accent/20 text-accent-foreground">
-              وفر {offer.originalPrice - offer.salePrice} ر.س
+            <Badge variant="secondary" className="bg-accent/20 text-accent-foreground flex items-center gap-1">
+              وفر {offer.originalPrice - offer.salePrice}
+              <SARSymbol size="xs" />
             </Badge>
           </div>
 

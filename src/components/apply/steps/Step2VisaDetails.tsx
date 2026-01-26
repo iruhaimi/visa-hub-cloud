@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import TravelerCounter from '../TravelerCounter';
 import PriceSummaryCard from '../PriceSummaryCard';
+import SARSymbol from '@/components/ui/SARSymbol';
 import { CalendarIcon, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +27,6 @@ export default function Step2VisaDetails() {
   const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
   const [dateOpen, setDateOpen] = useState(false);
   
-  const currency = direction === 'rtl' ? 'ر.س' : 'SAR';
   const ArrowNextIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
   const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
 
@@ -165,8 +165,9 @@ export default function Step2VisaDetails() {
                   <SelectItem key={visa.id} value={visa.id}>
                     <div className="flex justify-between items-center w-full">
                       <span>{visa.name}</span>
-                      <span className="text-primary font-medium ms-4">
-                        {Number(visa.price).toLocaleString()} {currency}
+                      <span className="text-primary font-medium ms-4 flex items-center gap-1">
+                        {Number(visa.price).toLocaleString()}
+                        <SARSymbol size="xs" className="text-primary" />
                       </span>
                     </div>
                   </SelectItem>
@@ -217,7 +218,6 @@ export default function Step2VisaDetails() {
               description={t('pricing.adult')}
               value={applicationData.travelers.adults}
               price={applicationData.adultPrice}
-              currency={currency}
               min={1}
               onChange={(val) => updateTravelers('adults', val)}
             />
@@ -227,7 +227,6 @@ export default function Step2VisaDetails() {
               description={t('pricing.child')}
               value={applicationData.travelers.children}
               price={applicationData.childPrice}
-              currency={currency}
               onChange={(val) => updateTravelers('children', val)}
             />
             
@@ -236,7 +235,6 @@ export default function Step2VisaDetails() {
               description={t('pricing.infant')}
               value={applicationData.travelers.infants}
               price={applicationData.infantPrice}
-              currency={currency}
               onChange={(val) => updateTravelers('infants', val)}
             />
           </div>
