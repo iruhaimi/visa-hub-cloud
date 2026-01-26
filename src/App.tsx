@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 // Layouts
 import MainLayout from "@/components/layout/MainLayout";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AgentLayout from "@/components/agent/AgentLayout";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
 
 // Pages
@@ -35,6 +36,10 @@ import ApplicationsList from "@/pages/admin/ApplicationsList";
 import ApplicationDetail from "@/pages/admin/ApplicationDetail";
 import UsersManagement from "@/pages/admin/UsersManagement";
 import Settings from "@/pages/admin/Settings";
+
+// Agent Pages
+import AgentDashboard from "@/pages/agent/AgentDashboard";
+import AgentApplicationsList from "@/pages/agent/AgentApplicationsList";
 
 const queryClient = new QueryClient();
 
@@ -90,12 +95,12 @@ const App = () => (
                 path="/agent" 
                 element={
                   <ProtectedRoute allowedRoles={['agent', 'admin']}>
-                    <AdminLayout />
+                    <AgentLayout />
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<AdminDashboard />} />
-                <Route path="applications" element={<ApplicationsList />} />
+                <Route index element={<AgentDashboard />} />
+                <Route path="applications" element={<AgentApplicationsList />} />
                 <Route path="applications/:id" element={<ApplicationDetail />} />
               </Route>
 
