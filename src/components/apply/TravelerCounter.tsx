@@ -2,13 +2,13 @@ import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SARSymbol from '@/components/ui/SARSymbol';
 
 interface TravelerCounterProps {
   label: string;
   description: string;
   value: number;
   price: number;
-  currency: string;
   min?: number;
   max?: number;
   onChange: (value: number) => void;
@@ -19,7 +19,6 @@ export default function TravelerCounter({
   description,
   value,
   price,
-  currency,
   min = 0,
   max = 10,
   onChange,
@@ -43,8 +42,9 @@ export default function TravelerCounter({
       <div className="flex-1">
         <div className="font-semibold text-foreground">{label}</div>
         <div className="text-sm text-muted-foreground">{description}</div>
-        <div className="text-sm font-medium text-primary mt-1">
-          {price.toLocaleString()} {currency}
+        <div className="text-sm font-medium text-primary mt-1 flex items-center gap-1">
+          {price.toLocaleString()}
+          <SARSymbol size="xs" className="text-primary" />
           <span className="text-muted-foreground font-normal">
             {direction === 'rtl' ? ' / للشخص' : ' / person'}
           </span>

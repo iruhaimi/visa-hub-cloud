@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import SARSymbol from '@/components/ui/SARSymbol';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -60,7 +61,6 @@ export default function Step6Payment() {
   const { toast } = useToast();
   
   const { serviceTotal, governmentTotal, grandTotal, breakdown } = calculateTotal();
-  const currency = direction === 'rtl' ? 'ر.س' : 'SAR';
   
   const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
 
@@ -175,7 +175,10 @@ export default function Step6Payment() {
                     <span className="text-muted-foreground">
                       {t('pricing.adult')} × {applicationData.travelers.adults}
                     </span>
-                    <span>{breakdown.adults.toLocaleString()} {currency}</span>
+                    <span className="flex items-center gap-1">
+                      {breakdown.adults.toLocaleString()}
+                      <SARSymbol size="xs" />
+                    </span>
                   </div>
                 )}
                 {applicationData.travelers.children > 0 && (
@@ -183,7 +186,10 @@ export default function Step6Payment() {
                     <span className="text-muted-foreground">
                       {t('pricing.child')} × {applicationData.travelers.children}
                     </span>
-                    <span>{breakdown.children.toLocaleString()} {currency}</span>
+                    <span className="flex items-center gap-1">
+                      {breakdown.children.toLocaleString()}
+                      <SARSymbol size="xs" />
+                    </span>
                   </div>
                 )}
                 {applicationData.travelers.infants > 0 && (
@@ -191,7 +197,10 @@ export default function Step6Payment() {
                     <span className="text-muted-foreground">
                       {t('pricing.infant')} × {applicationData.travelers.infants}
                     </span>
-                    <span>{breakdown.infants.toLocaleString()} {currency}</span>
+                    <span className="flex items-center gap-1">
+                      {breakdown.infants.toLocaleString()}
+                      <SARSymbol size="xs" />
+                    </span>
                   </div>
                 )}
                 
@@ -199,13 +208,19 @@ export default function Step6Payment() {
                 
                 <div className="flex justify-between text-sm">
                   <span>{direction === 'rtl' ? 'رسوم الخدمة' : 'Service Fees'}</span>
-                  <span>{serviceTotal.toLocaleString()} {currency}</span>
+                  <span className="flex items-center gap-1">
+                    {serviceTotal.toLocaleString()}
+                    <SARSymbol size="xs" />
+                  </span>
                 </div>
                 
                 {!applicationData.visaFeesIncluded && governmentTotal > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>{direction === 'rtl' ? 'رسوم التأشيرة (تُدفع لاحقاً)' : 'Visa Fees (to be paid later)'}</span>
-                    <span>{governmentTotal.toLocaleString()} {currency}</span>
+                    <span className="flex items-center gap-1">
+                      {governmentTotal.toLocaleString()}
+                      <SARSymbol size="xs" />
+                    </span>
                   </div>
                 )}
                 
@@ -213,7 +228,10 @@ export default function Step6Payment() {
                 
                 <div className="flex justify-between font-bold text-lg">
                   <span>{t('pricing.total')}</span>
-                  <span className="text-primary">{grandTotal.toLocaleString()} {currency}</span>
+                  <span className="text-primary flex items-center gap-1">
+                    {grandTotal.toLocaleString()}
+                    <SARSymbol size="md" className="text-primary" />
+                  </span>
                 </div>
               </div>
               
@@ -222,8 +240,8 @@ export default function Step6Payment() {
                 className={cn(
                   "w-full justify-center py-2",
                   applicationData.visaFeesIncluded 
-                    ? "bg-green-100 text-green-700" 
-                    : "bg-amber-100 text-amber-700"
+                    ? "bg-accent/20 text-accent-foreground" 
+                    : "bg-warning/20 text-warning-foreground"
                 )}
               >
                 {applicationData.visaFeesIncluded 
@@ -271,7 +289,7 @@ export default function Step6Payment() {
           {/* Security Badges */}
           <div className="p-4 bg-muted/30 rounded-lg">
             <div className="flex items-center gap-2 mb-3">
-              <Shield className="w-5 h-5 text-green-600" />
+              <Shield className="w-5 h-5 text-accent" />
               <span className="font-medium text-sm">
                 {direction === 'rtl' ? 'دفع آمن ومشفر' : 'Secure & Encrypted Payment'}
               </span>
@@ -303,7 +321,10 @@ export default function Step6Payment() {
             ) : (
               <>
                 <Lock className="w-5 h-5" />
-                {t('wizard.pay')} - {grandTotal.toLocaleString()} {currency}
+                <span className="flex items-center gap-1">
+                  {t('wizard.pay')} - {grandTotal.toLocaleString()}
+                  <SARSymbol size="sm" />
+                </span>
               </>
             )}
           </Button>

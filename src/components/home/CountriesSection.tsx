@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import SARSymbol from '@/components/ui/SARSymbol';
 import type { Country, VisaType } from '@/types/database';
 
 interface CountriesSectionProps {
@@ -100,7 +101,10 @@ export default function CountriesSection({ countries, visaTypes, t }: CountriesS
                   {minPrice && (
                     <div className="flex items-baseline gap-1 mb-4">
                       <span className="text-xs text-muted-foreground">يبدأ من</span>
-                      <span className="text-2xl font-bold text-primary">${minPrice}</span>
+                      <span className="text-2xl font-bold text-primary flex items-center gap-1">
+                        {minPrice}
+                        <SARSymbol size="sm" className="text-primary" />
+                      </span>
                     </div>
                   )}
 
