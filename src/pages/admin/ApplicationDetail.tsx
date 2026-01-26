@@ -30,7 +30,8 @@ import {
   Download,
   Loader2,
   AlertCircle,
-  Save
+  Save,
+  UserCog
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -62,6 +63,7 @@ interface ApplicationData {
   agent_notes: string | null;
   admin_notes: string | null;
   rejection_reason: string | null;
+  assigned_agent_id: string | null;
   visa_type: {
     name: string;
     price: number;
@@ -79,6 +81,10 @@ interface ApplicationData {
     passport_expiry: string;
     date_of_birth: string;
   };
+  assigned_agent: {
+    id: string;
+    full_name: string;
+  } | null;
 }
 
 interface Document {
@@ -98,12 +104,18 @@ interface StatusHistory {
   created_at: string;
 }
 
+interface Agent {
+  id: string;
+  full_name: string;
+}
+
 export default function ApplicationDetail() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin, profile: currentUserProfile } = useAuth();
   const [application, setApplication] = useState<ApplicationData | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [statusHistory, setStatusHistory] = useState<StatusHistory[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   
@@ -112,6 +124,10 @@ export default function ApplicationDetail() {
   const [newStatus, setNewStatus] = useState<ApplicationStatus | ''>('');
   const [statusNote, setStatusNote] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
+
+  // Agent assignment dialog
+  const [showAgentDialog, setShowAgentDialog] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   
   // Notes
   const [agentNotes, setAgentNotes] = useState('');
@@ -120,12 +136,41 @@ export default function ApplicationDetail() {
   useEffect(() => {
     if (id) {
       fetchApplicationData();
+      if (isAdmin) {
+        fetchAgents();
+      }
     }
-  }, [id]);
+  }, [id, isAdmin]);
+
+  const fetchAgents = async () => {
+    try {
+      // Fetch users with agent role
+      const { data: agentRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'agent');
+
+      if (rolesError) throw rolesError;
+
+      if (agentRoles && agentRoles.length > 0) {
+        const agentUserIds = agentRoles.map(r => r.user_id);
+        
+        const { data: agentProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('user_id', agentUserIds);
+
+        if (profilesError) throw profilesError;
+        setAgents(agentProfiles?.map(p => ({ id: p.id, full_name: p.full_name || 'بدون اسم' })) || []);
+      }
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    }
+  };
 
   const fetchApplicationData = async () => {
     try {
-      // Fetch application
+      // Fetch application with assigned agent info
       const { data: appData, error: appError } = await supabase
         .from('applications')
         .select(`
@@ -143,15 +188,20 @@ export default function ApplicationDetail() {
             passport_number,
             passport_expiry,
             date_of_birth
+          ),
+          assigned_agent:profiles!applications_assigned_agent_id_fkey(
+            id,
+            full_name
           )
         `)
         .eq('id', id)
         .single();
 
       if (appError) throw appError;
-      setApplication(appData);
+      setApplication(appData as ApplicationData);
       setAgentNotes(appData.agent_notes || '');
       setAdminNotes(appData.admin_notes || '');
+      setSelectedAgentId(appData.assigned_agent_id || '');
 
       // Fetch documents
       const { data: docsData } = await supabase
@@ -175,6 +225,29 @@ export default function ApplicationDetail() {
       toast.error('حدث خطأ في تحميل بيانات الطلب');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAssignAgent = async () => {
+    if (!application) return;
+
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ assigned_agent_id: selectedAgentId || null })
+        .eq('id', application.id);
+
+      if (error) throw error;
+
+      toast.success(selectedAgentId ? 'تم تعيين الوكيل بنجاح' : 'تم إلغاء تعيين الوكيل');
+      setShowAgentDialog(false);
+      fetchApplicationData();
+    } catch (error) {
+      console.error('Error assigning agent:', error);
+      toast.error('حدث خطأ في تعيين الوكيل');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -335,6 +408,12 @@ export default function ApplicationDetail() {
         </div>
         <div className="flex items-center gap-3">
           {getStatusBadge(application.status)}
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setShowAgentDialog(true)}>
+              <UserCog className="h-4 w-4 ml-2" />
+              {application.assigned_agent ? 'تغيير الوكيل' : 'تعيين وكيل'}
+            </Button>
+          )}
           <Button onClick={() => setShowStatusDialog(true)}>
             تغيير الحالة
           </Button>
@@ -446,6 +525,10 @@ export default function ApplicationDetail() {
               <InfoRow label="تاريخ الإنشاء" value={format(new Date(application.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })} />
               <InfoRow label="السعر" value={`${application.visa_type?.price} ر.س`} />
               <InfoRow label="مدة المعالجة" value={`${application.visa_type?.processing_days} أيام عمل`} />
+              <InfoRow 
+                label="الوكيل المسؤول" 
+                value={application.assigned_agent?.full_name || 'غير معين'} 
+              />
             </CardContent>
           </Card>
 
@@ -568,6 +651,48 @@ export default function ApplicationDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Agent Assignment Dialog */}
+      {isAdmin && (
+        <Dialog open={showAgentDialog} onOpenChange={setShowAgentDialog}>
+          <DialogContent dir="rtl">
+            <DialogHeader>
+              <DialogTitle>تعيين وكيل للطلب</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">اختر الوكيل</label>
+                <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر وكيل..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">بدون وكيل</SelectItem>
+                    {agents.map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {agents.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                  لا يوجد وكلاء مسجلين في النظام
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAgentDialog(false)}>
+                إلغاء
+              </Button>
+              <Button onClick={handleAssignAgent} disabled={updating}>
+                {updating && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+                حفظ التعيين
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
