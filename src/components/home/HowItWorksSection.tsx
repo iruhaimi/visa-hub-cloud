@@ -54,55 +54,43 @@ export default function HowItWorksSection({ t }: HowItWorksSectionProps) {
           </p>
         </motion.div>
 
-        {/* Timeline */}
-        <div className="relative">
-          {/* Connection Line - Desktop */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 -translate-y-1/2" />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
-                className="relative"
-              >
-                {/* Card */}
-                <div className="relative bg-card rounded-2xl p-6 shadow-lg border border-border/50 hover:shadow-xl transition-shadow">
-                  {/* Step Number */}
-                  <div className="absolute -top-4 right-6 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-lg">
-                    {index + 1}
-                  </div>
-
-                  {/* Icon */}
-                  <motion.div 
-                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4 shadow-lg`}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <step.icon className="h-8 w-8 text-white" />
-                  </motion.div>
-
-                  <h3 className="text-lg font-bold mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.desc}</p>
-
-                  {/* Checkmark */}
-                  <div className="absolute bottom-4 left-4">
-                    <CheckCircle className="h-5 w-5 text-primary/30" />
-                  </div>
+        {/* Steps Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {steps.map((step, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.15 }}
+              className="relative group"
+            >
+              {/* Card */}
+              <div className="relative bg-card rounded-2xl p-6 shadow-lg border border-border/50 hover:shadow-xl hover:border-primary/30 transition-all duration-300 h-full">
+                {/* Step Number */}
+                <div className="absolute -top-4 right-6 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-lg">
+                  {index + 1}
                 </div>
 
-                {/* Arrow - Mobile/Tablet */}
-                {index < steps.length - 1 && (
-                  <div className="lg:hidden flex justify-center my-4">
-                    <div className="w-0.5 h-8 bg-primary/30" />
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
+                {/* Icon */}
+                <motion.div 
+                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4 shadow-lg`}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <step.icon className="h-8 w-8 text-white" />
+                </motion.div>
+
+                <h3 className="text-lg font-bold mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+
+                {/* Checkmark */}
+                <div className="absolute bottom-4 left-4">
+                  <CheckCircle className="h-5 w-5 text-primary/30 group-hover:text-primary/60 transition-colors" />
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
