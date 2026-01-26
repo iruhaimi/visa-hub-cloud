@@ -261,10 +261,10 @@ export default function VisaDetail() {
                 <Card className="shadow-lg">
                   <CardHeader>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-primary">${visa.price}</span>
-                      <span className="text-muted-foreground">USD</span>
+                      <span className="text-4xl font-bold text-primary">{visa.price}</span>
+                      <span className="text-muted-foreground">ر.س</span>
                     </div>
-                    <CardDescription>per application</CardDescription>
+                    <CardDescription>لكل طلب</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <Button size="lg" className="w-full" onClick={handleApply}>

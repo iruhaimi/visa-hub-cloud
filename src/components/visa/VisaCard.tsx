@@ -101,7 +101,7 @@ export function VisaCard({ visa, country }: VisaCardProps) {
           <div className="flex items-end justify-between">
             <div>
               <p className="text-xs text-muted-foreground">السعر يبدأ من</p>
-              <p className="text-2xl font-bold text-primary">${visa.price}</p>
+              <p className="text-2xl font-bold text-primary">{visa.price} ر.س</p>
             </div>
             <Button asChild>
               <Link to={`/apply?country=${country.code}&visa=${visa.id}`}>

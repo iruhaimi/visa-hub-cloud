@@ -54,11 +54,11 @@ const processingTimeRanges = [
 ];
 
 const priceRanges = [
-  { value: 'all', label: 'Any Price' },
-  { value: 'budget', label: 'Under $50' },
-  { value: 'mid', label: '$50 - $150' },
-  { value: 'premium', label: '$150 - $300' },
-  { value: 'luxury', label: 'Over $300' },
+  { value: 'all', label: 'جميع الأسعار' },
+  { value: 'budget', label: 'أقل من 50 ر.س' },
+  { value: 'mid', label: '50 - 150 ر.س' },
+  { value: 'premium', label: '150 - 300 ر.س' },
+  { value: 'luxury', label: 'أكثر من 300 ر.س' },
 ];
 
 export default function VisaServices() {
@@ -467,11 +467,11 @@ export default function VisaServices() {
 
                           <div className="flex items-center justify-between">
                             <div>
-                              <span className="text-2xl font-bold text-primary">${visa.price}</span>
-                              <span className="text-sm text-muted-foreground ml-1">USD</span>
+                              <span className="text-2xl font-bold text-primary">{visa.price}</span>
+                              <span className="text-sm text-muted-foreground mr-1">ر.س</span>
                             </div>
                             <Badge variant="outline" className="capitalize">
-                              {visa.entry_type} Entry
+                              {visa.entry_type === 'single' ? 'دخول واحد' : 'دخول متعدد'}
                             </Badge>
                           </div>
                         </CardContent>
