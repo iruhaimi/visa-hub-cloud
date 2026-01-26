@@ -34,6 +34,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import ApplicationsList from "@/pages/admin/ApplicationsList";
 import ApplicationDetail from "@/pages/admin/ApplicationDetail";
 import UsersManagement from "@/pages/admin/UsersManagement";
+import Settings from "@/pages/admin/Settings";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="applications" element={<ApplicationsList />} />
                 <Route path="applications/:id" element={<ApplicationDetail />} />
                 <Route path="users" element={<UsersManagement />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
 
               {/* Agent Routes */}
