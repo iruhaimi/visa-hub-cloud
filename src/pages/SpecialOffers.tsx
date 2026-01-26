@@ -10,108 +10,15 @@ import {
   Calendar,
   Star,
   Zap,
-  Timer
+  Timer,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import SARSymbol from '@/components/ui/SARSymbol';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-interface Offer {
-  id: string;
-  title: string;
-  description: string;
-  discount: number;
-  originalPrice: number;
-  salePrice: number;
-  country: string;
-  flagEmoji: string;
-  endDate: Date;
-  badge: string;
-  isHot: boolean;
-}
-
-const offers: Offer[] = [
-  {
-    id: '1',
-    title: 'تأشيرة دبي السياحية',
-    description: 'عرض خاص لموسم الصيف - تأشيرة سياحية لمدة 30 يوم',
-    discount: 25,
-    originalPrice: 400,
-    salePrice: 300,
-    country: 'الإمارات',
-    flagEmoji: '🇦🇪',
-    endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
-    badge: 'الأكثر طلباً',
-    isHot: true,
-  },
-  {
-    id: '2',
-    title: 'تأشيرة تركيا السياحية',
-    description: 'خصم حصري على التأشيرة الإلكترونية - صلاحية 90 يوم',
-    discount: 30,
-    originalPrice: 350,
-    salePrice: 245,
-    country: 'تركيا',
-    flagEmoji: '🇹🇷',
-    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days
-    badge: 'عرض محدود',
-    isHot: true,
-  },
-  {
-    id: '3',
-    title: 'تأشيرة مصر السياحية',
-    description: 'تأشيرة دخول متعددة - صلاحية 6 أشهر',
-    discount: 20,
-    originalPrice: 250,
-    salePrice: 200,
-    country: 'مصر',
-    flagEmoji: '🇪🇬',
-    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    badge: 'جديد',
-    isHot: false,
-  },
-  {
-    id: '4',
-    title: 'تأشيرة أذربيجان',
-    description: 'عرض خاص للعائلات - تأشيرة سياحية 30 يوم',
-    discount: 35,
-    originalPrice: 300,
-    salePrice: 195,
-    country: 'أذربيجان',
-    flagEmoji: '🇦🇿',
-    endDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
-    badge: 'ينتهي قريباً',
-    isHot: true,
-  },
-  {
-    id: '5',
-    title: 'تأشيرة جورجيا',
-    description: 'خصم الموسم - تأشيرة إلكترونية سريعة',
-    discount: 15,
-    originalPrice: 200,
-    salePrice: 170,
-    country: 'جورجيا',
-    flagEmoji: '🇬🇪',
-    endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days
-    badge: 'موصى به',
-    isHot: false,
-  },
-  {
-    id: '6',
-    title: 'باقة شهر العسل - ماليزيا',
-    description: 'تأشيرة لشخصين + خدمة VIP',
-    discount: 40,
-    originalPrice: 600,
-    salePrice: 360,
-    country: 'ماليزيا',
-    flagEmoji: '🇲🇾',
-    endDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days
-    badge: 'عرض خاص',
-    isHot: true,
-  },
-];
+import { useSpecialOffers, SpecialOffer } from '@/hooks/useSpecialOffers';
 
 function CountdownTimer({ endDate }: { endDate: Date }) {
   const [timeLeft, setTimeLeft] = useState({
@@ -165,7 +72,7 @@ function CountdownTimer({ endDate }: { endDate: Date }) {
   );
 }
 
-function OfferCard({ offer, index }: { offer: Offer; index: number }) {
+function OfferCard({ offer, index }: { offer: SpecialOffer; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -174,7 +81,7 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
     >
       <Card className="group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-xl">
         {/* Hot Badge */}
-        {offer.isHot && (
+        {offer.is_hot && (
           <div className="absolute top-0 left-0 z-10">
             <div className="bg-gradient-to-r from-destructive to-warning text-destructive-foreground text-xs font-bold px-3 py-1 rounded-br-lg flex items-center gap-1">
               <Zap className="h-3 w-3" />
@@ -186,20 +93,20 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
         {/* Discount Badge */}
         <div className="absolute top-3 right-3 z-10">
           <Badge className="bg-primary text-primary-foreground text-lg font-bold px-3 py-1">
-            {offer.discount}% خصم
+            {offer.discount_percentage}% خصم
           </Badge>
         </div>
 
         <CardContent className="p-6">
           {/* Header */}
           <div className="flex items-start gap-4 mb-4">
-            <div className="text-4xl">{offer.flagEmoji}</div>
+            <div className="text-4xl">{offer.flag_emoji}</div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant="outline" className="text-xs">
                   {offer.badge}
                 </Badge>
-                <span className="text-xs text-muted-foreground">{offer.country}</span>
+                <span className="text-xs text-muted-foreground">{offer.country_name}</span>
               </div>
               <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
                 {offer.title}
@@ -215,15 +122,15 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
           {/* Pricing */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-1">
-              <span className="text-3xl font-bold text-primary">{offer.salePrice}</span>
+              <span className="text-3xl font-bold text-primary">{offer.sale_price}</span>
               <SARSymbol size="md" className="text-primary" />
             </div>
             <div className="flex items-center gap-1 line-through text-muted-foreground">
-              <span className="text-lg">{offer.originalPrice}</span>
+              <span className="text-lg">{offer.original_price}</span>
               <SARSymbol size="xs" className="text-muted-foreground" />
             </div>
             <Badge variant="secondary" className="bg-accent/20 text-accent-foreground flex items-center gap-1">
-              وفر {offer.originalPrice - offer.salePrice}
+              وفر {offer.original_price - offer.sale_price}
               <SARSymbol size="xs" />
             </Badge>
           </div>
@@ -231,7 +138,7 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
           {/* Countdown */}
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg mb-4">
             <span className="text-sm text-muted-foreground">ينتهي العرض خلال:</span>
-            <CountdownTimer endDate={offer.endDate} />
+            <CountdownTimer endDate={new Date(offer.end_date)} />
           </div>
 
           {/* CTA */}
@@ -249,9 +156,12 @@ function OfferCard({ offer, index }: { offer: Offer; index: number }) {
 
 export default function SpecialOffers() {
   const { t } = useLanguage();
+  const { data: offers, isLoading, error } = useSpecialOffers();
 
-  // Main countdown for the biggest sale
-  const mainSaleEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  // Main countdown for the biggest sale (use first offer's end date or 7 days from now)
+  const mainSaleEnd = offers && offers.length > 0 
+    ? new Date(offers[0].end_date) 
+    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   return (
     <div className="min-h-screen">
@@ -376,11 +286,22 @@ export default function SpecialOffers() {
             <p className="text-muted-foreground">اختر العرض المناسب لك واحجز الآن قبل انتهاء الوقت</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {offers.map((offer, index) => (
-              <OfferCard key={offer.id} offer={offer} index={index} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : offers && offers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {offers.map((offer, index) => (
+                <OfferCard key={offer.id} offer={offer} index={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-lg">لا توجد عروض متاحة حالياً</p>
+              <p className="text-sm text-muted-foreground mt-2">تابعنا للحصول على أحدث العروض</p>
+            </div>
+          )}
         </div>
       </section>
 
