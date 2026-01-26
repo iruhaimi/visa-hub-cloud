@@ -3,18 +3,16 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft,
   ArrowRight,
-  Clock, 
-  Calendar, 
   CheckCircle2, 
   FileText,
   AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { VisaCard } from '@/components/visa/VisaCard';
 import type { Country, VisaType } from '@/types/database';
 
 export default function CountryDetail() {
@@ -138,78 +136,9 @@ export default function CountryDetail() {
             </Card>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {visaTypes.map((visa) => {
-                const requirements = Array.isArray(visa.requirements) ? visa.requirements : [];
-                
-                return (
-                  <Card key={visa.id} className="flex flex-col">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-xl">{visa.name}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {visa.description || `تأشيرة ${visa.name} إلى ${country.name}`}
-                          </CardDescription>
-                        </div>
-                        <Badge variant="outline" className="capitalize">
-                          {visa.entry_type === 'single' ? 'دخول واحد' : 'دخول متعدد'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 space-y-4">
-                      {/* Stats */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-lg bg-muted/50 p-3 text-center">
-                          <Clock className="h-5 w-5 mx-auto text-primary mb-1" />
-                          <p className="text-xs text-muted-foreground">المعالجة</p>
-                          <p className="font-semibold">{visa.processing_days} يوم</p>
-                        </div>
-                        <div className="rounded-lg bg-muted/50 p-3 text-center">
-                          <Calendar className="h-5 w-5 mx-auto text-primary mb-1" />
-                          <p className="text-xs text-muted-foreground">الصلاحية</p>
-                          <p className="font-semibold">{visa.validity_days || '-'} يوم</p>
-                        </div>
-                      </div>
-
-                      {/* Requirements Preview */}
-                      {requirements.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium mb-2">المتطلبات الأساسية:</p>
-                          <ul className="space-y-1">
-                            {requirements.slice(0, 3).map((req, i) => (
-                              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                                <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                                <span>{req}</span>
-                              </li>
-                            ))}
-                            {requirements.length > 3 && (
-                              <li className="text-sm text-primary">
-                                +{requirements.length - 3} متطلبات أخرى
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Price */}
-                      <div className="pt-4 border-t border-border">
-                        <div className="flex items-end justify-between">
-                          <div>
-                            <p className="text-xs text-muted-foreground">السعر يبدأ من</p>
-                            <p className="text-2xl font-bold text-primary">${visa.price}</p>
-                          </div>
-                          <Button asChild>
-                            <Link to={`/apply?country=${country.code}&visa=${visa.id}`}>
-                              قدّم الآن
-                              <ArrowIcon className="h-4 w-4 ms-1 rtl-flip" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {visaTypes.map((visa) => (
+                <VisaCard key={visa.id} visa={visa} country={country} />
+              ))}
             </div>
           )}
         </div>
