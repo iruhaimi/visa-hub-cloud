@@ -237,6 +237,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          subscribed_at: string
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -384,6 +420,71 @@ export type Database = {
           wallet_balance?: number | null
         }
         Relationships: []
+      }
+      special_offers: {
+        Row: {
+          badge: string | null
+          country_name: string
+          created_at: string
+          description: string | null
+          discount_percentage: number
+          end_date: string
+          flag_emoji: string | null
+          id: string
+          is_active: boolean | null
+          is_hot: boolean | null
+          original_price: number
+          sale_price: number
+          start_date: string
+          title: string
+          updated_at: string
+          visa_type_id: string | null
+        }
+        Insert: {
+          badge?: string | null
+          country_name: string
+          created_at?: string
+          description?: string | null
+          discount_percentage: number
+          end_date: string
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          original_price: number
+          sale_price: number
+          start_date?: string
+          title: string
+          updated_at?: string
+          visa_type_id?: string | null
+        }
+        Update: {
+          badge?: string | null
+          country_name?: string
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          end_date?: string
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          original_price?: number
+          sale_price?: number
+          start_date?: string
+          title?: string
+          updated_at?: string
+          visa_type_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "special_offers_visa_type_id_fkey"
+            columns: ["visa_type_id"]
+            isOneToOne: false
+            referencedRelation: "visa_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
