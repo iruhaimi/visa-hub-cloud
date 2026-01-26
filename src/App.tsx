@@ -29,6 +29,7 @@ import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentFailed from "@/pages/PaymentFailed";
 import Auth from "@/pages/Auth";
 import Profile from "@/pages/Profile";
+import MyApplications from "@/pages/MyApplications";
 import NotFound from "@/pages/NotFound";
 
 // Admin Pages
@@ -72,6 +73,7 @@ const App = () => (
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/payment-failed" element={<PaymentFailed />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/my-applications" element={<MyApplications />} />
               </Route>
 
               {/* Auth Route */}

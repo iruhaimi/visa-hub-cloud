@@ -132,7 +132,7 @@ export default function HeaderArabic() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard/applications" className="cursor-pointer">
+                  <Link to="/my-applications" className="cursor-pointer">
                     <FileText className="h-4 w-4" />
                     <span className="mr-2">{t('nav.myApplications')}</span>
                   </Link>
