@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,16 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { User, Phone, MapPin, Calendar, Globe, CreditCard, Wallet, Save, Loader2 } from 'lucide-react';
+import { User, Phone, CreditCard, Wallet, Save, Loader2, Camera, Upload } from 'lucide-react';
 
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { direction } = useLanguage();
   const { toast } = useToast();
   const isRTL = direction === 'rtl';
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -49,6 +50,83 @@ const Profile = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !profile) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: isRTL ? 'خطأ' : 'Error',
+        description: isRTL ? 'يرجى اختيار ملف صورة' : 'Please select an image file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: isRTL ? 'خطأ' : 'Error',
+        description: isRTL ? 'حجم الصورة يجب أن يكون أقل من 2 ميجابايت' : 'Image size must be less than 2MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      // Generate unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: `${publicUrl}?t=${Date.now()}` })
+        .eq('id', profile.id);
+
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+
+      toast({
+        title: isRTL ? 'تم الرفع' : 'Uploaded',
+        description: isRTL ? 'تم تحديث صورتك الشخصية بنجاح' : 'Your profile picture has been updated',
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: isRTL ? 'خطأ' : 'Error',
+        description: isRTL ? 'حدث خطأ أثناء رفع الصورة' : 'Failed to upload image',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,6 +188,8 @@ const Profile = () => {
     country: isRTL ? 'الدولة' : 'Country',
     save: isRTL ? 'حفظ التغييرات' : 'Save Changes',
     saving: isRTL ? 'جاري الحفظ...' : 'Saving...',
+    changePhoto: isRTL ? 'تغيير الصورة' : 'Change Photo',
+    uploading: isRTL ? 'جاري الرفع...' : 'Uploading...',
   };
 
   const getInitials = (name: string | null) => {
@@ -120,17 +200,62 @@ const Profile = () => {
   return (
     <div className="container mx-auto py-8 px-4" dir={direction}>
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {/* Header with Avatar Upload */}
         <div className="flex items-center gap-6 mb-8">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={profile?.avatar_url || ''} />
-            <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-              {getInitials(profile?.full_name)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
+          <div className="relative group">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={profile?.avatar_url || ''} />
+              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                {getInitials(profile?.full_name)}
+              </AvatarFallback>
+            </Avatar>
+            
+            {/* Upload Overlay */}
+            <button
+              type="button"
+              onClick={handleAvatarClick}
+              disabled={isUploadingAvatar}
+              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
+            >
+              {isUploadingAvatar ? (
+                <Loader2 className="h-6 w-6 text-white animate-spin" />
+              ) : (
+                <Camera className="h-6 w-6 text-white" />
+              )}
+            </button>
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+          </div>
+          
+          <div className="flex-1">
             <h1 className="text-3xl font-bold">{profile?.full_name || labels.pageTitle}</h1>
             <p className="text-muted-foreground">{user?.email}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={handleAvatarClick}
+              disabled={isUploadingAvatar}
+            >
+              {isUploadingAvatar ? (
+                <>
+                  <Loader2 className={`h-4 w-4 animate-spin ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {labels.uploading}
+                </>
+              ) : (
+                <>
+                  <Upload className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {labels.changePhoto}
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
