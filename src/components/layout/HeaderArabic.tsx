@@ -126,7 +126,7 @@ export default function HeaderArabic() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard/profile" className="cursor-pointer">
+                  <Link to="/profile" className="cursor-pointer">
                     <User className="h-4 w-4" />
                     <span className="mr-2">{t('nav.profile')}</span>
                   </Link>
