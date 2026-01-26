@@ -30,6 +30,7 @@ import PaymentFailed from "@/pages/PaymentFailed";
 import Auth from "@/pages/Auth";
 import Profile from "@/pages/Profile";
 import MyApplications from "@/pages/MyApplications";
+import SpecialOffers from "@/pages/SpecialOffers";
 import NotFound from "@/pages/NotFound";
 
 // Admin Pages
@@ -74,6 +75,7 @@ const App = () => (
                 <Route path="/payment-failed" element={<PaymentFailed />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/my-applications" element={<MyApplications />} />
+                <Route path="/offers" element={<SpecialOffers />} />
               </Route>
 
               {/* Auth Route */}
