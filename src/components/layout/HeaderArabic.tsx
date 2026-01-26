@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, LayoutDashboard, Plane, FileText, Phone, Globe, MessageCircle } from 'lucide-react';
+import { Menu, X, User, LogOut, LayoutDashboard, FileText, Phone, Globe, MessageCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import logo from '@/assets/logo.jpeg';
 
 export default function HeaderArabic() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -57,65 +58,93 @@ export default function HeaderArabic() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container-section flex h-16 items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Plane className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">فيزاجو</span>
-          </Link>
+    <header className="sticky top-0 z-50 w-full bg-background shadow-sm">
+      {/* Top Bar */}
+      <div className="hidden lg:block border-b border-border/30 bg-muted/30">
+        <div className="container-section flex h-10 items-center justify-between text-sm">
+          <div className="flex items-center gap-6 text-muted-foreground">
+            <a href="tel:+966500000000" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+              <Phone className="h-3.5 w-3.5" />
+              <span>+966 50 000 0000</span>
+            </a>
+            <a href="mailto:info@otolat-rahlatcom.com" className="hover:text-foreground transition-colors">
+              info@otolat-rahlatcom.com
+            </a>
+          </div>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://wa.me/966500000000" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-success hover:text-success/80 transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>واتساب</span>
+            </a>
+            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-7 px-2 text-xs">
+              <Globe className="h-3.5 w-3.5" />
+              <span className="mr-1">{language === 'ar' ? 'English' : 'عربي'}</span>
+            </Button>
+          </div>
         </div>
+      </div>
+
+      {/* Main Navigation */}
+      <nav className="container-section flex h-20 items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-3 group">
+          <img 
+            src={logo} 
+            alt="عطلات رحلاتكم" 
+            className="h-14 w-auto object-contain transition-transform group-hover:scale-105"
+          />
+        </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex lg:items-center lg:gap-6">
+        <div className="hidden lg:flex lg:items-center lg:gap-1">
           {navigation.map((item) => (
             <Link
               key={item.name}
               to={item.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="relative px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-primary group"
             >
               {item.name}
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-3/4 rounded-full" />
             </Link>
           ))}
         </div>
 
         {/* Desktop Actions */}
         <div className="hidden lg:flex lg:items-center lg:gap-3">
-          {/* Language Toggle */}
-          <Button variant="ghost" size="sm" onClick={toggleLanguage}>
-            <Globe className="h-4 w-4" />
-            <span className="mr-1">{language === 'ar' ? 'EN' : 'عربي'}</span>
-          </Button>
-
-          {/* WhatsApp */}
-          <Button variant="ghost" size="icon" asChild>
-            <a href="https://wa.me/966500000000" target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="h-5 w-5 text-success" />
-            </a>
-          </Button>
-
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Avatar className="h-9 w-9">
+                <Button variant="ghost" className="flex items-center gap-2 px-3 h-10 rounded-full border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'User'} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium max-w-[100px] truncate">
+                    {profile?.full_name || t('nav.profile')}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-popover" align="end" forceMount>
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <Avatar className="h-10 w-10">
                     <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'User'} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-popover" align="end" forceMount>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
+                  <div className="flex flex-col space-y-0.5 leading-none">
                     {profile?.full_name && (
-                      <p className="font-medium">{profile.full_name}</p>
+                      <p className="font-medium text-sm">{profile.full_name}</p>
                     )}
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
@@ -146,10 +175,10 @@ export default function HeaderArabic() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" asChild className="rounded-full">
                 <Link to="/auth">{t('nav.signIn')}</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="rounded-full px-6 shadow-md hover:shadow-lg transition-shadow">
                 <Link to="/apply">{t('nav.startApplication')}</Link>
               </Button>
             </>
@@ -157,19 +186,28 @@ export default function HeaderArabic() {
         </div>
 
         {/* Mobile menu button */}
-        <div className="flex lg:hidden gap-2">
-          <Button variant="ghost" size="sm" onClick={toggleLanguage}>
+        <div className="flex lg:hidden gap-2 items-center">
+          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-9 w-9 p-0">
             <Globe className="h-4 w-4" />
           </Button>
+          <a 
+            href="https://wa.me/966500000000" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="h-9 w-9 flex items-center justify-center text-success"
+          >
+            <MessageCircle className="h-5 w-5" />
+          </a>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="h-9 w-9"
           >
             {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5" />
             ) : (
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             )}
           </Button>
         </div>
@@ -177,30 +215,48 @@ export default function HeaderArabic() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="lg:hidden">
-          <div className="space-y-1 px-4 pb-3 pt-2">
+        <div className="lg:hidden border-t border-border/50 bg-background animate-fade-in">
+          <div className="space-y-1 px-4 pb-4 pt-3">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className="block rounded-md px-3 py-2 text-base font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                className="block rounded-lg px-4 py-3 text-base font-medium text-muted-foreground hover:bg-primary/5 hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.name}
               </Link>
             ))}
-            <div className="mt-4 flex flex-col gap-2 px-3">
+            <div className="mt-4 flex flex-col gap-2 pt-4 border-t border-border/50">
               {user ? (
                 <>
-                  <Button variant="outline" asChild className="w-full justify-start">
+                  <div className="flex items-center gap-3 px-4 py-2 mb-2">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'User'} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{profile?.full_name || 'المستخدم'}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" asChild className="w-full justify-start rounded-lg">
                     <Link to={getDashboardLink()} onClick={() => setMobileMenuOpen(false)}>
                       <LayoutDashboard className="h-4 w-4" />
                       <span className="mr-2">{t('nav.dashboard')}</span>
                     </Link>
                   </Button>
+                  <Button variant="outline" asChild className="w-full justify-start rounded-lg">
+                    <Link to="/my-applications" onClick={() => setMobileMenuOpen(false)}>
+                      <FileText className="h-4 w-4" />
+                      <span className="mr-2">{t('nav.myApplications')}</span>
+                    </Link>
+                  </Button>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-destructive"
+                    className="w-full justify-start rounded-lg text-destructive hover:bg-destructive/10"
                     onClick={() => {
                       handleSignOut();
                       setMobileMenuOpen(false);
@@ -212,12 +268,12 @@ export default function HeaderArabic() {
                 </>
               ) : (
                 <>
-                  <Button variant="outline" asChild className="w-full">
+                  <Button variant="outline" asChild className="w-full rounded-lg">
                     <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
                       {t('nav.signIn')}
                     </Link>
                   </Button>
-                  <Button asChild className="w-full">
+                  <Button asChild className="w-full rounded-lg">
                     <Link to="/apply" onClick={() => setMobileMenuOpen(false)}>
                       {t('nav.startApplication')}
                     </Link>
