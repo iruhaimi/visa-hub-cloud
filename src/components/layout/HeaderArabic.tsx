@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogOut, LayoutDashboard, FileText, Phone, Globe, MessageCircle, ChevronDown } from 'lucide-react';
+import { Menu, X, User, LogOut, LayoutDashboard, FileText, Globe, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -58,39 +58,9 @@ export default function HeaderArabic() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background shadow-sm">
-      {/* Top Bar */}
-      <div className="hidden lg:block border-b border-border/30 bg-muted/30">
-        <div className="container-section flex h-10 items-center justify-between text-sm">
-          <div className="flex items-center gap-6 text-muted-foreground">
-            <a href="tel:920034158" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
-              <Phone className="h-3.5 w-3.5" />
-              <span dir="ltr">920034158</span>
-            </a>
-            <a href="mailto:info@rhalat.com" className="hover:text-foreground transition-colors">
-              info@rhalat.com
-            </a>
-          </div>
-          <div className="flex items-center gap-4">
-            <a 
-              href="https://wa.me/966920034158" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-success hover:text-success/80 transition-colors"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>واتساب</span>
-            </a>
-            <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-7 px-2 text-xs">
-              <Globe className="h-3.5 w-3.5" />
-              <span className="mr-1">{language === 'ar' ? 'English' : 'عربي'}</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
+    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40">
       {/* Main Navigation */}
-      <nav className="container-section flex h-20 items-center justify-between">
+      <nav className="container-section flex h-16 lg:h-20 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
           <img 
@@ -190,14 +160,6 @@ export default function HeaderArabic() {
           <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-9 w-9 p-0">
             <Globe className="h-4 w-4" />
           </Button>
-          <a 
-            href="https://wa.me/966920034158" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="h-9 w-9 flex items-center justify-center text-success"
-          >
-            <MessageCircle className="h-5 w-5" />
-          </a>
           <Button
             variant="ghost"
             size="icon"
