@@ -63,17 +63,17 @@ export default function HeaderArabic() {
       <div className="hidden lg:block border-b border-border/30 bg-muted/30">
         <div className="container-section flex h-10 items-center justify-between text-sm">
           <div className="flex items-center gap-6 text-muted-foreground">
-            <a href="tel:+966500000000" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+            <a href="tel:920034158" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
               <Phone className="h-3.5 w-3.5" />
-              <span>+966 50 000 0000</span>
+              <span dir="ltr">920034158</span>
             </a>
-            <a href="mailto:info@otolat-rahlatcom.com" className="hover:text-foreground transition-colors">
-              info@otolat-rahlatcom.com
+            <a href="mailto:info@rhalat.com" className="hover:text-foreground transition-colors">
+              info@rhalat.com
             </a>
           </div>
           <div className="flex items-center gap-4">
             <a 
-              href="https://wa.me/966500000000" 
+              href="https://wa.me/966920034158" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-success hover:text-success/80 transition-colors"
@@ -191,7 +191,7 @@ export default function HeaderArabic() {
             <Globe className="h-4 w-4" />
           </Button>
           <a 
-            href="https://wa.me/966500000000" 
+            href="https://wa.me/966920034158" 
             target="_blank" 
             rel="noopener noreferrer"
             className="h-9 w-9 flex items-center justify-center text-success"
