@@ -28,6 +28,7 @@ import Refund from "@/pages/Refund";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentFailed from "@/pages/PaymentFailed";
 import Auth from "@/pages/Auth";
+import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 
 // Admin Pages
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/refund" element={<Refund />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/payment-failed" element={<PaymentFailed />} />
+                <Route path="/profile" element={<Profile />} />
               </Route>
 
               {/* Auth Route */}
