@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Search, 
   ArrowLeft,
   ArrowRight,
   Shield, 
@@ -16,12 +15,11 @@ import {
   Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Country, VisaType } from '@/types/database';
+import HeroSection from '@/components/home/HeroSection';
 
 const testimonials = [
   {
@@ -48,7 +46,6 @@ export default function HomeArabic() {
   const { t, direction } = useLanguage();
   const [countries, setCountries] = useState<Country[]>([]);
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   const ArrowIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
@@ -119,62 +116,7 @@ export default function HomeArabic() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden gradient-hero py-20 sm:py-32">
-        <div className="container-section relative z-10">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4 bg-white/20 text-white hover:bg-white/30">
-              {t('hero.trusted')}
-            </Badge>
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
-              {t('hero.title')}
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-white/80">
-              {t('hero.subtitle')}
-            </p>
-
-            {/* Search Box */}
-            <div className="mt-10 mx-auto max-w-xl">
-              <div className="flex gap-2 bg-white rounded-lg p-2 shadow-xl">
-                <div className="relative flex-1">
-                  <Search className="absolute start-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder={t('hero.searchPlaceholder')}
-                    className="border-0 ps-10 focus-visible:ring-0"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <Button asChild>
-                  <Link to="/destinations">
-                    {t('hero.cta')}
-                    <ArrowIcon className="h-4 w-4 ms-2 rtl-flip" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Trust Indicators */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-white/70">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>98% {t('stats.successRate')}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Shield className="h-4 w-4" />
-                <span>50+ {t('stats.countries')}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>24/7 {t('stats.support')}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOCAxOC04LjA1OSAxOC0xOC04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNCAxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNHoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-30" />
-      </section>
+      <HeroSection />
 
       {/* Featured Countries */}
       <section className="py-16 sm:py-24 bg-background">
