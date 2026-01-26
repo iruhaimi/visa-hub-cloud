@@ -39,6 +39,7 @@ import ApplicationsList from "@/pages/admin/ApplicationsList";
 import ApplicationDetail from "@/pages/admin/ApplicationDetail";
 import UsersManagement from "@/pages/admin/UsersManagement";
 import Settings from "@/pages/admin/Settings";
+import OffersManagement from "@/pages/admin/OffersManagement";
 
 // Agent Pages
 import AgentDashboard from "@/pages/agent/AgentDashboard";
@@ -95,6 +96,7 @@ const App = () => (
                 <Route path="applications/:id" element={<ApplicationDetail />} />
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="offers" element={<OffersManagement />} />
               </Route>
 
               {/* Agent Routes */}
