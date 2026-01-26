@@ -40,6 +40,7 @@ import Settings from "@/pages/admin/Settings";
 // Agent Pages
 import AgentDashboard from "@/pages/agent/AgentDashboard";
 import AgentApplicationsList from "@/pages/agent/AgentApplicationsList";
+import AgentApplicationDetail from "@/pages/agent/AgentApplicationDetail";
 
 const queryClient = new QueryClient();
 
@@ -101,7 +102,7 @@ const App = () => (
               >
                 <Route index element={<AgentDashboard />} />
                 <Route path="applications" element={<AgentApplicationsList />} />
-                <Route path="applications/:id" element={<ApplicationDetail />} />
+                <Route path="applications/:id" element={<AgentApplicationDetail />} />
               </Route>
 
               {/* Catch-all */}
