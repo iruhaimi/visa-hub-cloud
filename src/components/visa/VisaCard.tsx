@@ -127,6 +127,13 @@ export function VisaCard({ visa, country }: VisaCardProps) {
                 {visa.price}
                 <SARSymbol size="md" className="text-primary" />
               </p>
+              {/* Price Notes from Database */}
+              <p className="text-xs text-muted-foreground mt-1">
+                {direction === 'rtl' 
+                  ? (visa.price_notes || 'شامل رسوم التأشيرة')
+                  : (visa.price_notes_en || 'Visa fees included')
+                }
+              </p>
             </div>
             <Button asChild>
               <Link to={`/apply?country=${country.code}&visa=${visa.id}`}>
