@@ -297,15 +297,15 @@ export default function Refund() {
                       }
                     </p>
                     <a 
-                      href="mailto:refunds@visago.sa" 
+                      href="mailto:info@rhalat.com" 
                       className="text-primary font-medium hover:underline"
                     >
-                      refunds@visago.sa
+                      info@rhalat.com
                     </a>
                   </div>
                   <div className="flex gap-3">
                     <Button asChild>
-                      <a href="mailto:refunds@visago.sa">
+                      <a href="mailto:info@rhalat.com">
                         {isRTL ? 'طلب استرداد' : 'Request Refund'}
                       </a>
                     </Button>

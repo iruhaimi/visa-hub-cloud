@@ -19,22 +19,22 @@ export default function Terms() {
     {
       titleAr: 'مقدمة',
       titleEn: 'Introduction',
-      contentAr: `مرحباً بك في فيزاجو. بزيارتك لموقعنا واستخدام خدماتنا، فإنك توافق على الالتزام بهذه الشروط والأحكام. يرجى قراءتها بعناية قبل استخدام أي من خدماتنا.
+      contentAr: `مرحباً بك في وكالة عطلات رحلاتكم. بزيارتك لموقعنا واستخدام خدماتنا، فإنك توافق على الالتزام بهذه الشروط والأحكام. يرجى قراءتها بعناية قبل استخدام أي من خدماتنا.
 
-هذه الشروط تحكم العلاقة بينك وبين شركة فيزاجو لخدمات التأشيرات والسفر. إذا كنت لا توافق على أي من هذه الشروط، يرجى عدم استخدام موقعنا أو خدماتنا.`,
-      contentEn: `Welcome to VisaGo. By visiting our website and using our services, you agree to be bound by these terms and conditions. Please read them carefully before using any of our services.
+هذه الشروط تحكم العلاقة بينك وبين وكالة عطلات رحلاتكم للسياحة والسفر. إذا كنت لا توافق على أي من هذه الشروط، يرجى عدم استخدام موقعنا أو خدماتنا.`,
+      contentEn: `Welcome to Otolat Rahlatcom. By visiting our website and using our services, you agree to be bound by these terms and conditions. Please read them carefully before using any of our services.
 
-These terms govern the relationship between you and VisaGo Visa and Travel Services. If you do not agree to any of these terms, please do not use our website or services.`
+These terms govern the relationship between you and Otolat Rahlatcom Travel Agency. If you do not agree to any of these terms, please do not use our website or services.`
     },
     {
       titleAr: 'تعريفات',
       titleEn: 'Definitions',
-      contentAr: `• "الشركة" أو "نحن": تشير إلى فيزاجو لخدمات التأشيرات والسفر.
+      contentAr: `• "الشركة" أو "نحن": تشير إلى وكالة عطلات رحلاتكم للسياحة والسفر.
 • "العميل" أو "أنت": تشير إلى أي شخص يستخدم موقعنا أو خدماتنا.
 • "الخدمات": تشمل جميع خدمات التأشيرات والسفر التي نقدمها.
 • "الطلب": يشير إلى أي طلب تأشيرة يتم تقديمه عبر موقعنا.
 • "الرسوم": تشمل رسوم الخدمة ورسوم التأشيرة الحكومية.`,
-      contentEn: `• "Company" or "We": refers to VisaGo Visa and Travel Services.
+      contentEn: `• "Company" or "We": refers to Otolat Rahlatcom Travel Agency.
 • "Client" or "You": refers to any person using our website or services.
 • "Services": includes all visa and travel services we provide.
 • "Application": refers to any visa application submitted through our website.
@@ -177,14 +177,14 @@ Last updated: January 2024`
       titleEn: 'Contact Us',
       contentAr: `إذا كان لديك أي أسئلة حول هذه الشروط والأحكام، يرجى الاتصال بنا:
 
-البريد الإلكتروني: legal@visago.sa
-الهاتف: +966 11 XXX XXXX
-العنوان: الرياض، طريق الملك فهد، برج المملكة`,
+البريد الإلكتروني: info@rhalat.com
+الهاتف: 920034158
+العنوان: الرياض - حي الربيع - شارع أبي بن معاذ الأنصاري`,
       contentEn: `If you have any questions about these terms and conditions, please contact us:
 
-Email: legal@visago.sa
-Phone: +966 11 XXX XXXX
-Address: Riyadh, King Fahd Road, Kingdom Tower`
+Email: info@rhalat.com
+Phone: 920034158
+Address: Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd`
     },
   ];
 
