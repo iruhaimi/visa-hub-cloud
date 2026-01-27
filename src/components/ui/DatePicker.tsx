@@ -1,7 +1,7 @@
 import * as React from "react";
 import { format, setMonth, setYear, getMonth, getYear, getDaysInMonth, startOfMonth, getDay, addDays, isSameDay, isToday, isBefore, isAfter } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DatePickerProps {
-  value?: string;
+  value?: string | Date | null;
   onChange: (value: string) => void;
   placeholder?: string;
   isRTL?: boolean;
@@ -20,6 +20,7 @@ interface DatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   className?: string;
+  triggerClassName?: string;
 }
 
 const monthsAr = [
@@ -28,8 +29,8 @@ const monthsAr = [
 ];
 
 const monthsEn = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
 ];
 
 const daysAr = ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
@@ -44,14 +45,24 @@ export function DatePicker({
   minDate,
   maxDate,
   className,
+  triggerClassName,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [view, setView] = React.useState<'days' | 'months' | 'years'>('days');
+  
+  // Handle value as string or Date
+  const parseValue = (val: string | Date | null | undefined): Date | undefined => {
+    if (!val) return undefined;
+    if (val instanceof Date) return val;
+    return new Date(val);
+  };
+  
+  const selectedDate = parseValue(value);
+  
   const [calendarDate, setCalendarDate] = React.useState<Date>(
-    value ? new Date(value) : new Date()
+    selectedDate || new Date()
   );
   
-  const selectedDate = value ? new Date(value) : undefined;
   const months = isRTL ? monthsAr : monthsEn;
   const days = isRTL ? daysAr : daysEn;
   
@@ -129,8 +140,8 @@ export function DatePicker({
   };
 
   React.useEffect(() => {
-    if (value) {
-      setCalendarDate(new Date(value));
+    if (selectedDate) {
+      setCalendarDate(selectedDate);
     }
   }, [value]);
 
@@ -147,16 +158,17 @@ export function DatePicker({
           variant="outline"
           disabled={disabled}
           className={cn(
-            "w-full h-10 justify-between text-start font-normal group",
+            "w-full h-12 justify-between text-start font-normal group",
             "border-input bg-background hover:bg-accent/50",
             "transition-all duration-200",
             !selectedDate && "text-muted-foreground",
+            triggerClassName,
             className
           )}
         >
           <span className="flex items-center gap-2">
             {selectedDate ? (
-              <span className="text-foreground">
+              <span className="text-foreground font-medium">
                 {format(selectedDate, "dd MMMM yyyy", { 
                   locale: isRTL ? ar : enUS 
                 })}
@@ -166,7 +178,7 @@ export function DatePicker({
             )}
           </span>
           <div className={cn(
-            "flex items-center justify-center w-8 h-8 rounded-md",
+            "flex items-center justify-center w-9 h-9 rounded-lg",
             "bg-primary/10 text-primary",
             "group-hover:bg-primary group-hover:text-primary-foreground",
             "transition-all duration-200"
@@ -176,30 +188,37 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[320px] p-0 shadow-2xl border-border/30 bg-background rounded-2xl overflow-hidden" 
+        className="w-[340px] p-0 shadow-2xl border-0 bg-background rounded-2xl overflow-hidden" 
         align={isRTL ? "end" : "start"}
         sideOffset={8}
       >
-        {/* Header */}
-        <div className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-4">
-          <button
-            type="button"
-            onClick={() => setView(view === 'years' ? 'days' : 'years')}
-            className="text-sm opacity-80 hover:opacity-100 transition-opacity"
-          >
-            {getYear(calendarDate)}
-          </button>
-          <button
-            type="button"
-            onClick={() => setView(view === 'months' ? 'days' : 'months')}
-            className="block text-2xl font-bold hover:opacity-80 transition-opacity"
-          >
-            {format(calendarDate, "d MMMM", { locale: isRTL ? ar : enUS })}
-          </button>
+        {/* Gradient Header */}
+        <div className="relative bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-5 overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative z-10">
+            <button
+              type="button"
+              onClick={() => setView(view === 'years' ? 'days' : 'years')}
+              className="text-sm font-medium opacity-80 hover:opacity-100 transition-opacity flex items-center gap-1"
+            >
+              {getYear(calendarDate)}
+              <ChevronDown className="h-3 w-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setView(view === 'months' ? 'days' : 'months')}
+              className="block text-2xl font-bold mt-1 hover:opacity-80 transition-opacity"
+            >
+              {format(calendarDate, "EEEE، d MMMM", { locale: isRTL ? ar : enUS })}
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 bg-background">
           {view === 'days' && (
             <>
               {/* Month Navigation */}
@@ -207,14 +226,17 @@ export function DatePicker({
                 <button
                   type="button"
                   onClick={goToPrevMonth}
-                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                  className={cn(
+                    "p-2.5 rounded-xl hover:bg-accent transition-all duration-200",
+                    "hover:scale-110 active:scale-95"
+                  )}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setView('months')}
-                  className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-1"
+                  className="text-base font-bold hover:text-primary transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-accent"
                 >
                   {format(calendarDate, "MMMM yyyy", { locale: isRTL ? ar : enUS })}
                   <ChevronDown className="h-4 w-4" />
@@ -222,7 +244,10 @@ export function DatePicker({
                 <button
                   type="button"
                   onClick={goToNextMonth}
-                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                  className={cn(
+                    "p-2.5 rounded-xl hover:bg-accent transition-all duration-200",
+                    "hover:scale-110 active:scale-95"
+                  )}
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -231,7 +256,7 @@ export function DatePicker({
               {/* Days Header */}
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {days.map((day, i) => (
-                  <div key={i} className="h-9 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                  <div key={i} className="h-10 flex items-center justify-center text-xs font-bold text-muted-foreground/70 uppercase tracking-wider">
                     {day}
                   </div>
                 ))}
@@ -240,18 +265,19 @@ export function DatePicker({
               {/* Days Grid */}
               <div className="grid grid-cols-7 gap-1">
                 {calendarDays.map((date, i) => (
-                  <div key={i} className="aspect-square">
+                  <div key={i} className="aspect-square p-0.5">
                     {date ? (
                       <button
                         type="button"
                         disabled={isDisabled(date)}
                         onClick={() => handleSelect(date)}
                         className={cn(
-                          "w-full h-full rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200",
-                          "hover:bg-primary/10 hover:scale-110",
-                          isToday(date) && !selectedDate && "bg-accent text-accent-foreground ring-2 ring-primary/30",
-                          selectedDate && isSameDay(date, selectedDate) && "bg-primary text-primary-foreground shadow-lg hover:bg-primary",
-                          isDisabled(date) && "opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100"
+                          "w-full h-full rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200",
+                          "hover:bg-primary/10 hover:scale-110 hover:shadow-md",
+                          isToday(date) && !selectedDate && "bg-accent text-accent-foreground ring-2 ring-primary/40 ring-offset-1",
+                          isToday(date) && selectedDate && !isSameDay(date, selectedDate) && "bg-accent/50 ring-1 ring-primary/30",
+                          selectedDate && isSameDay(date, selectedDate) && "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 hover:from-primary hover:to-primary",
+                          isDisabled(date) && "opacity-20 cursor-not-allowed hover:bg-transparent hover:scale-100 hover:shadow-none"
                         )}
                       >
                         {date.getDate()}
@@ -269,14 +295,14 @@ export function DatePicker({
                 <button
                   type="button"
                   onClick={() => setCalendarDate(prev => setYear(prev, getYear(prev) - 1))}
-                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                  className="p-2.5 rounded-xl hover:bg-accent transition-all duration-200 hover:scale-110 active:scale-95"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setView('years')}
-                  className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-1"
+                  className="text-base font-bold hover:text-primary transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-accent"
                 >
                   {getYear(calendarDate)}
                   <ChevronDown className="h-4 w-4" />
@@ -284,7 +310,7 @@ export function DatePicker({
                 <button
                   type="button"
                   onClick={() => setCalendarDate(prev => setYear(prev, getYear(prev) + 1))}
-                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                  className="p-2.5 rounded-xl hover:bg-accent transition-all duration-200 hover:scale-110 active:scale-95"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -296,9 +322,9 @@ export function DatePicker({
                     type="button"
                     onClick={() => handleMonthSelect(i)}
                     className={cn(
-                      "py-3 px-2 rounded-xl text-sm font-medium transition-all duration-200",
-                      "hover:bg-primary/10 hover:scale-105",
-                      getMonth(calendarDate) === i && "bg-primary text-primary-foreground shadow-md hover:bg-primary"
+                      "py-3.5 px-2 rounded-xl text-sm font-semibold transition-all duration-200",
+                      "hover:bg-primary/10 hover:scale-105 hover:shadow-md",
+                      getMonth(calendarDate) === i && "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 hover:from-primary hover:to-primary"
                     )}
                   >
                     {month}
@@ -309,7 +335,7 @@ export function DatePicker({
           )}
 
           {view === 'years' && (
-            <ScrollArea className="h-[280px]">
+            <ScrollArea className="h-[300px]">
               <div className="grid grid-cols-3 gap-2 p-1">
                 {years.map((year) => (
                   <button
@@ -317,9 +343,10 @@ export function DatePicker({
                     type="button"
                     onClick={() => handleYearSelect(year)}
                     className={cn(
-                      "py-3 px-2 rounded-xl text-sm font-medium transition-all duration-200",
-                      "hover:bg-primary/10 hover:scale-105",
-                      getYear(calendarDate) === year && "bg-primary text-primary-foreground shadow-md hover:bg-primary"
+                      "py-3.5 px-2 rounded-xl text-sm font-semibold transition-all duration-200",
+                      "hover:bg-primary/10 hover:scale-105 hover:shadow-md",
+                      getYear(calendarDate) === year && "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 hover:from-primary hover:to-primary",
+                      year === currentYear && getYear(calendarDate) !== year && "ring-2 ring-primary/30"
                     )}
                   >
                     {year}
@@ -331,18 +358,24 @@ export function DatePicker({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/30">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border/30 bg-muted/20">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => {
               const today = new Date();
-              setCalendarDate(today);
-              handleSelect(today);
+              if (!isDisabled(today)) {
+                setCalendarDate(today);
+                handleSelect(today);
+              } else {
+                setCalendarDate(today);
+                setView('days');
+              }
             }}
-            className="text-primary hover:text-primary hover:bg-primary/10"
+            className="text-primary font-semibold hover:text-primary hover:bg-primary/10 gap-1.5"
           >
+            <Sparkles className="h-3.5 w-3.5" />
             {isRTL ? "اليوم" : "Today"}
           </Button>
           <Button
@@ -353,7 +386,7 @@ export function DatePicker({
               onChange("");
               setOpen(false);
             }}
-            className="text-muted-foreground"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
             {isRTL ? "مسح" : "Clear"}
           </Button>
