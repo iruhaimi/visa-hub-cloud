@@ -40,6 +40,7 @@ import ApplicationDetail from "@/pages/admin/ApplicationDetail";
 import UsersManagement from "@/pages/admin/UsersManagement";
 import Settings from "@/pages/admin/Settings";
 import OffersManagement from "@/pages/admin/OffersManagement";
+import RefundRequestsManagement from "@/pages/admin/RefundRequestsManagement";
 
 // Agent Pages
 import AgentDashboard from "@/pages/agent/AgentDashboard";
@@ -97,6 +98,7 @@ const App = () => (
                 <Route path="users" element={<UsersManagement />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="offers" element={<OffersManagement />} />
+                <Route path="refunds" element={<RefundRequestsManagement />} />
               </Route>
 
               {/* Agent Routes */}
