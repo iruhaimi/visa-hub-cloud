@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Phone, CreditCard, Wallet, Save, Loader2, Camera, Upload } from 'lucide-react';
+import { User, Phone, CreditCard, Wallet, Save, Loader2, Camera, Upload, FileText, RotateCcw, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -408,6 +409,54 @@ const Profile = () => {
               <div className="text-3xl font-bold text-primary">
                 {profile?.wallet_balance || 0} {isRTL ? 'ر.س' : 'SAR'}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {isRTL ? 'روابط سريعة' : 'Quick Links'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              <Link 
+                to="/my-applications" 
+                className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-primary/10 text-primary">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <span className="font-medium">
+                    {isRTL ? 'طلباتي' : 'My Applications'}
+                  </span>
+                </div>
+                {isRTL ? (
+                  <ChevronLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                )}
+              </Link>
+              
+              <Link 
+                to="/track-refund" 
+                className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-orange-500/10 text-orange-500">
+                    <RotateCcw className="h-5 w-5" />
+                  </div>
+                  <span className="font-medium">
+                    {isRTL ? 'تتبع حالة الاسترداد' : 'Track Refund Status'}
+                  </span>
+                </div>
+                {isRTL ? (
+                  <ChevronLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                )}
+              </Link>
             </CardContent>
           </Card>
 
