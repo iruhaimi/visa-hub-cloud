@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { 
   FileText, 
   Calendar, 
@@ -18,9 +19,10 @@ import {
   XCircle,
   Loader2,
   RefreshCw,
-  Plane
+  Plane,
+  Edit3
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import type { ApplicationStatus } from '@/types/database';
 
@@ -33,6 +35,7 @@ interface ApplicationWithVisa {
   visa_type: {
     id: string;
     name: string;
+    processing_days: number;
     country: {
       id: string;
       name: string;
@@ -41,6 +44,19 @@ interface ApplicationWithVisa {
     };
   };
 }
+
+// Status progress mapping
+const STATUS_PROGRESS: Record<ApplicationStatus, number> = {
+  draft: 0,
+  pending_payment: 10,
+  submitted: 20,
+  under_review: 40,
+  documents_required: 50,
+  processing: 70,
+  approved: 100,
+  rejected: 100,
+  cancelled: 0,
+};
 
 const MyApplications = () => {
   const { user, profile } = useAuth();
@@ -128,6 +144,7 @@ const MyApplications = () => {
           visa_type:visa_types (
             id,
             name,
+            processing_days,
             country:countries (
               id,
               name,
@@ -257,73 +274,121 @@ const MyApplications = () => {
         {/* Applications List */}
         {!isLoading && !error && applications.length > 0 && (
           <div className="space-y-4">
-            {applications.map((app) => (
-              <Card key={app.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    {/* Country Flag & Info */}
-                    <div className="flex items-center gap-4 flex-1">
-                      {app.visa_type?.country?.flag_url && (
-                        <img
-                          src={app.visa_type.country.flag_url}
-                          alt={app.visa_type.country.name}
-                          className="h-12 w-16 object-cover rounded-lg shadow-sm"
-                        />
-                      )}
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {app.visa_type?.country?.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {app.visa_type?.name}
-                        </p>
+            {applications.map((app) => {
+              const progress = STATUS_PROGRESS[app.status];
+              const processingDays = app.visa_type?.processing_days || 7;
+              const daysElapsed = app.submitted_at 
+                ? differenceInDays(new Date(), new Date(app.submitted_at))
+                : 0;
+              const daysRemaining = Math.max(0, processingDays - daysElapsed);
+              const isActive = !['approved', 'rejected', 'cancelled', 'draft'].includes(app.status);
+              const isDraft = app.status === 'draft';
+              
+              return (
+                <Card key={app.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                  {/* Progress indicator bar at top */}
+                  {isActive && (
+                    <div className="h-1 bg-muted">
+                      <div 
+                        className="h-full bg-primary transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  )}
+                  
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      {/* Country Flag & Info */}
+                      <div className="flex items-center gap-4 flex-1">
+                        {app.visa_type?.country?.flag_url && (
+                          <img
+                            src={app.visa_type.country.flag_url}
+                            alt={app.visa_type.country.name}
+                            className="h-12 w-16 object-cover rounded-lg shadow-sm"
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {app.visa_type?.country?.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {app.visa_type?.name}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Status Badge */}
+                      <div className="flex items-center gap-2">
+                        {isActive && (
+                          <Badge variant="outline" className="gap-1">
+                            <Clock className="h-3 w-3" />
+                            {daysRemaining} {isRTL ? 'يوم' : 'days'}
+                          </Badge>
+                        )}
+                        <Badge 
+                          variant={getStatusVariant(app.status)}
+                          className="flex items-center gap-1 w-fit"
+                        >
+                          {getStatusIcon(app.status)}
+                          {statusLabels[app.status][isRTL ? 'ar' : 'en']}
+                        </Badge>
                       </div>
                     </div>
 
-                    {/* Status Badge */}
-                    <Badge 
-                      variant={getStatusVariant(app.status)}
-                      className="flex items-center gap-1 w-fit"
-                    >
-                      {getStatusIcon(app.status)}
-                      {statusLabels[app.status][isRTL ? 'ar' : 'en']}
-                    </Badge>
-                  </div>
+                    {/* Progress Bar for active applications */}
+                    {isActive && (
+                      <div className="mt-4 space-y-2">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>{isRTL ? 'التقدم' : 'Progress'}</span>
+                          <span>{progress}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                      </div>
+                    )}
 
-                  {/* Details Row */}
-                  <div className="mt-4 pt-4 border-t flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <FileText className="h-4 w-4" />
-                      <span>{app.id.slice(0, 8)}...</span>
+                    {/* Details Row */}
+                    <div className="mt-4 pt-4 border-t flex flex-wrap gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <FileText className="h-4 w-4" />
+                        <span>{app.id.slice(0, 8)}...</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          {isRTL ? 'السفر: ' : 'Travel: '}
+                          {formatDate(app.travel_date)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {isRTL ? 'تم الإنشاء: ' : 'Created: '}
+                          {formatDate(app.created_at)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {isRTL ? 'السفر: ' : 'Travel: '}
-                        {formatDate(app.travel_date)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {isRTL ? 'تم الإنشاء: ' : 'Created: '}
-                        {formatDate(app.created_at)}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Action Button */}
-                  <div className="mt-4 flex justify-end">
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={`/track?id=${app.id}`}>
-                        <Eye className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                        {labels.viewDetails}
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    {/* Action Buttons */}
+                    <div className="mt-4 flex justify-end gap-2">
+                      {isDraft && (
+                        <Button asChild variant="default" size="sm">
+                          <Link to={`/apply?draft=${app.id}`}>
+                            <Edit3 className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {isRTL ? 'استكمال الطلب' : 'Continue'}
+                          </Link>
+                        </Button>
+                      )}
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/track?id=${app.id}`}>
+                          <Eye className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                          {labels.viewDetails}
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
