@@ -28,7 +28,7 @@ export default function Step1BasicInfo() {
   const schema = z.object({
     fullName: z.string().min(3, t('validation.required')),
     email: z.string().email(t('validation.email')),
-    phone: z.string().min(9, t('validation.phone')),
+    phone: z.string().min(9, t('validation.phone')).max(9, direction === 'rtl' ? 'رقم الجوال يجب أن يكون 9 أرقام' : 'Phone must be 9 digits'),
     countryCode: z.string(),
   });
 
@@ -71,10 +71,14 @@ export default function Step1BasicInfo() {
     }
   }, [setValue]);
 
-  // Handle phone input - allow only digits
+  // Handle phone input - allow only digits and limit to 9 characters
   const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
-    const filtered = filterNonNumeric(input.value);
+    let filtered = filterNonNumeric(input.value);
+    // Limit to 9 digits
+    if (filtered.length > 9) {
+      filtered = filtered.slice(0, 9);
+    }
     if (filtered !== input.value) {
       input.value = filtered;
       setValue('phone', filtered);
@@ -154,6 +158,7 @@ export default function Step1BasicInfo() {
               id="phone"
               type="tel"
               inputMode="numeric"
+              maxLength={9}
               {...register('phone')}
               onInput={handlePhoneInput}
               placeholder="5XXXXXXXX"
