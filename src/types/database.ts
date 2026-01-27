@@ -60,6 +60,8 @@ export interface VisaType {
   description: string | null;
   requirements: string[];
   price: number;
+  child_price: number | null;
+  infant_price: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;

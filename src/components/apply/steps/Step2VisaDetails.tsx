@@ -105,14 +105,22 @@ export default function Step2VisaDetails() {
     if (applicationData.visaTypeId && visaTypes) {
       const selectedVisa = visaTypes.find(v => v.id === applicationData.visaTypeId);
       if (selectedVisa) {
-        // Calculate prices (example: child 75%, infant 25%)
         const basePrice = Number(selectedVisa.price);
         const isFeesIncluded = selectedVisa.fee_type === 'included';
+        
+        // Use custom prices from database, or fallback to percentage-based calculation
+        const childPrice = selectedVisa.child_price != null 
+          ? Number(selectedVisa.child_price) 
+          : Math.round(basePrice * 0.75);
+        const infantPrice = selectedVisa.infant_price != null 
+          ? Number(selectedVisa.infant_price) 
+          : Math.round(basePrice * 0.5);
+        
         updateApplicationData({
           visaTypeName: selectedVisa.name,
           adultPrice: basePrice,
-          childPrice: Math.round(basePrice * 0.75),
-          infantPrice: Math.round(basePrice * 0.25),
+          childPrice: childPrice,
+          infantPrice: infantPrice,
           visaFeesIncluded: isFeesIncluded,
           governmentFees: isFeesIncluded ? 0 : Math.round(basePrice * 0.3),
           priceNotes: selectedVisa.price_notes || '',

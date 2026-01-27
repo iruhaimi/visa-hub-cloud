@@ -562,12 +562,14 @@ export type Database = {
       }
       visa_types: {
         Row: {
+          child_price: number | null
           country_id: string
           created_at: string
           description: string | null
           entry_type: string | null
           fee_type: string | null
           id: string
+          infant_price: number | null
           is_active: boolean | null
           max_stay_days: number | null
           name: string
@@ -580,12 +582,14 @@ export type Database = {
           validity_days: number | null
         }
         Insert: {
+          child_price?: number | null
           country_id: string
           created_at?: string
           description?: string | null
           entry_type?: string | null
           fee_type?: string | null
           id?: string
+          infant_price?: number | null
           is_active?: boolean | null
           max_stay_days?: number | null
           name: string
@@ -598,12 +602,14 @@ export type Database = {
           validity_days?: number | null
         }
         Update: {
+          child_price?: number | null
           country_id?: string
           created_at?: string
           description?: string | null
           entry_type?: string | null
           fee_type?: string | null
           id?: string
+          infant_price?: number | null
           is_active?: boolean | null
           max_stay_days?: number | null
           name?: string
