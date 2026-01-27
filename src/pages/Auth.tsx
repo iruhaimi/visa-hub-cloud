@@ -11,6 +11,27 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+
+const REQUIRED_PROFILE_FIELDS = [
+  'full_name', 'phone', 'date_of_birth', 'nationality',
+  'passport_number', 'passport_expiry', 'address', 'city', 'country'
+] as const;
+
+const checkProfileCompleteness = async (userId: string): Promise<string[]> => {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!profile) return REQUIRED_PROFILE_FIELDS.slice();
+
+  return REQUIRED_PROFILE_FIELDS.filter(field => {
+    const value = profile[field as keyof typeof profile];
+    return !value || (typeof value === 'string' && value.trim() === '');
+  });
+};
 
 const signInSchema = z.object({
   email: z.string().email('يرجى إدخال بريد إلكتروني صحيح'),
@@ -87,6 +108,23 @@ export default function Auth() {
         title: 'مرحباً بعودتك!',
         description: 'تم تسجيل الدخول بنجاح',
       });
+
+      // Check profile completeness and show reminder toast
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const missingFields = await checkProfileCompleteness(currentUser.id);
+        if (missingFields.length > 0) {
+          setTimeout(() => {
+            toast({
+              title: isRTL ? 'أكمل ملفك الشخصي' : 'Complete Your Profile',
+              description: isRTL 
+                ? `لديك ${missingFields.length} حقول ناقصة. يرجى استكمال بياناتك لتسهيل عملية التقديم.`
+                : `You have ${missingFields.length} incomplete fields. Please complete your profile.`,
+            });
+          }, 1000);
+        }
+      }
+
       navigate('/profile');
     }
   };
@@ -111,6 +149,17 @@ export default function Auth() {
         title: 'تم إنشاء الحساب!',
         description: 'مرحباً بك في عطلات رحلاتكم! يرجى استكمال بياناتك الشخصية.',
       });
+
+      // Show profile completion reminder for new users
+      setTimeout(() => {
+        toast({
+          title: isRTL ? 'أكمل ملفك الشخصي' : 'Complete Your Profile',
+          description: isRTL 
+            ? 'يرجى استكمال بياناتك الشخصية وبيانات جواز السفر لتسهيل عملية التقديم على التأشيرة.'
+            : 'Please complete your personal and passport details to facilitate your visa application.',
+        });
+      }, 1500);
+
       navigate('/profile');
     }
   };
