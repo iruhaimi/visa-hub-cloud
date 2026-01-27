@@ -372,7 +372,7 @@ const Profile = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">{labels.phone}</Label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-row-reverse">
                   <CountryCodePicker
                     value={formData.countryCode}
                     onChange={(value) => setFormData(prev => ({ ...prev, countryCode: value }))}
