@@ -447,9 +447,9 @@ export default function Contact() {
           viewport={{ once: true }}
         >
           <Card className="overflow-hidden shadow-xl border-0">
-            <div className="aspect-[21/9] bg-muted relative">
+            <div className="aspect-[21/9] bg-muted relative group">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3624.6837453874037!2d46.6854!3d24.7114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjTCsDQyJzQxLjAiTiA0NsKwNDEnMDcuNCJF!5e0!3m2!1sen!2ssa!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3624.6837453874037!2d46.6854!3d24.7114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjTCsDQyJzQxLjAiTiA0NsKwNDEnMDcuNCJF!5e0!3m2!1sar!2ssa!4v1234567890"
                 width="100%"
                 height="100%"
                 style={{ border: 0, position: 'absolute', inset: 0 }}
@@ -457,6 +457,15 @@ export default function Contact() {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               />
+              <a
+                href="https://maps.app.goo.gl/hym4suBsGkWe3jLKA"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 opacity-90 hover:opacity-100 transition-opacity"
+              >
+                <MapPin className="w-4 h-4" />
+                {isRTL ? 'فتح في خرائط جوجل' : 'Open in Google Maps'}
+              </a>
             </div>
           </Card>
         </motion.div>
