@@ -513,27 +513,14 @@ export default function Pricing() {
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger>
-                                          <Badge 
-                                            variant={visa.fee_type === 'included' ? 'default' : 'secondary'}
-                                            className={`rounded-lg text-xs ${visa.fee_type === 'included' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0' : ''}`}
-                                          >
-                                            {visa.fee_type === 'included' 
-                                              ? (isRTL ? 'شامل الرسوم' : 'Fees Included')
-                                              : (isRTL ? 'رسوم منفصلة' : 'Fees Separate')}
-                                          </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-[200px]">
-                                          <p className="text-sm">
-                                            {isRTL 
-                                              ? (visa.price_notes || 'شامل رسوم التأشيرة')
-                                              : (visa.price_notes_en || 'Visa fees included')}
-                                          </p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <Badge 
+                                      variant={visa.fee_type === 'included' ? 'default' : 'secondary'}
+                                      className={`rounded-lg text-xs ${visa.fee_type === 'included' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0' : ''}`}
+                                    >
+                                      {isRTL 
+                                        ? (visa.price_notes || (visa.fee_type === 'included' ? 'شامل الرسوم' : 'رسوم منفصلة'))
+                                        : (visa.price_notes_en || (visa.fee_type === 'included' ? 'Fees Included' : 'Fees Separate'))}
+                                    </Badge>
                                   </TableCell>
                                   <TableCell>
                                     <Button size="sm" className="rounded-xl" asChild>
