@@ -48,9 +48,16 @@ const Profile = () => {
     }
   }, [profile]);
 
+  // Filter to remove Arabic characters from phone field
+  const filterArabicChars = (value: string) => {
+    return value.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Filter Arabic characters from phone field
+    const processedValue = name === 'phone' ? filterArabicChars(value) : value;
+    setFormData(prev => ({ ...prev, [name]: processedValue }));
   };
 
   const handleAvatarClick = () => {
@@ -346,6 +353,11 @@ const Profile = () => {
                 <Input
                   id="phone"
                   name="phone"
+                  type="tel"
+                  dir="ltr"
+                  lang="en"
+                  inputMode="tel"
+                  style={{ textAlign: 'left' }}
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
