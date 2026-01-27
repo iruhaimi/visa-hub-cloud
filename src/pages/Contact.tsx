@@ -109,10 +109,14 @@ export default function Contact() {
     }
   }, []);
 
-  // Handle phone input - allow only digits
+  // Handle phone input - allow only digits and limit to 9 characters
   const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
-    const filtered = filterNonNumeric(input.value);
+    let filtered = filterNonNumeric(input.value);
+    // Limit to 9 digits
+    if (filtered.length > 9) {
+      filtered = filtered.slice(0, 9);
+    }
     if (filtered !== input.value) {
       input.value = filtered;
       setFormData(prev => ({ ...prev, phone: filtered }));
@@ -408,10 +412,11 @@ export default function Contact() {
                             name="phone"
                             type="tel"
                             inputMode="numeric"
+                            maxLength={9}
                             value={formData.phone}
                             onChange={handleChange}
                             onInput={handlePhoneInput}
-                            placeholder="5XX XXX XXXX"
+                            placeholder="5XXXXXXXX"
                             className="rounded-xl flex-1 text-left"
                             dir="ltr"
                             style={{ textAlign: 'left' }}
