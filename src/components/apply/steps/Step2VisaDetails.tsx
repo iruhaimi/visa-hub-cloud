@@ -1,14 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
-import { format } from 'date-fns';
-import { ar, enUS } from 'date-fns/locale';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DatePicker } from '@/components/ui/DatePicker';
 import {
   Select,
   SelectContent,
@@ -19,8 +16,7 @@ import {
 import TravelerCounter from '../TravelerCounter';
 import PriceSummaryCard from '../PriceSummaryCard';
 import SARSymbol from '@/components/ui/SARSymbol';
-import { CalendarIcon, ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { 
   SCHENGEN_INFO, 
   filterOutSchengenCountries, 
@@ -31,7 +27,6 @@ import {
 export default function Step2VisaDetails() {
   const { t, direction, language } = useLanguage();
   const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
-  const [dateOpen, setDateOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [initialized, setInitialized] = useState(false);
   const [isSchengenFromUrl, setIsSchengenFromUrl] = useState(false);
@@ -149,9 +144,8 @@ export default function Step2VisaDetails() {
     updateApplicationData({ visaTypeId });
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    updateApplicationData({ travelDate: date || null });
-    setDateOpen(false);
+  const handleDateChange = (dateString: string) => {
+    updateApplicationData({ travelDate: dateString ? new Date(dateString) : null });
   };
 
   const updateTravelers = (type: 'adults' | 'children' | 'infants', value: number) => {
@@ -302,34 +296,13 @@ export default function Step2VisaDetails() {
           {/* Travel Date */}
           <div className="space-y-2">
             <Label>{t('form.travelDate')}</Label>
-            <Popover open={dateOpen} onOpenChange={setDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full h-12 justify-start text-start font-normal",
-                    !applicationData.travelDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="me-2 h-4 w-4" />
-                  {applicationData.travelDate ? (
-                    format(applicationData.travelDate, "PPP", { locale: language === 'ar' ? ar : enUS })
-                  ) : (
-                    direction === 'rtl' ? 'اختر تاريخ السفر' : 'Pick a travel date'
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={applicationData.travelDate || undefined}
-                  onSelect={handleDateSelect}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              value={applicationData.travelDate}
+              onChange={handleDateChange}
+              placeholder={direction === 'rtl' ? 'اختر تاريخ السفر' : 'Pick a travel date'}
+              isRTL={direction === 'rtl'}
+              minDate={new Date()}
+            />
           </div>
 
           {/* Traveler Counters */}
