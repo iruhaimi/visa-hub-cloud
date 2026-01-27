@@ -34,6 +34,7 @@ export default function Step2VisaDetails() {
   const [dateOpen, setDateOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [initialized, setInitialized] = useState(false);
+  const [isSchengenFromUrl, setIsSchengenFromUrl] = useState(false);
   
   const ArrowNextIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
   const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
@@ -71,6 +72,7 @@ export default function Step2VisaDetails() {
       
       if (countryCode === 'SCHENGEN') {
         setSelectedRegion('schengen');
+        setIsSchengenFromUrl(true); // Mark that user came from Schengen selection
       } else if (countryCode && !isSchengenCountry(countryCode)) {
         // Find the country by code and set it
         const country = countries.find(c => c.code === countryCode);
@@ -185,57 +187,59 @@ export default function Step2VisaDetails() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Region/Country Selection */}
-          <div className="space-y-2">
-            <Label>{t('form.country')}</Label>
-            <Select
-              value={selectedRegion || (applicationData.countryId && !isSchengenCountry(countries?.find(c => c.id === applicationData.countryId)?.code || '') ? applicationData.countryId : '')}
-              onValueChange={(value) => {
-                if (value === 'schengen') {
-                  handleRegionChange('schengen');
-                } else {
-                  // Direct country selection
-                  setSelectedRegion('');
-                  handleCountryChange(value);
-                }
-              }}
-            >
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder={direction === 'rtl' ? 'اختر الوجهة' : 'Select destination'} />
-              </SelectTrigger>
-              <SelectContent>
-                {/* Schengen Option */}
-                {schengenCountries.length > 0 && (
-                  <SelectItem value="schengen">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={SCHENGEN_INFO.flag_url} 
-                        alt="EU" 
-                        className="w-5 h-4 object-cover rounded"
-                      />
-                      <span>{SCHENGEN_INFO.name}</span>
-                    </div>
-                  </SelectItem>
-                )}
-                
-                {/* Non-Schengen Countries */}
-                {nonSchengenCountries.map((country) => (
-                  <SelectItem key={country.id} value={country.id}>
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={country.flag_url || `https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
-                        alt={country.name}
-                        className="w-5 h-4 object-cover rounded"
-                      />
-                      <span>{country.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Region/Country Selection - Hidden when user came from Schengen URL */}
+          {!isSchengenFromUrl && (
+            <div className="space-y-2">
+              <Label>{t('form.country')}</Label>
+              <Select
+                value={selectedRegion || (applicationData.countryId && !isSchengenCountry(countries?.find(c => c.id === applicationData.countryId)?.code || '') ? applicationData.countryId : '')}
+                onValueChange={(value) => {
+                  if (value === 'schengen') {
+                    handleRegionChange('schengen');
+                  } else {
+                    // Direct country selection
+                    setSelectedRegion('');
+                    handleCountryChange(value);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder={direction === 'rtl' ? 'اختر الوجهة' : 'Select destination'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Schengen Option */}
+                  {schengenCountries.length > 0 && (
+                    <SelectItem value="schengen">
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={SCHENGEN_INFO.flag_url} 
+                          alt="EU" 
+                          className="w-5 h-4 object-cover rounded"
+                        />
+                        <span>{SCHENGEN_INFO.name}</span>
+                      </div>
+                    </SelectItem>
+                  )}
+                  
+                  {/* Non-Schengen Countries */}
+                  {nonSchengenCountries.map((country) => (
+                    <SelectItem key={country.id} value={country.id}>
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={country.flag_url || `https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
+                          alt={country.name}
+                          className="w-5 h-4 object-cover rounded"
+                        />
+                        <span>{country.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          {/* Schengen Country Selection - Only shows when Schengen is selected */}
+          {/* Schengen Country Selection - Shows when Schengen is selected or user came from Schengen URL */}
           {selectedRegion === 'schengen' && (
             <div className="space-y-2">
               <Label>{direction === 'rtl' ? 'اختر الدولة من شنغن' : 'Select Schengen country'}</Label>
