@@ -107,8 +107,16 @@ export function DatePicker({
   };
 
   const isDisabled = (date: Date) => {
-    if (minDate && isBefore(date, minDate)) return true;
-    if (maxDate && isAfter(date, maxDate)) return true;
+    // Create date-only comparisons to avoid time issues
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    if (minDate) {
+      const minDateOnly = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+      if (isBefore(dateOnly, minDateOnly)) return true;
+    }
+    if (maxDate) {
+      const maxDateOnly = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
+      if (isAfter(dateOnly, maxDateOnly)) return true;
+    }
     return false;
   };
 
