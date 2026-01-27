@@ -79,9 +79,9 @@ export default function AdminLayout() {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b px-4">
           {sidebarOpen && (
-            <Link to="/" className="text-xl font-bold text-primary">
-              فيزا السعودية
-            </Link>
+          <Link to="/" className="text-xl font-bold text-primary">
+            عطلات رحلاتكم
+          </Link>
           )}
           <Button
             variant="ghost"
