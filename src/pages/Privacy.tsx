@@ -201,22 +201,22 @@ To exercise any of these rights, contact us via email.`
       titleEn: 'Contact Us',
       contentAr: `لأي استفسارات حول سياسة الخصوصية أو بياناتك الشخصية:
 
-**مسؤول حماية البيانات:**
-البريد الإلكتروني: privacy@visago.sa
-الهاتف: +966 11 XXX XXXX
+**وكالة عطلات رحلاتكم للسياحة والسفر:**
+البريد الإلكتروني: info@rhalat.com
+الهاتف: 920034158
 
 **العنوان:**
-الرياض، طريق الملك فهد، برج المملكة
+الرياض - حي الربيع - شارع أبي بن معاذ الأنصاري
 
 آخر تحديث: يناير 2024`,
       contentEn: `For any inquiries about our privacy policy or your personal data:
 
-**Data Protection Officer:**
-Email: privacy@visago.sa
-Phone: +966 11 XXX XXXX
+**Otolat Rahlatcom Travel Agency:**
+Email: info@rhalat.com
+Phone: 920034158
 
 **Address:**
-Riyadh, King Fahd Road, Kingdom Tower
+Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd
 
 Last updated: January 2024`
     },
@@ -249,8 +249,8 @@ Last updated: January 2024`
             <CardContent className="py-6">
               <p className="text-muted-foreground leading-relaxed">
                 {isRTL 
-                  ? 'نحن في فيزاجو نلتزم بحماية خصوصيتك. توضح هذه السياسة كيفية جمع واستخدام وحماية معلوماتك الشخصية عند استخدام موقعنا وخدماتنا.'
-                  : 'At VisaGo, we are committed to protecting your privacy. This policy explains how we collect, use, and protect your personal information when using our website and services.'
+                  ? 'نحن في وكالة عطلات رحلاتكم نلتزم بحماية خصوصيتك. توضح هذه السياسة كيفية جمع واستخدام وحماية معلوماتك الشخصية عند استخدام موقعنا وخدماتنا.'
+                  : 'At Otolat Rahlatcom, we are committed to protecting your privacy. This policy explains how we collect, use, and protect your personal information when using our website and services.'
                 }
               </p>
             </CardContent>
