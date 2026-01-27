@@ -228,13 +228,14 @@ export default function Auth() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         dir="ltr"
+                        className="pr-10"
                         {...signUpForm.register('password')}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className={`absolute top-0 h-full px-3 hover:bg-transparent ${isRTL ? 'left-0' : 'right-0'}`}
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -258,13 +259,14 @@ export default function Auth() {
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         dir="ltr"
+                        className="pr-10"
                         {...signUpForm.register('confirmPassword')}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className={`absolute top-0 h-full px-3 hover:bg-transparent ${isRTL ? 'left-0' : 'right-0'}`}
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       >
                         {showConfirmPassword ? (
@@ -305,13 +307,14 @@ export default function Auth() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         dir="ltr"
+                        className="pr-10"
                         {...signInForm.register('password')}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className={`absolute top-0 h-full px-3 hover:bg-transparent ${isRTL ? 'left-0' : 'right-0'}`}
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
