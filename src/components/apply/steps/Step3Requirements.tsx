@@ -211,11 +211,14 @@ export default function Step3Requirements() {
       </div>
 
       {/* Tips */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-        <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+      <div 
+        className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800"
+        dir={direction === 'rtl' ? 'rtl' : 'ltr'}
+      >
+        <h4 className={`font-semibold text-blue-900 dark:text-blue-100 mb-2 ${direction === 'rtl' ? 'text-right' : 'text-left'}`}>
           {direction === 'rtl' ? 'نصائح مهمة' : 'Important Tips'}
         </h4>
-        <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+        <ul className={`text-sm text-blue-800 dark:text-blue-200 space-y-1 ${direction === 'rtl' ? 'list-disc list-inside text-right' : 'list-disc list-inside text-left'}`}>
           <li>
             {direction === 'rtl' 
               ? 'تأكد من صلاحية جواز السفر لمدة 6 أشهر على الأقل'

@@ -240,15 +240,16 @@ export default function FAQ() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               className="max-w-lg mx-auto"
+              dir={isRTL ? 'rtl' : 'ltr'}
             >
               <div className="relative">
-                <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Search className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground`} />
                 <Input
                   type="text"
                   placeholder={isRTL ? 'ابحث عن سؤال...' : 'Search for a question...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-4 pr-12 py-6 text-base bg-white text-foreground rounded-2xl shadow-2xl border-0"
+                  className={`${isRTL ? 'pl-4 pr-12' : 'pr-4 pl-12'} py-6 text-base bg-white text-foreground rounded-2xl shadow-2xl border-0`}
                 />
               </div>
             </motion.div>
@@ -271,17 +272,20 @@ export default function FAQ() {
                   <Card className="shadow-lg overflow-hidden border-0">
                     <CardContent className="p-0">
                       {/* Category Header */}
-                      <div className="flex items-center gap-4 p-6 border-b bg-gradient-to-r from-primary/5 to-transparent">
+                      <div 
+                        className={`flex items-center gap-4 p-6 border-b bg-gradient-to-r from-primary/5 to-transparent`}
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                      >
                         <motion.div 
                           whileHover={{ scale: 1.1, rotate: 5 }}
                           className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center"
                         >
                           <Icon className="w-6 h-6 text-primary" />
                         </motion.div>
-                        <h2 className="text-xl font-bold">
+                        <h2 className={`text-xl font-bold ${isRTL ? 'text-right' : 'text-left'}`}>
                           {isRTL ? category.titleAr : category.titleEn}
                         </h2>
-                        <Badge variant="secondary" className="mr-auto">
+                        <Badge variant="secondary" className={isRTL ? 'mr-auto' : 'ml-auto'}>
                           {category.questions.length}
                         </Badge>
                       </div>
@@ -312,7 +316,7 @@ export default function FAQ() {
                                 <motion.div
                                   animate={{ rotate: isOpen ? 180 : 0 }}
                                   transition={{ duration: 0.3 }}
-                                  className={`flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'} ${isOpen ? 'text-primary' : 'text-muted-foreground'}`}
+                                  className={`flex-shrink-0 ${isRTL ? 'mr-4' : 'ml-4'} ${isOpen ? 'text-primary' : 'text-muted-foreground'}`}
                                 >
                                   <ChevronDown className="h-5 w-5" />
                                 </motion.div>

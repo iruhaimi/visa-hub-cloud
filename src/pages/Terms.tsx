@@ -212,41 +212,41 @@ Address: Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd`
         <div className="max-w-4xl mx-auto">
           {/* Quick Summary */}
           <Card className="mb-8 border-primary/20 bg-primary/5">
-            <CardContent className="py-6">
-              <div className="flex gap-4">
-                <Info className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-                <div>
+            <CardContent className="py-6" dir={isRTL ? 'rtl' : 'ltr'}>
+              <div className={`flex gap-4 ${isRTL ? 'flex-row' : 'flex-row'}`}>
+                <Info className={`w-6 h-6 text-primary flex-shrink-0 mt-1`} />
+                <div className={isRTL ? 'text-right' : 'text-left'}>
                   <h3 className="font-semibold mb-2">
                     {isRTL ? 'ملخص سريع' : 'Quick Summary'}
                   </h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
+                    <li className={`flex items-start gap-2 ${isRTL ? 'flex-row' : 'flex-row'}`}>
                       <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      {isRTL 
+                      <span>{isRTL 
                         ? 'نحن نساعدك في تقديم طلبات التأشيرة ولسنا جهة إصدار'
                         : 'We help you submit visa applications, we are not the issuing authority'
-                      }
+                      }</span>
                     </li>
-                    <li className="flex items-start gap-2">
+                    <li className={`flex items-start gap-2 ${isRTL ? 'flex-row' : 'flex-row'}`}>
                       <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      {isRTL 
+                      <span>{isRTL 
                         ? 'رسوم الخدمة غير قابلة للاسترداد'
                         : 'Service fees are non-refundable'
-                      }
+                      }</span>
                     </li>
-                    <li className="flex items-start gap-2">
+                    <li className={`flex items-start gap-2 ${isRTL ? 'flex-row' : 'flex-row'}`}>
                       <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      {isRTL 
+                      <span>{isRTL 
                         ? 'أنت مسؤول عن دقة المعلومات والمستندات المقدمة'
                         : 'You are responsible for accuracy of information and documents provided'
-                      }
+                      }</span>
                     </li>
-                    <li className="flex items-start gap-2">
+                    <li className={`flex items-start gap-2 ${isRTL ? 'flex-row' : 'flex-row'}`}>
                       <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                      {isRTL 
+                      <span>{isRTL 
                         ? 'لا نضمن الموافقة على أي طلب تأشيرة'
                         : 'We do not guarantee approval of any visa application'
-                      }
+                      }</span>
                     </li>
                   </ul>
                 </div>
