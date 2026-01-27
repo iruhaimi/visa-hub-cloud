@@ -33,6 +33,7 @@ export default function Step2VisaDetails() {
   const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
   const [dateOpen, setDateOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [initialized, setInitialized] = useState(false);
   
   const ArrowNextIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
   const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
@@ -61,6 +62,29 @@ export default function Step2VisaDetails() {
     countries ? filterOutSchengenCountries(countries) : [], 
     [countries]
   );
+
+  // Check URL params for initial selection (e.g., /apply?country=SCHENGEN)
+  useEffect(() => {
+    if (!initialized && countries && countries.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const countryCode = urlParams.get('country');
+      
+      if (countryCode === 'SCHENGEN') {
+        setSelectedRegion('schengen');
+      } else if (countryCode && !isSchengenCountry(countryCode)) {
+        // Find the country by code and set it
+        const country = countries.find(c => c.code === countryCode);
+        if (country) {
+          setSelectedRegion('');
+          updateApplicationData({
+            countryId: country.id,
+            countryName: country.name,
+          });
+        }
+      }
+      setInitialized(true);
+    }
+  }, [countries, initialized, updateApplicationData]);
 
   // Fetch visa types for selected country
   const { data: visaTypes, isLoading: visaTypesLoading } = useQuery({
