@@ -113,14 +113,14 @@ function ApplyContent() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-primary/10 to-transparent py-8">
-        <div className="container-section">
-          <h1 className="text-3xl font-bold text-center">
+      {/* Header - More compact on mobile */}
+      <div className="bg-gradient-to-b from-primary/10 to-transparent py-4 sm:py-8">
+        <div className="container-section px-4 sm:px-6">
+          <h1 className="text-xl sm:text-3xl font-bold text-center">
             {direction === 'rtl' ? 'تقديم طلب التأشيرة' : 'Visa Application'}
           </h1>
           {country && (
-            <p className="text-center text-muted-foreground mt-2">
+            <p className="text-center text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
               {direction === 'rtl' ? `التأشيرة إلى ${country.name}` : `Visa to ${country.name}`}
             </p>
           )}
@@ -128,7 +128,7 @@ function ApplyContent() {
       </div>
 
       {/* Wizard Stepper */}
-      <div className="container-section">
+      <div className="container-section px-4 sm:px-6">
         <WizardStepper 
           currentStep={currentStep} 
           totalSteps={6} 
@@ -137,8 +137,8 @@ function ApplyContent() {
       </div>
 
       {/* Step Content */}
-      <div className="container-section py-8">
-        <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-sm border p-6 md:p-8">
+      <div className="container-section px-4 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">
+        <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-sm border p-4 sm:p-6 md:p-8">
           {renderStep()}
         </div>
       </div>

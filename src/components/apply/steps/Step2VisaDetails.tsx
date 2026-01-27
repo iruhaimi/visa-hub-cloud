@@ -26,7 +26,7 @@ import {
 
 export default function Step2VisaDetails() {
   const { t, direction, language } = useLanguage();
-  const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
+  const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep, calculateTotal } = useApplication();
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [initialized, setInitialized] = useState(false);
   const [isSchengenFromUrl, setIsSchengenFromUrl] = useState(false);
@@ -180,22 +180,46 @@ export default function Step2VisaDetails() {
   }, [selectedRegion, schengenCountries]);
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">{t('wizard.step2')}</h2>
-        <p className="text-muted-foreground mt-2">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center mb-4 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold">{t('wizard.step2')}</h2>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">
           {direction === 'rtl' 
             ? 'حدد نوع التأشيرة وتاريخ السفر وعدد المسافرين' 
             : 'Select visa type, travel date and number of travelers'}
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      {/* Mobile: Show Price Summary at top as collapsible */}
+      <div className="lg:hidden">
+        <details className="group">
+          <summary className="flex items-center justify-between p-4 bg-primary/5 rounded-xl cursor-pointer list-none">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <SARSymbol size="sm" className="text-primary" />
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">{t('pricing.total')}</span>
+                <div className="font-bold text-lg text-primary flex items-center gap-1">
+                  {calculateTotal().grandTotal.toLocaleString()}
+                  <SARSymbol size="sm" className="text-primary" />
+                </div>
+              </div>
+            </div>
+            <ArrowNextIcon className="w-5 h-5 text-muted-foreground transition-transform group-open:rotate-90" />
+          </summary>
+          <div className="mt-3">
+            <PriceSummaryCard />
+          </div>
+        </details>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Region/Country Selection - Hidden when user came from Schengen URL */}
           {!isSchengenFromUrl && (
             <div className="space-y-2">
-              <Label>{t('form.country')}</Label>
+              <Label className="text-sm sm:text-base">{t('form.country')}</Label>
               <Select
                 value={selectedRegion || (applicationData.countryId && !isSchengenCountry(countries?.find(c => c.id === applicationData.countryId)?.code || '') ? applicationData.countryId : '')}
                 onValueChange={(value) => {
@@ -208,7 +232,7 @@ export default function Step2VisaDetails() {
                   }
                 }}
               >
-                <SelectTrigger className="h-12">
+                <SelectTrigger className="h-12 sm:h-12 text-sm sm:text-base">
                   <SelectValue placeholder={direction === 'rtl' ? 'اختر الوجهة' : 'Select destination'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -228,6 +252,35 @@ export default function Step2VisaDetails() {
                   
                   {/* Non-Schengen Countries */}
                   {nonSchengenCountries.map((country) => (
+                    <SelectItem key={country.id} value={country.id}>
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={country.flag_url || `https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
+                          alt={country.name}
+                          className="w-5 h-4 object-cover rounded"
+                        />
+                        <span>{country.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Schengen Country Selection - Shows when Schengen is selected or user came from Schengen URL */}
+          {selectedRegion === 'schengen' && (
+            <div className="space-y-2">
+              <Label className="text-sm sm:text-base">{direction === 'rtl' ? 'اختر الدولة من شنغن' : 'Select Schengen country'}</Label>
+              <Select
+                value={applicationData.countryId}
+                onValueChange={handleCountryChange}
+              >
+                <SelectTrigger className="h-12 text-sm sm:text-base">
+                  <SelectValue placeholder={direction === 'rtl' ? 'اختر الدولة' : 'Select country'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {schengenCountries.map((country) => (
                     <SelectItem key={country.id} value={country.id}>
                       <div className="flex items-center gap-2">
                         <img 
@@ -275,13 +328,13 @@ export default function Step2VisaDetails() {
 
           {/* Visa Type Selection */}
           <div className="space-y-2">
-            <Label>{t('form.visaType')}</Label>
+            <Label className="text-sm sm:text-base">{t('form.visaType')}</Label>
             <Select
               value={applicationData.visaTypeId}
               onValueChange={handleVisaTypeChange}
               disabled={!applicationData.countryId || visaTypesLoading}
             >
-              <SelectTrigger className="h-12">
+              <SelectTrigger className="h-12 text-sm sm:text-base">
                 <SelectValue placeholder={
                   visaTypesLoading 
                     ? (direction === 'rtl' ? 'جاري التحميل...' : 'Loading...') 
@@ -306,7 +359,7 @@ export default function Step2VisaDetails() {
 
           {/* Travel Date */}
           <div className="space-y-2">
-            <Label>{t('form.travelDate')}</Label>
+            <Label className="text-sm sm:text-base">{t('form.travelDate')}</Label>
             <DatePicker
               value={applicationData.travelDate}
               onChange={handleDateChange}
@@ -317,8 +370,8 @@ export default function Step2VisaDetails() {
           </div>
 
           {/* Traveler Counters */}
-          <div className="space-y-4">
-            <Label className="text-base font-semibold">{t('form.travelers')}</Label>
+          <div className="space-y-3 sm:space-y-4">
+            <Label className="text-sm sm:text-base font-semibold">{t('form.travelers')}</Label>
             
             <TravelerCounter
               label={t('form.adults')}
@@ -347,34 +400,36 @@ export default function Step2VisaDetails() {
           </div>
         </div>
 
-        {/* Price Summary Sidebar */}
-        <div className="lg:col-span-1">
+        {/* Price Summary Sidebar - Desktop Only */}
+        <div className="hidden lg:block lg:col-span-1">
           <div className="sticky top-24">
             <PriceSummaryCard />
           </div>
         </div>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex gap-4 pt-6">
+      {/* Navigation Buttons - Sticky on mobile */}
+      <div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6 sticky bottom-0 bg-background/95 backdrop-blur-sm pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:static sm:bg-transparent sm:backdrop-blur-none border-t sm:border-0 mt-4 sm:mt-0">
         <Button
           type="button"
           variant="outline"
           size="lg"
-          className="flex-1 h-12 gap-2"
+          className="flex-1 h-12 sm:h-12 gap-2 text-sm sm:text-base"
           onClick={goToPreviousStep}
         >
           <ArrowPrevIcon className="w-4 h-4" />
-          {t('wizard.previous')}
+          <span className="hidden xs:inline">{t('wizard.previous')}</span>
+          <span className="xs:hidden">{direction === 'rtl' ? 'السابق' : 'Back'}</span>
         </Button>
         <Button
           type="button"
           size="lg"
-          className="flex-1 h-12 gap-2"
+          className="flex-1 h-12 sm:h-12 gap-2 text-sm sm:text-base"
           onClick={goToNextStep}
           disabled={!canProceed}
         >
-          {t('wizard.next')}
+          <span className="hidden xs:inline">{t('wizard.next')}</span>
+          <span className="xs:hidden">{direction === 'rtl' ? 'التالي' : 'Next'}</span>
           <ArrowNextIcon className="w-4 h-4" />
         </Button>
       </div>

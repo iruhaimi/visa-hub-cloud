@@ -92,21 +92,21 @@ export default function Step6Payment() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">{t('wizard.step6')}</h2>
-        <p className="text-muted-foreground mt-2">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center mb-4 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold">{t('wizard.step6')}</h2>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">
           {direction === 'rtl' 
             ? 'راجع طلبك وأكمل عملية الدفع' 
             : 'Review your application and complete payment'}
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Order Summary */}
-        <div className="space-y-4">
-          <h3 className="font-bold text-lg flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+        <div className="space-y-3 sm:space-y-4 order-2 lg:order-1">
+          <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             {t('payment.summary')}
           </h3>
           
@@ -254,22 +254,22 @@ export default function Step6Payment() {
         </div>
 
         {/* Payment Methods */}
-        <div className="space-y-4">
-          <h3 className="font-bold text-lg flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
+        <div className="space-y-3 sm:space-y-4 order-1 lg:order-2">
+          <h3 className="font-bold text-base sm:text-lg flex items-center gap-2">
+            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
             {t('payment.selectMethod')}
           </h3>
           
           <RadioGroup
             value={applicationData.paymentMethod}
             onValueChange={(value) => updateApplicationData({ paymentMethod: value })}
-            className="space-y-3"
+            className="space-y-2 sm:space-y-3"
           >
             {paymentMethods.map((method) => (
               <div
                 key={method.id}
                 className={cn(
-                  "flex items-center space-x-3 rtl:space-x-reverse p-4 rounded-lg border-2 cursor-pointer transition-colors",
+                  "flex items-center space-x-3 rtl:space-x-reverse p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-colors",
                   applicationData.paymentMethod === method.id 
                     ? "border-primary bg-primary/5" 
                     : "border-muted hover:border-primary/50"
@@ -277,30 +277,30 @@ export default function Step6Payment() {
                 onClick={() => updateApplicationData({ paymentMethod: method.id })}
               >
                 <RadioGroupItem value={method.id} id={method.id} />
-                <method.icon className="w-6 h-6 text-muted-foreground" />
+                <method.icon className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground shrink-0" />
                 <Label htmlFor={method.id} className="flex-1 cursor-pointer">
-                  <div className="font-medium">{method.label[language]}</div>
-                  <div className="text-sm text-muted-foreground">{method.description[language]}</div>
+                  <div className="font-medium text-sm sm:text-base">{method.label[language]}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">{method.description[language]}</div>
                 </Label>
               </div>
             ))}
           </RadioGroup>
 
           {/* Security Badges */}
-          <div className="p-4 bg-muted/30 rounded-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <Shield className="w-5 h-5 text-accent" />
-              <span className="font-medium text-sm">
+          <div className="p-3 sm:p-4 bg-muted/30 rounded-xl">
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+              <span className="font-medium text-xs sm:text-sm">
                 {direction === 'rtl' ? 'دفع آمن ومشفر' : 'Secure & Encrypted Payment'}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
-                <Lock className="w-3 h-3" />
+                <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 <span>SSL Secured</span>
               </div>
               <div className="flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" />
+                <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 <span>PCI Compliant</span>
               </div>
             </div>
@@ -309,19 +309,19 @@ export default function Step6Payment() {
           {/* Pay Button */}
           <Button
             size="lg"
-            className="w-full h-14 text-lg gap-2"
+            className="w-full h-12 sm:h-14 text-base sm:text-lg gap-2"
             onClick={handlePayment}
             disabled={!applicationData.paymentMethod || isProcessing}
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {direction === 'rtl' ? 'جاري المعالجة...' : 'Processing...'}
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                <span className="text-sm sm:text-base">{direction === 'rtl' ? 'جاري المعالجة...' : 'Processing...'}</span>
               </>
             ) : (
               <>
-                <Lock className="w-5 h-5" />
-                <span className="flex items-center gap-1">
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="flex items-center gap-1 text-sm sm:text-base">
                   {t('wizard.pay')} - {grandTotal.toLocaleString()}
                   <SARSymbol size="sm" />
                 </span>
@@ -332,17 +332,18 @@ export default function Step6Payment() {
       </div>
 
       {/* Back Button */}
-      <div className="pt-4">
+      <div className="pt-2 sm:pt-4">
         <Button
           type="button"
           variant="outline"
           size="lg"
-          className="gap-2"
+          className="gap-2 h-10 sm:h-12 text-sm sm:text-base"
           onClick={goToPreviousStep}
           disabled={isProcessing}
         >
           <ArrowPrevIcon className="w-4 h-4" />
-          {t('wizard.previous')}
+          <span className="hidden xs:inline">{t('wizard.previous')}</span>
+          <span className="xs:hidden">{direction === 'rtl' ? 'السابق' : 'Back'}</span>
         </Button>
       </div>
     </div>

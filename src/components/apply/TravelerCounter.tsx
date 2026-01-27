@@ -38,7 +38,7 @@ export default function TravelerCounter({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/30 rounded-xl border border-border gap-4">
       <div className="flex-1">
         <div className="font-semibold text-foreground">{label}</div>
         <div className="text-sm text-muted-foreground">{description}</div>
@@ -51,35 +51,36 @@ export default function TravelerCounter({
         </div>
       </div>
       
-      <div className="flex items-center gap-3">
+      {/* Counter Controls - Bigger touch targets on mobile */}
+      <div className="flex items-center justify-center gap-4 sm:gap-3">
         <Button
           type="button"
           variant="outline"
           size="icon"
           className={cn(
-            "h-9 w-9 rounded-full",
+            "h-12 w-12 sm:h-10 sm:w-10 rounded-full text-lg font-bold",
             value <= min && "opacity-50 cursor-not-allowed"
           )}
           onClick={handleDecrement}
           disabled={value <= min}
         >
-          <Minus className="h-4 w-4" />
+          <Minus className="h-5 w-5 sm:h-4 sm:w-4" />
         </Button>
         
-        <span className="w-8 text-center text-lg font-semibold">{value}</span>
+        <span className="w-12 text-center text-2xl sm:text-xl font-bold tabular-nums">{value}</span>
         
         <Button
           type="button"
           variant="outline"
           size="icon"
           className={cn(
-            "h-9 w-9 rounded-full",
+            "h-12 w-12 sm:h-10 sm:w-10 rounded-full text-lg font-bold",
             value >= max && "opacity-50 cursor-not-allowed"
           )}
           onClick={handleIncrement}
           disabled={value >= max}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
         </Button>
       </div>
     </div>

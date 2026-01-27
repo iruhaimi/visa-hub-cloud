@@ -133,10 +133,10 @@ export default function Step4Documents() {
   const canProceed = uploadedCount >= 2; // At least passport and photo
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">{t('wizard.step4')}</h2>
-        <p className="text-muted-foreground mt-2">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center mb-4 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold">{t('wizard.step4')}</h2>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2">
           {direction === 'rtl' 
             ? 'ارفع المستندات المطلوبة لإتمام طلبك' 
             : 'Upload required documents to complete your application'}
@@ -144,14 +144,14 @@ export default function Step4Documents() {
       </div>
 
       {/* Upload Progress */}
-      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-        <span className="font-medium">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 sm:p-4 bg-muted/30 rounded-xl">
+        <span className="font-medium text-sm sm:text-base">
           {direction === 'rtl' 
             ? `${uploadedCount} مستند تم رفعه`
             : `${uploadedCount} document${uploadedCount !== 1 ? 's' : ''} uploaded`
           }
         </span>
-        <Badge variant={uploadedCount >= 2 ? 'default' : 'secondary'}>
+        <Badge variant={uploadedCount >= 2 ? 'default' : 'secondary'} className="w-fit">
           {uploadedCount >= 2 
             ? (direction === 'rtl' ? 'الحد الأدنى مكتمل' : 'Minimum met')
             : (direction === 'rtl' ? 'مستندان على الأقل' : 'At least 2 required')
@@ -160,7 +160,7 @@ export default function Step4Documents() {
       </div>
 
       {/* File Upload Areas */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {documentTypes.map((docType) => {
           const upload = uploads[docType.id];
           const existingDoc = applicationData.uploadedDocuments.find(d => d.type === docType.id);
@@ -285,26 +285,28 @@ export default function Step4Documents() {
         </ul>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex gap-4 pt-6">
+      {/* Navigation Buttons - Sticky on mobile */}
+      <div className="flex gap-3 sm:gap-4 pt-4 sm:pt-6 sticky bottom-0 bg-background/95 backdrop-blur-sm pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:static sm:bg-transparent sm:backdrop-blur-none border-t sm:border-0 mt-4 sm:mt-0">
         <Button
           type="button"
           variant="outline"
           size="lg"
-          className="flex-1 h-12 gap-2"
+          className="flex-1 h-12 gap-2 text-sm sm:text-base"
           onClick={goToPreviousStep}
         >
           <ArrowPrevIcon className="w-4 h-4" />
-          {t('wizard.previous')}
+          <span className="hidden xs:inline">{t('wizard.previous')}</span>
+          <span className="xs:hidden">{direction === 'rtl' ? 'السابق' : 'Back'}</span>
         </Button>
         <Button
           type="button"
           size="lg"
-          className="flex-1 h-12 gap-2"
+          className="flex-1 h-12 gap-2 text-sm sm:text-base"
           onClick={goToNextStep}
           disabled={!canProceed}
         >
-          {t('wizard.next')}
+          <span className="hidden xs:inline">{t('wizard.next')}</span>
+          <span className="xs:hidden">{direction === 'rtl' ? 'التالي' : 'Next'}</span>
           <ArrowNextIcon className="w-4 h-4" />
         </Button>
       </div>
