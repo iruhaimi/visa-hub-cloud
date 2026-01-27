@@ -262,7 +262,7 @@ export default function Destinations() {
               animate="visible"
             >
               <AnimatePresence mode="popLayout">
-                {/* Schengen Card */}
+                {/* Schengen Card - Same design as regular country cards */}
                 {showSchengenInSearch && schengenCountries.length > 0 && (
                   <motion.div
                     key="schengen"
@@ -280,7 +280,7 @@ export default function Destinations() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
                       
-                      {/* Badges */}
+                      {/* Processing Days Badge */}
                       <div className="absolute top-3 right-3 flex items-center gap-2">
                         {schengenProcessingDays && (
                           <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm gap-1">
@@ -289,23 +289,11 @@ export default function Destinations() {
                           </Badge>
                         )}
                       </div>
-                      
-                      <Badge className="absolute top-3 left-3 bg-primary/90 backdrop-blur-sm">
-                        {schengenCountries.length} دولة
-                      </Badge>
                     </div>
 
                     {/* Content */}
                     <div className="p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <h3 className="text-xl font-bold">{SCHENGEN_INFO.name}</h3>
-                        <button 
-                          onClick={() => setShowSchengenCountries(!showSchengenCountries)}
-                          className="p-1 rounded-full hover:bg-muted transition-colors"
-                        >
-                          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${showSchengenCountries ? 'rotate-180' : ''}`} />
-                        </button>
-                      </div>
+                      <h3 className="text-xl font-bold mb-3">{SCHENGEN_INFO.name}</h3>
                       
                       {schengenMinPrice && (
                         <div className="flex items-baseline gap-2 mb-4">
@@ -317,52 +305,9 @@ export default function Destinations() {
                         </div>
                       )}
 
-                      {/* Schengen Countries Dropdown */}
-                      <AnimatePresence>
-                        {showSchengenCountries && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="overflow-hidden mb-4"
-                          >
-                            <div className="space-y-2 pt-2 border-t">
-                              {schengenCountries.map((country) => (
-                                <div 
-                                  key={country.id}
-                                  className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <img 
-                                      src={country.flag_url || `https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
-                                      alt={country.name}
-                                      className="w-6 h-4 object-cover rounded"
-                                    />
-                                    <span className="font-medium">{country.name}</span>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
-                                      <Link to={`/country/${country.code}`}>
-                                        التفاصيل
-                                      </Link>
-                                    </Button>
-                                    <Button size="sm" className="h-7 px-2 text-xs" asChild>
-                                      <Link to={`/apply?country=${country.code}`}>
-                                        قدّم
-                                      </Link>
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" className="flex-1 rounded-xl" asChild>
-                          <Link to={`/country/${schengenCountries[0]?.code || 'DE'}`}>
+                          <Link to="/country/SCHENGEN">
                             التفاصيل
                           </Link>
                         </Button>
