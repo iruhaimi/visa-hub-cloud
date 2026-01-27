@@ -287,7 +287,7 @@ export default function FAQ() {
                       </div>
                       
                       {/* Questions */}
-                      <div className="divide-y">
+                      <div className="divide-y" dir={isRTL ? 'rtl' : 'ltr'}>
                         {category.questions.map((faq, faqIndex) => {
                           const itemKey = `${categoryIndex}-${faqIndex}`;
                           const isOpen = openItems[itemKey];
@@ -296,7 +296,8 @@ export default function FAQ() {
                             <div key={faqIndex}>
                               <button
                                 onClick={() => toggleItem(itemKey)}
-                                className="w-full flex items-center justify-between p-5 text-right hover:bg-muted/50 transition-colors"
+                                className="w-full flex items-center justify-between p-5 hover:bg-muted/50 transition-colors"
+                                style={{ textAlign: isRTL ? 'right' : 'left' }}
                               >
                                 <div className="flex items-center gap-3 flex-1">
                                   <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 transition-colors ${
@@ -304,14 +305,14 @@ export default function FAQ() {
                                   }`}>
                                     {faqIndex + 1}
                                   </span>
-                                  <span className={`font-medium transition-colors ${isOpen ? 'text-primary' : ''}`}>
+                                  <span className={`font-medium transition-colors ${isOpen ? 'text-primary' : ''}`} style={{ textAlign: isRTL ? 'right' : 'left' }}>
                                     {isRTL ? faq.qAr : faq.qEn}
                                   </span>
                                 </div>
                                 <motion.div
                                   animate={{ rotate: isOpen ? 180 : 0 }}
                                   transition={{ duration: 0.3 }}
-                                  className={`flex-shrink-0 mr-4 ${isOpen ? 'text-primary' : 'text-muted-foreground'}`}
+                                  className={`flex-shrink-0 ${isRTL ? 'ml-4' : 'mr-4'} ${isOpen ? 'text-primary' : 'text-muted-foreground'}`}
                                 >
                                   <ChevronDown className="h-5 w-5" />
                                 </motion.div>
@@ -326,8 +327,8 @@ export default function FAQ() {
                                     transition={{ duration: 0.3 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="px-5 pb-5 pr-16">
-                                      <p className="text-muted-foreground leading-relaxed bg-muted/30 p-4 rounded-xl">
+                                    <div className={`px-5 pb-5 ${isRTL ? 'pl-16' : 'pr-16'}`}>
+                                      <p className="text-muted-foreground leading-relaxed bg-muted/30 p-4 rounded-xl" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                                         {isRTL ? faq.aAr : faq.aEn}
                                       </p>
                                     </div>
