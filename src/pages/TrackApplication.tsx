@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { filterArabicChars, filterNonNumeric } from '@/lib/inputFilters';
 import { 
@@ -24,9 +25,10 @@ import {
   Eye,
   Ban,
   Package,
-  Sparkles
+  Sparkles,
+  Timer
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import type { ApplicationStatus } from '@/types/database';
 
@@ -39,6 +41,7 @@ interface ApplicationResult {
   approved_at: string | null;
   visa_type: {
     name: string;
+    processing_days: number;
     country: {
       name: string;
       flag_url: string | null;
@@ -202,6 +205,7 @@ export default function TrackApplication() {
           approved_at,
           visa_type:visa_types(
             name,
+            processing_days,
             country:countries(name, flag_url)
           )
         `)
@@ -519,6 +523,47 @@ export default function TrackApplication() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Estimated Time Card */}
+                {result.submitted_at && !['approved', 'rejected', 'cancelled', 'draft'].includes(result.status) && (
+                  <Card className="shadow-xl border-0 bg-gradient-to-r from-primary/5 to-transparent">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                            <Timer className="w-7 h-7 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-lg">
+                              {isRTL ? 'الوقت المتبقي المتوقع' : 'Estimated Time Remaining'}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {isRTL ? 'بناءً على وقت المعالجة المعتاد' : 'Based on standard processing time'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          {(() => {
+                            const processingDays = result.visa_type?.processing_days || 7;
+                            const daysElapsed = differenceInDays(new Date(), new Date(result.submitted_at!));
+                            const daysRemaining = Math.max(0, processingDays - daysElapsed);
+                            const progressPercent = Math.min(100, (daysElapsed / processingDays) * 100);
+                            
+                            return (
+                              <div className="flex flex-col items-center">
+                                <div className="text-4xl font-bold text-primary">{daysRemaining}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {isRTL ? 'أيام عمل' : 'business days'}
+                                </div>
+                                <Progress value={progressPercent} className="w-24 h-2 mt-2" />
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Progress Timeline */}
                 <Card className="shadow-xl border-0">

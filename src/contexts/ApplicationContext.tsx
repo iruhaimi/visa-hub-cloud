@@ -67,6 +67,11 @@ interface ApplicationContextType {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   isStepValid: (step: number) => boolean;
+  // Draft functionality
+  draftId: string | null;
+  setDraftId: (id: string | null) => void;
+  isDraftLoading: boolean;
+  setIsDraftLoading: (loading: boolean) => void;
 }
 
 const initialApplicationData: ApplicationData = {
@@ -102,6 +107,8 @@ const ApplicationContext = createContext<ApplicationContextType | undefined>(und
 export function ApplicationProvider({ children }: { children: React.ReactNode }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [applicationData, setApplicationData] = useState<ApplicationData>(initialApplicationData);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [isDraftLoading, setIsDraftLoading] = useState(false);
 
   const updateApplicationData = useCallback((data: Partial<ApplicationData>) => {
     setApplicationData(prev => ({ ...prev, ...data }));
@@ -110,6 +117,7 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
   const resetApplication = useCallback(() => {
     setApplicationData(initialApplicationData);
     setCurrentStep(1);
+    setDraftId(null);
   }, []);
 
   const calculateTotal = useCallback(() => {
@@ -186,6 +194,10 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
         goToNextStep,
         goToPreviousStep,
         isStepValid,
+        draftId,
+        setDraftId,
+        isDraftLoading,
+        setIsDraftLoading,
       }}
     >
       {children}

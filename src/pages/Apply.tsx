@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ApplicationProvider, useApplication } from '@/contexts/ApplicationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import WizardStepper from '@/components/apply/WizardStepper';
 import Step1BasicInfo from '@/components/apply/steps/Step1BasicInfo';
 import Step2VisaDetails from '@/components/apply/steps/Step2VisaDetails';
@@ -12,13 +14,30 @@ import Step4Documents from '@/components/apply/steps/Step4Documents';
 import Step5Terms from '@/components/apply/steps/Step5Terms';
 import Step6Payment from '@/components/apply/steps/Step6Payment';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Save, Loader2 } from 'lucide-react';
 
 function ApplyContent() {
   const { countryCode } = useParams();
   const [searchParams] = useSearchParams();
   const visaTypeId = searchParams.get('visa');
-  const { direction } = useLanguage();
-  const { currentStep, setCurrentStep, updateApplicationData } = useApplication();
+  const draftIdParam = searchParams.get('draft');
+  const { direction, language } = useLanguage();
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const { 
+    currentStep, 
+    setCurrentStep, 
+    updateApplicationData, 
+    applicationData,
+    draftId,
+    setDraftId,
+    isDraftLoading,
+    setIsDraftLoading
+  } = useApplication();
+  
+  const lastSavedStep = useRef(0);
+  const isSaving = useRef(false);
 
   // Pre-fill country if coming from country page
   const { data: country, isLoading: countryLoading } = useQuery({
@@ -52,18 +71,177 @@ function ApplyContent() {
     enabled: !!visaTypeId,
   });
 
+  // Load draft if draftId is provided in URL
+  const { isLoading: draftLoading } = useQuery({
+    queryKey: ['load-draft', draftIdParam],
+    queryFn: async () => {
+      if (!draftIdParam) return null;
+      setIsDraftLoading(true);
+      
+      const { data, error } = await supabase
+        .from('applications')
+        .select(`
+          id,
+          visa_type_id,
+          travel_date,
+          purpose_of_travel,
+          visa_type:visa_types(
+            id,
+            name,
+            price,
+            child_price,
+            infant_price,
+            fee_type,
+            government_fees,
+            price_notes,
+            price_notes_en,
+            country:countries(id, name)
+          )
+        `)
+        .eq('id', draftIdParam)
+        .single();
+
+      if (error) {
+        setIsDraftLoading(false);
+        throw error;
+      }
+      
+      setDraftId(draftIdParam);
+      
+      // Parse stored draft data
+      let storedData: any = {};
+      if (data.purpose_of_travel) {
+        try {
+          storedData = JSON.parse(data.purpose_of_travel);
+        } catch {
+          storedData = {};
+        }
+      }
+      
+      const visa = data.visa_type as any;
+      const countryData = visa?.country;
+      
+      // Update application data
+      updateApplicationData({
+        visaTypeId: data.visa_type_id,
+        visaTypeName: visa?.name || '',
+        countryId: countryData?.id || '',
+        countryName: countryData?.name || '',
+        travelDate: data.travel_date ? new Date(data.travel_date) : null,
+        adultPrice: visa?.price || 0,
+        childPrice: visa?.child_price || Math.round((visa?.price || 0) * 0.75),
+        infantPrice: visa?.infant_price || Math.round((visa?.price || 0) * 0.5),
+        visaFeesIncluded: visa?.fee_type === 'included',
+        governmentFees: visa?.government_fees || 0,
+        priceNotes: visa?.price_notes || '',
+        priceNotesEn: visa?.price_notes_en || '',
+        fullName: storedData.fullName || '',
+        email: storedData.email || '',
+        phone: storedData.phone || '',
+        countryCode: storedData.countryCode || '+966',
+        travelers: storedData.travelers || { adults: 1, children: 0, infants: 0 },
+        checkedRequirements: storedData.checkedRequirements || [],
+      });
+      
+      // Set step to where user left off
+      if (storedData.currentStep && storedData.currentStep > 1) {
+        setCurrentStep(storedData.currentStep);
+        lastSavedStep.current = storedData.currentStep;
+      }
+      
+      setIsDraftLoading(false);
+      
+      toast({
+        title: language === 'ar' ? 'تم تحميل المسودة' : 'Draft Loaded',
+        description: language === 'ar' ? 'تم استعادة بيانات طلبك السابق' : 'Your previous application data has been restored',
+      });
+      
+      return data;
+    },
+    enabled: !!draftIdParam && !!profile,
+  });
+
+  // Auto-save draft when step changes
+  const saveDraft = useCallback(async () => {
+    if (!profile || !applicationData.visaTypeId || isSaving.current) return;
+    if (currentStep === lastSavedStep.current) return;
+    
+    isSaving.current = true;
+    
+    try {
+      const draftPayload = {
+        user_id: profile.id,
+        visa_type_id: applicationData.visaTypeId,
+        travel_date: applicationData.travelDate ? applicationData.travelDate.toISOString().split('T')[0] : null,
+        status: 'draft' as const,
+        purpose_of_travel: JSON.stringify({
+          fullName: applicationData.fullName,
+          email: applicationData.email,
+          phone: applicationData.phone,
+          countryCode: applicationData.countryCode,
+          travelers: applicationData.travelers,
+          checkedRequirements: applicationData.checkedRequirements,
+          currentStep,
+        }),
+      };
+
+      let result;
+      
+      if (draftId) {
+        result = await supabase
+          .from('applications')
+          .update({
+            ...draftPayload,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', draftId)
+          .select('id')
+          .single();
+      } else {
+        result = await supabase
+          .from('applications')
+          .insert(draftPayload)
+          .select('id')
+          .single();
+      }
+
+      if (result.error) throw result.error;
+      
+      if (!draftId) {
+        setDraftId(result.data.id);
+      }
+      
+      lastSavedStep.current = currentStep;
+      
+    } catch (error) {
+      console.error('Error saving draft:', error);
+    } finally {
+      isSaving.current = false;
+    }
+  }, [profile, applicationData, currentStep, draftId, setDraftId]);
+
+  // Trigger save on step change (after step 2)
+  useEffect(() => {
+    if (currentStep >= 2 && profile && applicationData.visaTypeId) {
+      const timer = setTimeout(() => {
+        saveDraft();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, saveDraft, profile, applicationData.visaTypeId]);
+
   // Update application data when country/visa is loaded
   useEffect(() => {
-    if (country) {
+    if (country && !draftIdParam) {
       updateApplicationData({
         countryId: country.id,
         countryName: country.name,
       });
     }
-  }, [country, updateApplicationData]);
+  }, [country, updateApplicationData, draftIdParam]);
 
   useEffect(() => {
-    if (visaType) {
+    if (visaType && !draftIdParam) {
       const basePrice = Number(visaType.price);
       updateApplicationData({
         countryId: visaType.country_id,
@@ -75,7 +253,7 @@ function ApplyContent() {
         infantPrice: Math.round(basePrice * 0.25),
       });
     }
-  }, [visaType, updateApplicationData]);
+  }, [visaType, updateApplicationData, draftIdParam]);
 
   const handleStepClick = (step: number) => {
     if (step < currentStep) {
@@ -102,7 +280,7 @@ function ApplyContent() {
     }
   };
 
-  if (countryLoading || visaLoading) {
+  if (countryLoading || visaLoading || draftLoading || isDraftLoading) {
     return (
       <div className="container-section py-8">
         <Skeleton className="h-20 w-full mb-8" />
@@ -116,12 +294,27 @@ function ApplyContent() {
       {/* Header - More compact on mobile */}
       <div className="bg-gradient-to-b from-primary/10 to-transparent py-4 sm:py-8">
         <div className="container-section px-4 sm:px-6">
-          <h1 className="text-xl sm:text-3xl font-bold text-center">
-            {direction === 'rtl' ? 'تقديم طلب التأشيرة' : 'Visa Application'}
-          </h1>
-          {country && (
+          <div className="flex items-center justify-center gap-3">
+            <h1 className="text-xl sm:text-3xl font-bold text-center">
+              {direction === 'rtl' ? 'تقديم طلب التأشيرة' : 'Visa Application'}
+            </h1>
+            {/* Draft Save Indicator */}
+            {draftId && profile && (
+              <Badge variant="secondary" className="gap-1 text-xs">
+                {isSaving.current ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Save className="w-3 h-3" />
+                )}
+                {direction === 'rtl' ? 'محفوظ' : 'Saved'}
+              </Badge>
+            )}
+          </div>
+          {(country || applicationData.countryName) && (
             <p className="text-center text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
-              {direction === 'rtl' ? `التأشيرة إلى ${country.name}` : `Visa to ${country.name}`}
+              {direction === 'rtl' 
+                ? `التأشيرة إلى ${country?.name || applicationData.countryName}` 
+                : `Visa to ${country?.name || applicationData.countryName}`}
             </p>
           )}
         </div>
