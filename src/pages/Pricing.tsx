@@ -50,6 +50,9 @@ interface VisaType {
   validity_days: number | null;
   max_stay_days: number | null;
   entry_type: string | null;
+  fee_type: string | null;
+  price_notes: string | null;
+  price_notes_en: string | null;
   requirements: string[];
   country: Country;
   country_id: string;
@@ -60,20 +63,6 @@ const TRAVELER_PRICING = {
   adult: { label: 'بالغ (12+ سنة)', labelEn: 'Adult (12+)', multiplier: 1 },
   child: { label: 'طفل (6-12 سنة)', labelEn: 'Child (6-12)', multiplier: 0.75 },
   infant: { label: 'رضيع (أقل من 6)', labelEn: 'Infant (<6)', multiplier: 0.5 },
-};
-
-// Government visa fees (example data - these would typically come from DB)
-const GOVERNMENT_FEES: Record<string, { amount: number; included: boolean }> = {
-  'US': { amount: 160, included: false },
-  'GB': { amount: 134, included: false },
-  'CA': { amount: 100, included: false },
-  'AU': { amount: 145, included: false },
-  'DE': { amount: 80, included: true },
-  'FR': { amount: 80, included: true },
-  'AE': { amount: 0, included: true },
-  'SA': { amount: 0, included: true },
-  'JP': { amount: 25, included: true },
-  'SG': { amount: 30, included: true },
 };
 
 export default function Pricing() {
@@ -110,8 +99,19 @@ export default function Pricing() {
     fetchData();
   }, []);
 
-  const getGovFee = (countryCode: string) => {
-    return GOVERNMENT_FEES[countryCode] || { amount: 0, included: true };
+  // Helper function to check if visa fees are included for a group of visas
+  const getVisaFeeStatus = (visas: VisaType[]) => {
+    // Check if all visas in this country have fees included
+    const allIncluded = visas.every(v => v.fee_type === 'included');
+    const anyIncluded = visas.some(v => v.fee_type === 'included');
+    
+    if (allIncluded) {
+      return { included: true, mixed: false };
+    } else if (anyIncluded) {
+      return { included: false, mixed: true };
+    } else {
+      return { included: false, mixed: false };
+    }
   };
 
   const filteredVisaTypes = selectedCountry === 'all' 
@@ -337,7 +337,7 @@ export default function Pricing() {
             viewport={{ once: true }}
           >
             {Object.entries(visasByCountry).map(([countryCode, { country, visas }]) => {
-              const govFee = getGovFee(countryCode);
+              const feeStatus = getVisaFeeStatus(visas);
               
               return (
                 <motion.div key={countryCode} variants={itemVariants}>
@@ -359,19 +359,22 @@ export default function Pricing() {
                           </div>
                         </div>
                         
-                        {/* Government Fee Status */}
+                        {/* Government Fee Status - Now Dynamic from Database */}
                         <div className="flex items-center gap-2">
-                          {govFee.included ? (
+                          {feeStatus.included ? (
                             <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1 border-0">
                               <CheckCircle2 className="h-3 w-3" />
                               {isRTL ? 'رسوم التأشيرة شاملة' : 'Visa fee included'}
                             </Badge>
+                          ) : feeStatus.mixed ? (
+                            <Badge variant="secondary" className="gap-1">
+                              <Info className="h-3 w-3" />
+                              {isRTL ? 'راجع تفاصيل كل تأشيرة' : 'See visa details'}
+                            </Badge>
                           ) : (
                             <Badge variant="secondary" className="gap-1">
                               <Info className="h-3 w-3" />
-                              {isRTL 
-                                ? `رسوم التأشيرة منفصلة: $${govFee.amount}`
-                                : `Visa fee separate: $${govFee.amount}`}
+                              {isRTL ? 'رسوم التأشيرة منفصلة' : 'Visa fee separate'}
                             </Badge>
                           )}
                         </div>
@@ -414,6 +417,9 @@ export default function Pricing() {
                               </TableHead>
                               <TableHead className="text-center">
                                 {isRTL ? 'نوع الدخول' : 'Entry Type'}
+                              </TableHead>
+                              <TableHead className="text-center min-w-[150px]">
+                                {isRTL ? 'ملاحظات' : 'Notes'}
                               </TableHead>
                               <TableHead></TableHead>
                             </TableRow>
@@ -498,6 +504,29 @@ export default function Pricing() {
                                         ? (isRTL ? 'متعدد' : 'Multiple')
                                         : (isRTL ? 'مفرد' : 'Single')}
                                     </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger>
+                                          <Badge 
+                                            variant={visa.fee_type === 'included' ? 'default' : 'secondary'}
+                                            className={`rounded-lg text-xs ${visa.fee_type === 'included' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0' : ''}`}
+                                          >
+                                            {visa.fee_type === 'included' 
+                                              ? (isRTL ? 'شامل الرسوم' : 'Fees Included')
+                                              : (isRTL ? 'رسوم منفصلة' : 'Fees Separate')}
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-[200px]">
+                                          <p className="text-sm">
+                                            {isRTL 
+                                              ? (visa.price_notes || 'شامل رسوم التأشيرة')
+                                              : (visa.price_notes_en || 'Visa fees included')}
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   </TableCell>
                                   <TableCell>
                                     <Button size="sm" className="rounded-xl" asChild>
