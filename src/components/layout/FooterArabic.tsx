@@ -24,9 +24,9 @@ export default function FooterArabic() {
   ];
 
   const policyLinks = [
-    { name: t('footer.terms'), href: '/terms' },
-    { name: t('footer.privacy'), href: '/privacy' },
-    { name: t('footer.refund'), href: '/refund' },
+    { name: 'الشروط والأحكام', href: '/terms' },
+    { name: 'سياسة الخصوصية', href: '/privacy' },
+    { name: 'سياسة الاسترجاع', href: '/refund' },
   ];
 
   return (
