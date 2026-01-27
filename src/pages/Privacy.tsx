@@ -19,6 +19,33 @@ export default function Privacy() {
 
   const sections = [
     {
+      icon: Shield,
+      titleAr: 'الامتثال لنظام حماية البيانات الشخصية',
+      titleEn: 'Personal Data Protection Law Compliance',
+      contentAr: `نلتزم في وكالة عطلات رحلاتكم بالعمل وفقاً لأحكام **نظام حماية البيانات الشخصية** الصادر بموجب المرسوم الملكي رقم (م/19) بتاريخ 09/02/1443هـ الموافق 16/09/2021م، والمعدّل بموجب المرسوم الملكي رقم (م/148) بتاريخ 05/09/1444هـ الموافق 27/03/2023م.
+
+**الجهة المنظمة:**
+نعمل تحت مظلة وإشراف **الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا)** - الجهة المختصة بتنظيم وحماية البيانات الشخصية في المملكة العربية السعودية.
+
+**التزاماتنا:**
+• نعالج بياناتك الشخصية فقط للأغراض المحددة والمشروعة
+• نحصل على موافقتك قبل جمع أو معالجة بياناتك
+• نحترم حقوقك في الوصول والتصحيح والحذف
+• نطبق إجراءات أمنية صارمة لحماية بياناتك
+• نلتزم بالإفصاح والشفافية في التعامل مع بياناتك`,
+      contentEn: `At Otolat Rahlatcom, we operate in full compliance with the **Personal Data Protection Law (PDPL)** issued pursuant to Royal Decree No. (M/19) dated 09/02/1443 AH corresponding to 16/09/2021 G, and amended pursuant to Royal Decree No. (M/148) dated 05/09/1444 AH corresponding to 27/03/2023 G.
+
+**Regulatory Authority:**
+We operate under the supervision of the **Saudi Data and Artificial Intelligence Authority (SDAIA)** - the competent authority for regulating and protecting personal data in the Kingdom of Saudi Arabia.
+
+**Our Commitments:**
+• We process your personal data only for specified and legitimate purposes
+• We obtain your consent before collecting or processing your data
+• We respect your rights to access, correct, and delete your data
+• We implement strict security measures to protect your data
+• We are committed to disclosure and transparency in handling your data`
+    },
+    {
       icon: Database,
       titleAr: 'المعلومات التي نجمعها',
       titleEn: 'Information We Collect',
@@ -244,6 +271,28 @@ Last updated: January 2024`
 
       <div className="container-section py-12">
         <div className="max-w-4xl mx-auto">
+          {/* Regulatory Badge */}
+          <Card className="mb-8 border-primary/20 bg-primary/5">
+            <CardContent className="py-6" dir={isRTL ? 'rtl' : 'ltr'}>
+              <div className={`flex items-center gap-4 ${isRTL ? 'flex-row' : 'flex-row'}`}>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">
+                    {isRTL ? 'معتمد من سدايا' : 'SDAIA Compliant'}
+                  </Badge>
+                  <p className={`text-muted-foreground leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
+                    {isRTL 
+                      ? 'نلتزم بنظام حماية البيانات الشخصية السعودي ونعمل تحت إشراف الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا) لضمان حماية خصوصيتك وفقاً لأعلى المعايير.'
+                      : 'We comply with the Saudi Personal Data Protection Law and operate under the supervision of the Saudi Data and Artificial Intelligence Authority (SDAIA) to ensure your privacy is protected according to the highest standards.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Introduction */}
           <Card className="mb-8">
             <CardContent className="py-6" dir={isRTL ? 'rtl' : 'ltr'}>
