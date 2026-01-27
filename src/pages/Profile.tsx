@@ -12,6 +12,7 @@ import { User, Phone, CreditCard, Wallet, Save, Loader2, Camera, Upload, FileTex
 import { Link } from 'react-router-dom';
 import { ProfileCompletionAlert } from '@/components/profile/ProfileCompletionAlert';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
+import { CountryPicker, CityPicker } from '@/components/ui/CountryCityPicker';
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { direction } = useLanguage();
@@ -404,23 +405,24 @@ const Profile = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="city">{labels.city}</Label>
-                <Input
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  placeholder={labels.city}
+                <Label htmlFor="country">{labels.country}</Label>
+                <CountryPicker
+                  value={formData.country}
+                  onChange={(value) => {
+                    setFormData(prev => ({ ...prev, country: value, city: '' }));
+                  }}
+                  isRTL={isRTL}
+                  placeholder={labels.country}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="country">{labels.country}</Label>
-                <Input
-                  id="country"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  placeholder={labels.country}
+                <Label htmlFor="city">{labels.city}</Label>
+                <CityPicker
+                  country={formData.country}
+                  value={formData.city}
+                  onChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
+                  isRTL={isRTL}
+                  placeholder={labels.city}
                 />
               </div>
             </CardContent>
