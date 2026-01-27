@@ -334,12 +334,11 @@ export function CityPicker({ country, value, onChange, isRTL = true, placeholder
                   setSearch('');
                 }}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-accent",
+                  "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-accent",
                   value === city && "bg-accent"
                 )}
               >
-                <span className="flex-1 text-right">{city}</span>
-                <span className="flex-1 text-right">{city}</span>
+                <span className="text-right">{city}</span>
                 {value === city && (
                   <Check className="h-4 w-4 text-primary" />
                 )}
