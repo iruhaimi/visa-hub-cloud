@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Phone, CreditCard, Wallet, Save, Loader2, Camera, Upload, FileText, RotateCcw, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ProfileCompletionAlert } from '@/components/profile/ProfileCompletionAlert';
+import CountryCodePicker from '@/components/ui/CountryCodePicker';
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { direction } = useLanguage();
@@ -23,6 +24,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
+    countryCode: '+966',
     date_of_birth: '',
     nationality: '',
     passport_number: '',
@@ -34,9 +36,26 @@ const Profile = () => {
 
   useEffect(() => {
     if (profile) {
+      // Extract country code from phone if exists (e.g., "+966512345678" -> "+966")
+      let countryCode = '+966';
+      let phoneNumber = profile.phone || '';
+      
+      if (phoneNumber.startsWith('+')) {
+        // Try to match common country codes
+        const codes = ['+966', '+971', '+973', '+974', '+965', '+968', '+20', '+962', '+961', '+963', '+964', '+967', '+970', '+212', '+213', '+216', '+218', '+249', '+90', '+44', '+1', '+33', '+49', '+91', '+92', '+60', '+62', '+86'];
+        for (const code of codes) {
+          if (phoneNumber.startsWith(code)) {
+            countryCode = code;
+            phoneNumber = phoneNumber.slice(code.length);
+            break;
+          }
+        }
+      }
+      
       setFormData({
         full_name: profile.full_name || '',
-        phone: profile.phone || '',
+        phone: phoneNumber,
+        countryCode: countryCode,
         date_of_birth: profile.date_of_birth || '',
         nationality: profile.nationality || '',
         passport_number: profile.passport_number || '',
@@ -143,11 +162,14 @@ const Profile = () => {
 
     setIsLoading(true);
     try {
+      // Combine country code with phone number for storage
+      const fullPhone = formData.phone ? `${formData.countryCode}${formData.phone}` : null;
+      
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: formData.full_name || null,
-          phone: formData.phone || null,
+          phone: fullPhone,
           date_of_birth: formData.date_of_birth || null,
           nationality: formData.nationality || null,
           passport_number: formData.passport_number || null,
@@ -350,18 +372,26 @@ const Profile = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">{labels.phone}</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  dir="ltr"
-                  lang="en"
-                  inputMode="tel"
-                  style={{ textAlign: 'left' }}
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder={isRTL ? '+966 5XX XXX XXXX' : '+966 5XX XXX XXXX'}
-                />
+                <div className="flex gap-2">
+                  <CountryCodePicker
+                    value={formData.countryCode}
+                    onChange={(value) => setFormData(prev => ({ ...prev, countryCode: value }))}
+                    isRTL={isRTL}
+                  />
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    dir="ltr"
+                    lang="en"
+                    inputMode="tel"
+                    style={{ textAlign: 'left' }}
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="5XX XXX XXXX"
+                    className="flex-1"
+                  />
+                </div>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="address">{labels.address}</Label>
