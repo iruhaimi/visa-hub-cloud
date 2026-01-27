@@ -268,13 +268,11 @@ export default function Destinations() {
                     key="schengen"
                     variants={itemVariants}
                     layout
+                    whileHover={{ y: -8, transition: { duration: 0.3 } }}
                     className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300"
                   >
                     {/* Flag Background */}
-                    <div 
-                      className="relative h-36 overflow-hidden cursor-pointer"
-                      onClick={() => setShowSchengenCountries(!showSchengenCountries)}
-                    >
+                    <div className="relative h-36 overflow-hidden">
                       <img
                         src={SCHENGEN_INFO.flag_url}
                         alt={SCHENGEN_INFO.name}
@@ -292,21 +290,21 @@ export default function Destinations() {
                         )}
                       </div>
                       
-                      {schengenVisaCount > 0 && (
-                        <Badge className="absolute top-3 left-3 bg-primary/90 backdrop-blur-sm">
-                          {schengenCountries.length} دولة
-                        </Badge>
-                      )}
+                      <Badge className="absolute top-3 left-3 bg-primary/90 backdrop-blur-sm">
+                        {schengenCountries.length} دولة
+                      </Badge>
                     </div>
 
                     {/* Content */}
                     <div className="p-5">
-                      <div 
-                        className="flex items-center justify-between mb-3 cursor-pointer"
-                        onClick={() => setShowSchengenCountries(!showSchengenCountries)}
-                      >
+                      <div className="flex items-center gap-2 mb-3">
                         <h3 className="text-xl font-bold">{SCHENGEN_INFO.name}</h3>
-                        <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${showSchengenCountries ? 'rotate-180' : ''}`} />
+                        <button 
+                          onClick={() => setShowSchengenCountries(!showSchengenCountries)}
+                          className="p-1 rounded-full hover:bg-muted transition-colors"
+                        >
+                          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${showSchengenCountries ? 'rotate-180' : ''}`} />
+                        </button>
                       </div>
                       
                       {schengenMinPrice && (
@@ -362,15 +360,19 @@ export default function Destinations() {
                         )}
                       </AnimatePresence>
 
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full rounded-xl gap-1"
-                        onClick={() => setShowSchengenCountries(!showSchengenCountries)}
-                      >
-                        {showSchengenCountries ? 'إخفاء الدول' : 'عرض الدول'}
-                        <ChevronDown className={`h-4 w-4 transition-transform ${showSchengenCountries ? 'rotate-180' : ''}`} />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 rounded-xl" asChild>
+                          <Link to={`/country/${schengenCountries[0]?.code || 'DE'}`}>
+                            التفاصيل
+                          </Link>
+                        </Button>
+                        <Button size="sm" className="flex-1 rounded-xl gap-1" asChild>
+                          <Link to="/apply?country=SCHENGEN">
+                            قدّم الآن
+                            <ArrowIcon className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
