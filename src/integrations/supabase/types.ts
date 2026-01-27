@@ -568,6 +568,7 @@ export type Database = {
           description: string | null
           entry_type: string | null
           fee_type: string | null
+          government_fees: number | null
           id: string
           infant_price: number | null
           is_active: boolean | null
@@ -588,6 +589,7 @@ export type Database = {
           description?: string | null
           entry_type?: string | null
           fee_type?: string | null
+          government_fees?: number | null
           id?: string
           infant_price?: number | null
           is_active?: boolean | null
@@ -608,6 +610,7 @@ export type Database = {
           description?: string | null
           entry_type?: string | null
           fee_type?: string | null
+          government_fees?: number | null
           id?: string
           infant_price?: number | null
           is_active?: boolean | null

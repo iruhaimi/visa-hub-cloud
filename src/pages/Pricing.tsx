@@ -48,6 +48,7 @@ interface VisaType {
   price: number;
   child_price: number | null;
   infant_price: number | null;
+  government_fees: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;
@@ -388,11 +389,12 @@ export default function Pricing() {
                     </CardHeader>
                     
                     <CardContent className="p-0">
-                      <div className="overflow-x-auto">
+                      {/* Desktop Table View */}
+                      <div className="hidden lg:block overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/30">
-                              <TableHead className="min-w-[200px]">
+                              <TableHead className="min-w-[180px]">
                                 {isRTL ? 'نوع التأشيرة' : 'Visa Type'}
                               </TableHead>
                               <TableHead className="text-center">
@@ -414,6 +416,10 @@ export default function Pricing() {
                                 </span>
                               </TableHead>
                               <TableHead className="text-center">
+                                <DollarSign className="h-4 w-4 inline-block ml-1" />
+                                {isRTL ? 'رسوم التأشيرة' : 'Visa Fee'}
+                              </TableHead>
+                              <TableHead className="text-center">
                                 <Clock className="h-4 w-4 inline-block ml-1" />
                                 {isRTL ? 'المعالجة' : 'Processing'}
                               </TableHead>
@@ -424,7 +430,7 @@ export default function Pricing() {
                               <TableHead className="text-center">
                                 {isRTL ? 'نوع الدخول' : 'Entry Type'}
                               </TableHead>
-                              <TableHead className="text-center min-w-[150px]">
+                              <TableHead className="text-center min-w-[130px]">
                                 {isRTL ? 'ملاحظات' : 'Notes'}
                               </TableHead>
                               <TableHead></TableHead>
@@ -433,9 +439,9 @@ export default function Pricing() {
                           <TableBody>
                             {visas.map((visa) => {
                               const adultPrice = visa.price;
-                              // Use custom prices from DB, or fallback to percentage-based calculation
                               const childPrice = visa.child_price ?? Math.round(visa.price * DEFAULT_CHILD_MULTIPLIER);
                               const infantPrice = visa.infant_price ?? Math.round(visa.price * DEFAULT_INFANT_MULTIPLIER);
+                              const govFees = visa.government_fees ?? 0;
                               
                               return (
                                 <TableRow key={visa.id} className="hover:bg-muted/30">
@@ -448,49 +454,34 @@ export default function Pricing() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger>
-                                          <span className="font-bold text-primary flex items-center justify-center gap-1">
-                                            {adultPrice}
-                                            <SARSymbol size="sm" className="text-primary" />
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{isRTL ? 'رسوم الخدمة للبالغ' : 'Adult service fee'}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <span className="font-bold text-primary flex items-center justify-center gap-1">
+                                      {adultPrice}
+                                      <SARSymbol size="sm" className="text-primary" />
+                                    </span>
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger>
-                                          <span className="font-bold text-primary flex items-center justify-center gap-1">
-                                            {childPrice}
-                                            <SARSymbol size="sm" className="text-primary" />
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{isRTL ? '75% من سعر البالغ' : '75% of adult price'}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <span className="font-bold text-primary flex items-center justify-center gap-1">
+                                      {childPrice}
+                                      <SARSymbol size="sm" className="text-primary" />
+                                    </span>
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger>
-                                          <span className="font-bold text-primary flex items-center justify-center gap-1">
-                                            {infantPrice}
-                                            <SARSymbol size="sm" className="text-primary" />
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{isRTL ? '50% من سعر البالغ' : '50% of adult price'}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                    <span className="font-bold text-primary flex items-center justify-center gap-1">
+                                      {infantPrice}
+                                      <SARSymbol size="sm" className="text-primary" />
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="text-center">
+                                    {visa.fee_type === 'included' ? (
+                                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0 text-xs">
+                                        {isRTL ? 'شامل' : 'Included'}
+                                      </Badge>
+                                    ) : (
+                                      <span className="font-bold text-amber-600 flex items-center justify-center gap-1">
+                                        {govFees}
+                                        <SARSymbol size="sm" className="text-amber-600" />
+                                      </span>
+                                    )}
                                   </TableCell>
                                   <TableCell className="text-center">
                                     <Badge variant="outline" className="rounded-lg">
@@ -535,6 +526,122 @@ export default function Pricing() {
                             })}
                           </TableBody>
                         </Table>
+                      </div>
+
+                      {/* Mobile Card View */}
+                      <div className="lg:hidden p-4 space-y-4">
+                        {visas.map((visa) => {
+                          const adultPrice = visa.price;
+                          const childPrice = visa.child_price ?? Math.round(visa.price * DEFAULT_CHILD_MULTIPLIER);
+                          const infantPrice = visa.infant_price ?? Math.round(visa.price * DEFAULT_INFANT_MULTIPLIER);
+                          const govFees = visa.government_fees ?? 0;
+                          
+                          return (
+                            <motion.div 
+                              key={visa.id}
+                              className="bg-card border rounded-xl p-4 space-y-4"
+                              whileHover={{ scale: 1.01 }}
+                            >
+                              {/* Header */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1">
+                                  <h4 className="font-bold text-base">{visa.name}</h4>
+                                  {visa.description && (
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                      {visa.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <Badge 
+                                  variant={visa.entry_type === 'multiple' ? 'default' : 'secondary'}
+                                  className="rounded-lg shrink-0"
+                                >
+                                  {visa.entry_type === 'multiple' 
+                                    ? (isRTL ? 'متعدد' : 'Multiple')
+                                    : (isRTL ? 'مفرد' : 'Single')}
+                                </Badge>
+                              </div>
+
+                              {/* Prices Grid */}
+                              <div className="grid grid-cols-3 gap-2 text-center">
+                                <div className="bg-primary/5 rounded-lg p-2">
+                                  <p className="text-xs text-muted-foreground mb-1">
+                                    {isRTL ? 'بالغ' : 'Adult'}
+                                  </p>
+                                  <span className="font-bold text-primary flex items-center justify-center gap-0.5 text-sm">
+                                    {adultPrice}
+                                    <SARSymbol size="xs" className="text-primary" />
+                                  </span>
+                                </div>
+                                <div className="bg-primary/5 rounded-lg p-2">
+                                  <p className="text-xs text-muted-foreground mb-1">
+                                    {isRTL ? 'طفل' : 'Child'}
+                                  </p>
+                                  <span className="font-bold text-primary flex items-center justify-center gap-0.5 text-sm">
+                                    {childPrice}
+                                    <SARSymbol size="xs" className="text-primary" />
+                                  </span>
+                                </div>
+                                <div className="bg-primary/5 rounded-lg p-2">
+                                  <p className="text-xs text-muted-foreground mb-1">
+                                    {isRTL ? 'رضيع' : 'Infant'}
+                                  </p>
+                                  <span className="font-bold text-primary flex items-center justify-center gap-0.5 text-sm">
+                                    {infantPrice}
+                                    <SARSymbol size="xs" className="text-primary" />
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Gov Fees */}
+                              <div className="flex items-center justify-between bg-muted/30 rounded-lg p-3">
+                                <span className="text-sm text-muted-foreground">
+                                  {isRTL ? 'رسوم التأشيرة الحكومية' : 'Government Visa Fee'}
+                                </span>
+                                {visa.fee_type === 'included' ? (
+                                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
+                                    {isRTL ? 'شامل في السعر' : 'Included'}
+                                  </Badge>
+                                ) : (
+                                  <span className="font-bold text-amber-600 flex items-center gap-1">
+                                    {govFees}
+                                    <SARSymbol size="sm" className="text-amber-600" />
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Details */}
+                              <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-1.5">
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  <span>{visa.processing_days} {isRTL ? 'أيام' : 'days'}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                                  <span>{visa.validity_days || '-'} {isRTL ? 'يوم' : 'days'}</span>
+                                </div>
+                              </div>
+
+                              {/* Notes Badge */}
+                              <Badge 
+                                variant={visa.fee_type === 'included' ? 'default' : 'secondary'}
+                                className={`w-full justify-center py-1.5 text-xs ${visa.fee_type === 'included' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0' : ''}`}
+                              >
+                                {isRTL 
+                                  ? (visa.price_notes || (visa.fee_type === 'included' ? 'شامل الرسوم' : 'رسوم منفصلة'))
+                                  : (visa.price_notes_en || (visa.fee_type === 'included' ? 'Fees Included' : 'Fees Separate'))}
+                              </Badge>
+
+                              {/* Apply Button */}
+                              <Button className="w-full rounded-xl" asChild>
+                                <Link to={`/apply?country=${countryCode}&visa=${visa.id}`}>
+                                  {isRTL ? 'قدّم الآن' : 'Apply Now'}
+                                  <ArrowLeft className="h-4 w-4 mr-1" />
+                                </Link>
+                              </Button>
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>

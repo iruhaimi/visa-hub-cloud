@@ -62,6 +62,7 @@ export interface VisaType {
   price: number;
   child_price: number | null;
   infant_price: number | null;
+  government_fees: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;
