@@ -1,7 +1,7 @@
 // Schengen countries configuration
 // These country codes represent EU Schengen zone countries
 
-export const SCHENGEN_COUNTRY_CODES = ['DE', 'FR', 'IT', 'ES', 'NL', 'AT', 'CH', 'BE', 'PT'] as const;
+export const SCHENGEN_COUNTRY_CODES = ['DE', 'FR', 'IT', 'ES', 'NL', 'AT', 'CH', 'BE', 'PT', 'GR', 'CZ', 'PL', 'SE', 'DK', 'NO', 'FI'] as const;
 
 export const SCHENGEN_INFO = {
   id: 'schengen',
