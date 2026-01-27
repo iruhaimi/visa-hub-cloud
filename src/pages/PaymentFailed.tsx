@@ -94,13 +94,13 @@ export default function PaymentFailed() {
               <h4 className="font-medium mb-2">{content.supportTitle}</h4>
               <p className="text-sm text-muted-foreground mb-3">{content.supportDesc}</p>
               <div className="flex flex-wrap gap-3 text-sm">
-                <a href="tel:+966123456789" className="flex items-center gap-1 text-primary hover:underline">
+                <a href="tel:920034158" className="flex items-center gap-1 text-primary hover:underline">
                   <Phone className="w-3 h-3" />
-                  +966 12 345 6789
+                  920034158
                 </a>
-                <a href="mailto:support@visa.com" className="flex items-center gap-1 text-primary hover:underline">
+                <a href="mailto:info@rhalat.com" className="flex items-center gap-1 text-primary hover:underline">
                   <Mail className="w-3 h-3" />
-                  support@visa.com
+                  info@rhalat.com
                 </a>
               </div>
             </div>

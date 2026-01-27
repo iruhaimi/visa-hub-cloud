@@ -46,7 +46,7 @@ const testimonials = [
   {
     name: 'Sarah Johnson',
     role: 'Business Traveler',
-    content: 'VisaGo made my US business visa application incredibly simple. Got approved in just 5 days!',
+    content: 'Otolat Rahlatcom made my US business visa application incredibly simple. Got approved in just 5 days!',
     rating: 5,
   },
   {
@@ -276,7 +276,7 @@ export default function Home() {
         <div className="container-section">
           <div className="text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Why Choose VisaGo?
+              Why Choose Otolat Rahlatcom?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               We make visa applications simple, fast, and stress-free
