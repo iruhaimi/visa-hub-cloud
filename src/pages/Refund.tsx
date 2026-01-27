@@ -64,6 +64,15 @@ export default function Refund() {
       isRefundable: true,
     },
     {
+      titleAr: 'رسوم الموعد',
+      titleEn: 'Appointment Fees',
+      descAr: 'رسوم حجز موعد السفارة أو مركز التأشيرات',
+      descEn: 'Embassy or visa center appointment booking fees',
+      refundableAr: 'غير قابلة للاسترداد بعد حجز الموعد',
+      refundableEn: 'Non-refundable once appointment is booked',
+      isRefundable: false,
+    },
+    {
       titleAr: 'رسوم التأشيرة الحكومية',
       titleEn: 'Government Visa Fees',
       descAr: 'الرسوم المدفوعة للسفارة أو القنصلية',
