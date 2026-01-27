@@ -98,51 +98,40 @@ function OfferCard({ offer, index }: { offer: SpecialOffer; index: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <Card className="group relative overflow-hidden bg-card hover:shadow-2xl transition-all duration-500 border-0 shadow-lg">
+      <Card className="group relative overflow-hidden bg-card hover:shadow-2xl transition-all duration-500 border-0 shadow-lg rounded-2xl">
         {/* Gradient Top Border */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
         
-        {/* Hot Badge */}
-        {offer.is_hot && (
-          <motion.div 
-            initial={{ x: -100 }}
-            animate={{ x: 0 }}
-            className="absolute top-4 left-0 z-10"
-          >
-            <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-4 py-1.5 rounded-e-full flex items-center gap-1.5 shadow-lg">
-              <Zap className="h-3.5 w-3.5" />
-              عرض حار 🔥
-            </div>
-          </motion.div>
-        )}
-
-        {/* Discount Circle Badge */}
-        <div className="absolute top-4 right-4 z-10">
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", delay: index * 0.1 + 0.2 }}
-            className="relative"
-          >
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary to-accent rounded-full flex flex-col items-center justify-center text-white shadow-xl">
-              <span className="text-xl sm:text-2xl font-bold leading-none">{offer.discount_percentage}%</span>
-              <span className="text-[10px] sm:text-xs">خصم</span>
-            </div>
-          </motion.div>
-        </div>
-
         <CardContent className="p-0">
-          {/* Header Section */}
+          {/* Header with Badges Row */}
           <div className="p-5 sm:p-6 pb-4">
-            {/* Country & Badge */}
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-4xl sm:text-5xl drop-shadow-md">{offer.flag_emoji}</span>
-              <div className="flex-1">
-                <Badge variant="outline" className="text-xs mb-1 border-primary/30 text-primary">
-                  {offer.badge}
-                </Badge>
-                <p className="text-sm text-muted-foreground">{offer.country_name}</p>
-              </div>
+            {/* Top Row: Hot Badge + Regular Badge */}
+            <div className="flex items-center justify-between mb-4">
+              {/* Hot Badge */}
+              {offer.is_hot ? (
+                <motion.div 
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                >
+                  <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-3 py-1.5 flex items-center gap-1.5 shadow-md border-0">
+                    <Zap className="h-3 w-3" />
+                    عرض حار 🔥
+                  </Badge>
+                </motion.div>
+              ) : (
+                <div />
+              )}
+              
+              {/* Regular Badge */}
+              <Badge variant="outline" className="text-xs border-primary/40 text-primary bg-primary/5">
+                {offer.badge}
+              </Badge>
+            </div>
+
+            {/* Country Flag & Name Row */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-4xl drop-shadow-sm">{offer.flag_emoji}</span>
+              <span className="text-sm font-medium text-muted-foreground">{offer.country_name}</span>
             </div>
 
             {/* Title */}
@@ -157,28 +146,42 @@ function OfferCard({ offer, index }: { offer: SpecialOffer; index: number }) {
           </div>
 
           {/* Pricing Section */}
-          <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-muted/50 to-muted/30">
+          <div className="px-5 sm:px-6 py-5 bg-muted/30 border-y border-border/30">
             <div className="flex items-center justify-between flex-wrap gap-3">
+              {/* Price */}
               <div className="flex items-baseline gap-3">
                 <div className="flex items-center gap-1">
                   <span className="text-3xl sm:text-4xl font-bold text-primary">{offer.sale_price}</span>
                   <SARSymbol size="lg" className="text-primary" />
                 </div>
-                <div className="flex items-center gap-0.5 line-through text-muted-foreground/70">
+                <div className="flex items-center gap-0.5 line-through text-muted-foreground/60">
                   <span className="text-base">{offer.original_price}</span>
-                  <SARSymbol size="xs" className="text-muted-foreground/70" />
+                  <SARSymbol size="xs" className="text-muted-foreground/60" />
                 </div>
               </div>
-              <Badge className="bg-green-500/10 text-green-600 border border-green-500/20 px-3 py-1.5 text-sm font-semibold">
-                وفر {savings} <SARSymbol size="xs" className="inline mr-0.5" />
-              </Badge>
+              
+              {/* Discount & Savings */}
+              <div className="flex flex-col items-end gap-1.5">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", delay: index * 0.1 + 0.2 }}
+                >
+                  <Badge className="bg-gradient-to-br from-primary to-accent text-white text-base font-bold px-3 py-1 border-0 shadow-md">
+                    {offer.discount_percentage}% خصم
+                  </Badge>
+                </motion.div>
+                <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 text-xs font-medium">
+                  وفر {savings} <SARSymbol size="xs" className="inline mr-0.5" />
+                </Badge>
+              </div>
             </div>
           </div>
 
           {/* Countdown Section */}
-          <div className="px-5 sm:px-6 py-5 border-t border-border/50">
+          <div className="px-5 sm:px-6 py-5">
             <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
-              <Clock className="h-4 w-4 text-destructive" />
+              <Clock className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">ينتهي العرض خلال</span>
             </div>
             <CountdownTimer endDate={new Date(offer.end_date)} size="sm" />
@@ -199,7 +202,7 @@ function OfferCard({ offer, index }: { offer: SpecialOffer; index: number }) {
             </div>
 
             {/* CTA Button */}
-            <Button asChild className="w-full h-12 text-base font-semibold group/btn shadow-md hover:shadow-lg transition-all">
+            <Button asChild className="w-full h-12 text-base font-semibold group/btn shadow-md hover:shadow-lg transition-all rounded-xl">
               <Link to="/apply">
                 احجز الآن
                 <ArrowLeft className="h-5 w-5 mr-2 transition-transform group-hover/btn:-translate-x-1" />
