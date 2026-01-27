@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, LogOut, LayoutDashboard, FileText, Globe, ChevronDown, Percent } from 'lucide-react';
+import { Menu, User, LogOut, LayoutDashboard, FileText, Globe, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import MobileNavDrawer from './MobileNavDrawer';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import logo from '@/assets/logo.jpeg';
 
 export default function HeaderArabic() {
@@ -99,6 +100,7 @@ export default function HeaderArabic() {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex lg:items-center lg:gap-3">
+            {user && <NotificationBell />}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -170,6 +172,7 @@ export default function HeaderArabic() {
 
           {/* Mobile menu button */}
           <div className="flex lg:hidden gap-2 items-center">
+            {user && <NotificationBell />}
             <Button variant="ghost" size="sm" onClick={toggleLanguage} className="h-9 w-9 p-0">
               <Globe className="h-4 w-4" />
             </Button>
