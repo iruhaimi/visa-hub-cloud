@@ -30,6 +30,7 @@ export default function Contact() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    countryCode: '+966',
     phone: '',
     subject: '',
     message: ''
@@ -393,16 +394,33 @@ export default function Contact() {
                         <Label htmlFor="phone">
                           {isRTL ? 'رقم الجوال' : 'Phone Number'}
                         </Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder="+966 5XX XXX XXXX"
-                          className="rounded-xl"
-                          dir="ltr"
-                        />
+                        <div className="flex gap-2" dir="ltr">
+                          <select
+                            value={formData.countryCode}
+                            onChange={(e) => setFormData(prev => ({ ...prev, countryCode: e.target.value }))}
+                            className="flex h-10 w-24 items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                          >
+                            <option value="+966">+966</option>
+                            <option value="+971">+971</option>
+                            <option value="+973">+973</option>
+                            <option value="+974">+974</option>
+                            <option value="+965">+965</option>
+                            <option value="+968">+968</option>
+                            <option value="+20">+20</option>
+                            <option value="+962">+962</option>
+                            <option value="+961">+961</option>
+                            <option value="+963">+963</option>
+                          </select>
+                          <Input
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            placeholder="5XX XXX XXXX"
+                            className="rounded-xl flex-1 placeholder:text-muted-foreground/60"
+                          />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="subject">
