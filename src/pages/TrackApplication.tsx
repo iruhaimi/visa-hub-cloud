@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
   FileText, 
@@ -17,12 +18,12 @@ import {
   Loader2,
   MapPin,
   Calendar,
-  User,
   CreditCard,
-  FileCheck,
   Send,
   Eye,
-  Ban
+  Ban,
+  Package,
+  Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
@@ -68,56 +69,56 @@ const STATUS_CONFIG: Record<ApplicationStatus, {
   pending_payment: { 
     icon: CreditCard, 
     color: 'text-amber-600', 
-    bgColor: 'bg-amber-100',
+    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
     labelAr: 'بانتظار الدفع',
     labelEn: 'Pending Payment'
   },
   submitted: { 
     icon: Send, 
     color: 'text-blue-600', 
-    bgColor: 'bg-blue-100',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
     labelAr: 'تم الإرسال',
     labelEn: 'Submitted'
   },
   under_review: { 
     icon: Eye, 
     color: 'text-purple-600', 
-    bgColor: 'bg-purple-100',
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
     labelAr: 'قيد المراجعة',
     labelEn: 'Under Review'
   },
   documents_required: { 
     icon: AlertCircle, 
     color: 'text-orange-600', 
-    bgColor: 'bg-orange-100',
+    bgColor: 'bg-orange-100 dark:bg-orange-900/30',
     labelAr: 'مطلوب مستندات',
     labelEn: 'Documents Required'
   },
   processing: { 
     icon: Clock, 
     color: 'text-cyan-600', 
-    bgColor: 'bg-cyan-100',
+    bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
     labelAr: 'قيد المعالجة',
     labelEn: 'Processing'
   },
   approved: { 
     icon: CheckCircle2, 
     color: 'text-green-600', 
-    bgColor: 'bg-green-100',
+    bgColor: 'bg-green-100 dark:bg-green-900/30',
     labelAr: 'تمت الموافقة',
     labelEn: 'Approved'
   },
   rejected: { 
     icon: XCircle, 
     color: 'text-red-600', 
-    bgColor: 'bg-red-100',
+    bgColor: 'bg-red-100 dark:bg-red-900/30',
     labelAr: 'مرفوض',
     labelEn: 'Rejected'
   },
   cancelled: { 
     icon: Ban, 
     color: 'text-gray-600', 
-    bgColor: 'bg-gray-100',
+    bgColor: 'bg-gray-100 dark:bg-gray-900/30',
     labelAr: 'ملغي',
     labelEn: 'Cancelled'
   },
@@ -134,7 +135,7 @@ const STATUS_ORDER: ApplicationStatus[] = [
 ];
 
 export default function TrackApplication() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const isRTL = language === 'ar';
   
   const [applicationNumber, setApplicationNumber] = useState('');
@@ -167,14 +168,6 @@ export default function TrackApplication() {
     setIsLoading(true);
 
     try {
-      // First, find the profile that matches the search criteria
-      const profileQuery = supabase
-        .from('profiles')
-        .select('id')
-        .eq(searchType === 'phone' ? 'phone' : 'id', searchType === 'phone' ? searchValue : 'dummy');
-
-      // For now, we'll search by application ID directly
-      // In production, you'd verify ownership through phone/email
       const { data: application, error: appError } = await supabase
         .from('applications')
         .select(`
@@ -243,289 +236,350 @@ export default function TrackApplication() {
   const currentStatusIndex = result ? getStatusIndex(result.status) : -1;
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-16">
-        <div className="container-section text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-6">
-            <Search className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {isRTL ? 'تتبع طلبك' : 'Track Your Application'}
-          </h1>
-          <p className="text-lg opacity-90 max-w-2xl mx-auto">
-            {isRTL 
-              ? 'أدخل رقم الطلب وبيانات التحقق لمعرفة حالة طلبك ومراحل المعالجة'
-              : 'Enter your application number and verification details to check your application status'
-            }
-          </p>
+      <section className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/85 py-20 overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute inset-0">
+          <motion.div
+            animate={{ y: [0, -20, 0] }}
+            transition={{ duration: 6, repeat: Infinity }}
+            className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-3xl blur-xl"
+          />
+          <motion.div
+            animate={{ y: [0, 20, 0] }}
+            transition={{ duration: 8, repeat: Infinity, delay: 1 }}
+            className="absolute bottom-20 left-20 w-40 h-40 bg-white/10 rounded-full blur-xl"
+          />
+        </div>
+
+        <div className="container-section relative">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-6"
+            >
+              <Package className="w-10 h-10 text-white" />
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {isRTL ? 'تتبع طلبك' : 'Track Your Application'}
+            </h1>
+            <p className="text-lg text-white/80 max-w-2xl mx-auto">
+              {isRTL 
+                ? 'أدخل رقم الطلب وبيانات التحقق لمعرفة حالة طلبك ومراحل المعالجة'
+                : 'Enter your application number and verification details to check your application status'
+              }
+            </p>
+          </motion.div>
         </div>
       </section>
 
       <div className="container-section py-12">
         <div className="max-w-3xl mx-auto">
           {/* Search Form */}
-          <Card className="mb-8 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                {isRTL ? 'بحث عن الطلب' : 'Search Application'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSearch} className="space-y-6">
-                {/* Application Number */}
-                <div className="space-y-2">
-                  <Label htmlFor="applicationNumber">
-                    {isRTL ? 'رقم الطلب' : 'Application Number'}
-                  </Label>
-                  <Input
-                    id="applicationNumber"
-                    type="text"
-                    placeholder={isRTL ? 'أدخل رقم الطلب (UUID)' : 'Enter application number (UUID)'}
-                    value={applicationNumber}
-                    onChange={(e) => setApplicationNumber(e.target.value)}
-                    className="text-base"
-                    dir="ltr"
-                  />
-                </div>
-
-                {/* Search Type Selection */}
-                <div className="space-y-3">
-                  <Label>
-                    {isRTL ? 'التحقق عبر' : 'Verify using'}
-                  </Label>
-                  <RadioGroup
-                    value={searchType}
-                    onValueChange={(v) => setSearchType(v as 'phone' | 'email')}
-                    className="flex gap-6"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="phone" id="phone" />
-                      <Label htmlFor="phone" className="cursor-pointer">
-                        {isRTL ? 'رقم الجوال' : 'Phone Number'}
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="email" id="email" />
-                      <Label htmlFor="email" className="cursor-pointer">
-                        {isRTL ? 'البريد الإلكتروني' : 'Email Address'}
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Search Value Input */}
-                <div className="space-y-2">
-                  <Label htmlFor="searchValue">
-                    {searchType === 'phone' 
-                      ? (isRTL ? 'رقم الجوال' : 'Phone Number')
-                      : (isRTL ? 'البريد الإلكتروني' : 'Email Address')
-                    }
-                  </Label>
-                  <Input
-                    id="searchValue"
-                    type={searchType === 'email' ? 'email' : 'tel'}
-                    placeholder={searchType === 'phone' 
-                      ? (isRTL ? '+966 5XXXXXXXX' : '+966 5XXXXXXXX')
-                      : (isRTL ? 'example@email.com' : 'example@email.com')
-                    }
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    className="text-base"
-                    dir="ltr"
-                  />
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                  <div className="flex items-center gap-2 text-destructive bg-destructive/10 p-3 rounded-lg">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-sm">{error}</span>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="mb-8 shadow-2xl border-0 overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <Search className="w-5 h-5 text-primary" />
                   </div>
-                )}
+                  {isRTL ? 'بحث عن الطلب' : 'Search Application'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleSearch} className="space-y-6">
+                  {/* Application Number */}
+                  <div className="space-y-2">
+                    <Label htmlFor="applicationNumber">
+                      {isRTL ? 'رقم الطلب' : 'Application Number'}
+                    </Label>
+                    <Input
+                      id="applicationNumber"
+                      type="text"
+                      placeholder={isRTL ? 'أدخل رقم الطلب (UUID)' : 'Enter application number (UUID)'}
+                      value={applicationNumber}
+                      onChange={(e) => setApplicationNumber(e.target.value)}
+                      className="text-base rounded-xl"
+                      dir="ltr"
+                    />
+                  </div>
 
-                {/* Submit Button */}
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  size="lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      {isRTL ? 'جاري البحث...' : 'Searching...'}
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-5 h-5" />
-                      {isRTL ? 'بحث' : 'Search'}
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                  {/* Search Type Selection */}
+                  <div className="space-y-3">
+                    <Label>
+                      {isRTL ? 'التحقق عبر' : 'Verify using'}
+                    </Label>
+                    <RadioGroup
+                      value={searchType}
+                      onValueChange={(v) => setSearchType(v as 'phone' | 'email')}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="phone" id="phone" />
+                        <Label htmlFor="phone" className="cursor-pointer">
+                          {isRTL ? 'رقم الجوال' : 'Phone Number'}
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="email" id="email" />
+                        <Label htmlFor="email" className="cursor-pointer">
+                          {isRTL ? 'البريد الإلكتروني' : 'Email Address'}
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Search Value Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="searchValue">
+                      {searchType === 'phone' 
+                        ? (isRTL ? 'رقم الجوال' : 'Phone Number')
+                        : (isRTL ? 'البريد الإلكتروني' : 'Email Address')
+                      }
+                    </Label>
+                    <Input
+                      id="searchValue"
+                      type={searchType === 'email' ? 'email' : 'tel'}
+                      placeholder={searchType === 'phone' 
+                        ? '+966 5XXXXXXXX'
+                        : 'example@email.com'
+                      }
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      className="text-base rounded-xl"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  {/* Error Message */}
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex items-center gap-3 text-destructive bg-destructive/10 p-4 rounded-xl"
+                      >
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm">{error}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Submit Button */}
+                  <Button 
+                    type="submit" 
+                    className="w-full rounded-xl" 
+                    size="lg"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                        {isRTL ? 'جاري البحث...' : 'Searching...'}
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-5 h-5 ml-2" />
+                        {isRTL ? 'بحث' : 'Search'}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Results Section */}
-          {searched && !isLoading && result && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {/* Application Summary Card */}
-              <Card className="shadow-lg border-t-4 border-t-primary">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-3">
-                      {result.visa_type?.country?.flag_url && (
-                        <img 
-                          src={result.visa_type.country.flag_url} 
-                          alt="" 
-                          className="w-12 h-8 object-cover rounded shadow"
-                        />
-                      )}
-                      <div>
-                        <CardTitle className="text-xl">
-                          {result.visa_type?.country?.name || 'Unknown'}
-                        </CardTitle>
-                        <p className="text-muted-foreground">
-                          {result.visa_type?.name}
-                        </p>
+          <AnimatePresence>
+            {searched && !isLoading && result && (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -30 }}
+                className="space-y-6"
+              >
+                {/* Application Summary Card */}
+                <Card className="shadow-xl border-0 overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-primary to-primary/50" />
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-4">
+                        {result.visa_type?.country?.flag_url && (
+                          <motion.img 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            src={result.visa_type.country.flag_url} 
+                            alt="" 
+                            className="w-14 h-10 object-cover rounded-lg shadow-lg"
+                          />
+                        )}
+                        <div>
+                          <CardTitle className="text-xl">
+                            {result.visa_type?.country?.name || 'Unknown'}
+                          </CardTitle>
+                          <p className="text-muted-foreground">
+                            {result.visa_type?.name}
+                          </p>
+                        </div>
                       </div>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <Badge 
+                          className={`${STATUS_CONFIG[result.status].bgColor} ${STATUS_CONFIG[result.status].color} border-0 px-4 py-2 text-sm`}
+                        >
+                          {(() => {
+                            const IconComponent = STATUS_CONFIG[result.status].icon;
+                            return <IconComponent className="w-4 h-4 ml-2" />;
+                          })()}
+                          {isRTL 
+                            ? STATUS_CONFIG[result.status].labelAr 
+                            : STATUS_CONFIG[result.status].labelEn
+                          }
+                        </Badge>
+                      </motion.div>
                     </div>
-                    <Badge 
-                      className={`${STATUS_CONFIG[result.status].bgColor} ${STATUS_CONFIG[result.status].color} border-0 px-3 py-1`}
-                    >
-                      {(() => {
-                        const IconComponent = STATUS_CONFIG[result.status].icon;
-                        return <IconComponent className="w-4 h-4 ml-1" />;
-                      })()}
-                      {isRTL 
-                        ? STATUS_CONFIG[result.status].labelAr 
-                        : STATUS_CONFIG[result.status].labelEn
-                      }
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>{isRTL ? 'تاريخ الإنشاء:' : 'Created:'}</span>
-                      <span className="text-foreground font-medium">
-                        {formatDate(result.created_at)}
-                      </span>
-                    </div>
-                    {result.travel_date && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        <span>{isRTL ? 'تاريخ السفر:' : 'Travel Date:'}</span>
-                        <span className="text-foreground font-medium">
-                          {format(new Date(result.travel_date), 'dd MMM yyyy', {
-                            locale: isRTL ? ar : enUS
-                          })}
-                        </span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-3 bg-muted/50 rounded-xl p-3">
+                        <Calendar className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">{isRTL ? 'تاريخ الإنشاء' : 'Created'}</p>
+                          <p className="font-medium text-sm">
+                            {formatDate(result.created_at)}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <FileText className="w-4 h-4" />
-                      <span>{isRTL ? 'رقم الطلب:' : 'App ID:'}</span>
-                      <span className="text-foreground font-mono text-xs">
-                        {result.id.slice(0, 8)}...
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Progress Timeline */}
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-primary" />
-                    {isRTL ? 'مراحل معالجة الطلب' : 'Application Progress'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {/* Visual Progress Steps */}
-                  <div className="mb-8">
-                    <div className="flex items-center justify-between relative">
-                      {/* Progress Line */}
-                      <div className="absolute top-5 left-0 right-0 h-1 bg-muted rounded-full" />
-                      <div 
-                        className="absolute top-5 h-1 bg-primary rounded-full transition-all duration-500"
-                        style={{ 
-                          width: `${Math.max(0, (currentStatusIndex / (STATUS_ORDER.length - 1)) * 100)}%`,
-                          [isRTL ? 'right' : 'left']: 0
-                        }}
-                      />
-                      
-                      {/* Steps */}
-                      {STATUS_ORDER.map((status, index) => {
-                        const config = STATUS_CONFIG[status];
-                        const Icon = config.icon;
-                        const isCompleted = currentStatusIndex >= index;
-                        const isCurrent = result.status === status;
-                        
-                        return (
-                          <div 
-                            key={status}
-                            className="relative z-10 flex flex-col items-center"
-                          >
-                            <div 
-                              className={`
-                                w-10 h-10 rounded-full flex items-center justify-center transition-all
-                                ${isCompleted 
-                                  ? 'bg-primary text-primary-foreground shadow-lg' 
-                                  : 'bg-muted text-muted-foreground'
-                                }
-                                ${isCurrent ? 'ring-4 ring-primary/30 scale-110' : ''}
-                              `}
-                            >
-                              <Icon className="w-5 h-5" />
-                            </div>
-                            <span 
-                              className={`
-                                mt-2 text-xs text-center max-w-[80px] hidden sm:block
-                                ${isCompleted ? 'text-foreground font-medium' : 'text-muted-foreground'}
-                              `}
-                            >
-                              {isRTL ? config.labelAr : config.labelEn}
-                            </span>
+                      {result.travel_date && (
+                        <div className="flex items-center gap-3 bg-muted/50 rounded-xl p-3">
+                          <MapPin className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">{isRTL ? 'تاريخ السفر' : 'Travel Date'}</p>
+                            <p className="font-medium text-sm">
+                              {format(new Date(result.travel_date), 'dd MMM yyyy', {
+                                locale: isRTL ? ar : enUS
+                              })}
+                            </p>
                           </div>
-                        );
-                      })}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 bg-muted/50 rounded-xl p-3">
+                        <FileText className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">{isRTL ? 'رقم الطلب' : 'App ID'}</p>
+                          <p className="font-medium text-sm font-mono">
+                            {result.id.slice(0, 8)}...
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Detailed Timeline */}
-                  <div className="border-t pt-6">
-                    <h4 className="font-medium mb-4 text-muted-foreground">
-                      {isRTL ? 'سجل التحديثات' : 'Status History'}
-                    </h4>
-                    
-                    {result.status_history.length > 0 ? (
-                      <div className="space-y-4">
+                {/* Progress Timeline */}
+                <Card className="shadow-xl border-0">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                      </div>
+                      {isRTL ? 'مراحل معالجة الطلب' : 'Application Progress'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Visual Progress Steps */}
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between relative">
+                        {/* Progress Line */}
+                        <div className="absolute top-5 left-0 right-0 h-1 bg-muted rounded-full" />
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.max(0, (currentStatusIndex / (STATUS_ORDER.length - 1)) * 100)}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="absolute top-5 h-1 bg-primary rounded-full"
+                          style={{ [isRTL ? 'right' : 'left']: 0 }}
+                        />
+                        
+                        {/* Steps */}
+                        {STATUS_ORDER.map((status, index) => {
+                          const config = STATUS_CONFIG[status];
+                          const Icon = config.icon;
+                          const isCompleted = currentStatusIndex >= index;
+                          const isCurrent = result.status === status;
+                          
+                          return (
+                            <motion.div 
+                              key={status}
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="relative z-10 flex flex-col items-center"
+                            >
+                              <div 
+                                className={`
+                                  w-10 h-10 rounded-full flex items-center justify-center transition-all
+                                  ${isCompleted 
+                                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
+                                    : 'bg-muted text-muted-foreground'
+                                  }
+                                  ${isCurrent ? 'ring-4 ring-primary/20' : ''}
+                                `}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <span className={`
+                                mt-2 text-xs text-center max-w-[60px] hidden sm:block
+                                ${isCompleted ? 'text-foreground font-medium' : 'text-muted-foreground'}
+                              `}>
+                                {isRTL ? config.labelAr : config.labelEn}
+                              </span>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Status History */}
+                    {result.status_history.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold mb-4">
+                          {isRTL ? 'سجل التحديثات' : 'Update History'}
+                        </h4>
                         {result.status_history.map((entry, index) => {
                           const config = STATUS_CONFIG[entry.new_status];
                           const Icon = config.icon;
-                          const isLast = index === result.status_history.length - 1;
                           
                           return (
-                            <div key={entry.id} className="flex gap-4">
-                              {/* Timeline Connector */}
-                              <div className="flex flex-col items-center">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${config.bgColor} ${config.color}`}>
-                                  <Icon className="w-4 h-4" />
-                                </div>
-                                {!isLast && (
-                                  <div className="w-0.5 h-full min-h-[40px] bg-muted my-1" />
-                                )}
+                            <motion.div
+                              key={entry.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="flex items-start gap-3 bg-muted/30 rounded-xl p-4"
+                            >
+                              <div className={`w-8 h-8 rounded-lg ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
+                                <Icon className={`w-4 h-4 ${config.color}`} />
                               </div>
-                              
-                              {/* Content */}
-                              <div className="flex-1 pb-4">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-medium">
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <span className={`font-medium ${config.color}`}>
                                     {isRTL ? config.labelAr : config.labelEn}
                                   </span>
                                   <span className="text-xs text-muted-foreground">
@@ -538,78 +592,38 @@ export default function TrackApplication() {
                                   </p>
                                 )}
                               </div>
-                            </div>
+                            </motion.div>
                           );
                         })}
                       </div>
-                    ) : (
-                      <div className="text-center py-6 text-muted-foreground">
-                        <FileCheck className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                        <p>
-                          {isRTL 
-                            ? 'لا يوجد سجل تحديثات بعد'
-                            : 'No status updates yet'
-                          }
-                        </p>
-                      </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              {/* Help Section */}
-              <Card className="bg-muted/50">
-                <CardContent className="py-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-1">
-                        {isRTL ? 'تحتاج مساعدة؟' : 'Need Help?'}
-                      </h4>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {isRTL 
-                          ? 'إذا كان لديك أي استفسار حول طلبك، لا تتردد في التواصل معنا'
-                          : 'If you have any questions about your application, feel free to contact us'
-                        }
-                      </p>
-                      <div className="flex gap-3 flex-wrap">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href="https://wa.me/966500000000" target="_blank" rel="noopener">
-                            {isRTL ? 'واتساب' : 'WhatsApp'}
-                          </a>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                          <a href="mailto:support@example.com">
-                            {isRTL ? 'البريد الإلكتروني' : 'Email'}
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* No Results State */}
-          {searched && !isLoading && !result && !error && (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Search className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium mb-2">
+          {/* No Results */}
+          <AnimatePresence>
+            {searched && !isLoading && !result && !error && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-16"
+              >
+                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
                   {isRTL ? 'لم يتم العثور على نتائج' : 'No Results Found'}
                 </h3>
                 <p className="text-muted-foreground">
-                  {isRTL 
-                    ? 'يرجى التأكد من صحة رقم الطلب والبيانات المدخلة'
-                    : 'Please verify your application number and entered details'
-                  }
+                  {isRTL ? 'تأكد من صحة رقم الطلب والبيانات المدخلة' : 'Please verify the application number and details'}
                 </p>
-              </CardContent>
-            </Card>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
