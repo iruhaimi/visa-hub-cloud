@@ -1,238 +1,61 @@
 
+# خطة: إعادة التوجيه التلقائي لصفحة الملف الشخصي بعد التسجيل/الدخول
 
-# DirectKSA-Style Travel & Visa Platform
+## الهدف
+بعد نجاح عملية التسجيل أو تسجيل الدخول، سيتم توجيه المستخدم تلقائياً إلى صفحة `/profile` مع عرض رسالة ترحيب مناسبة.
 
-A comprehensive full-stack travel and visa services platform with professional design, inspired by DirectKSA.com. The platform will handle visa applications, document management, payment processing, and include a complete admin system.
+## التغييرات المطلوبة
 
----
+### 1. تعديل ملف صفحة المصادقة (Auth.tsx)
 
-## 🎨 Design & Branding
+**الموقع:** `src/pages/Auth.tsx`
 
-**Professional & Corporate Style**
-- Clean, trustworthy color palette with primary blues and neutral grays
-- Modern typography with clear hierarchy
-- Trust-building elements (certifications, secure badges, testimonials)
-- Responsive design optimized for desktop and mobile
-- Arabic/English language support ready
+**التعديلات:**
 
----
+#### أ) تحديث دالة handleSignIn (تسجيل الدخول)
+- تغيير وجهة التوجيه من `/` إلى `/profile`
+- تحديث رسالة الترحيب لتكون أكثر ملاءمة
 
-## 🏠 Public Pages
+```text
+التغيير في السطر 90:
+من: navigate('/');
+إلى: navigate('/profile');
+```
 
-### Homepage
-- Hero section with search for visa services by destination country
-- Featured destinations with visa availability
-- Service categories (Tourist Visa, Student Visa, Business Visa)
-- Trust indicators and company credentials
-- Quick application status checker
-- Testimonials and success stories
+#### ب) تحديث دالة handleSignUp (إنشاء حساب جديد)
+- تغيير وجهة التوجيه من `/` إلى `/profile`
+- تعديل رسالة النجاح لتوجيه المستخدم لاستكمال بياناته
 
-### Visa Services Pages
-- Country-specific visa information pages
-- Requirements checklist for each visa type
-- Pricing and processing time information
-- FAQ sections for common questions
-- Start application CTAs
+```text
+التغيير في السطر 114:
+من: navigate('/');
+إلى: navigate('/profile');
 
-### Additional Services Pages
-- Hotel & flight booking information
-- Travel insurance options
-- Document translation services
-- International driving license
-- Study abroad programs
+تحديث رسالة النجاح:
+من: 'مرحباً بك في عطلات رحلاتكم. تم إنشاء حسابك بنجاح.'
+إلى: 'مرحباً بك في عطلات رحلاتكم! يرجى استكمال بياناتك الشخصية.'
+```
 
----
+#### ج) تحديث useEffect للتوجيه التلقائي
+- تغيير التوجيه التلقائي للمستخدمين المسجلين من `/` إلى `/profile`
 
-## 👤 Customer Portal
+```text
+التغيير في السطر 46:
+من: navigate('/');
+إلى: navigate('/profile');
+```
 
-### User Dashboard
-- Application status overview with visual progress tracker
-- Recent applications list
-- Upcoming appointment reminders
-- Digital wallet balance display
-- Quick actions (new application, upload documents)
+## ملخص التغييرات
 
-### Visa Application System
-- Multi-step application wizard
-- Country and visa type selection
-- Personal information forms with validation
-- Travel details and itinerary
-- Document requirements checklist
-- Document upload with preview
-- Application review and submission
+| الملف | نوع التغيير | الوصف |
+|-------|-------------|-------|
+| `src/pages/Auth.tsx` | تعديل | تحديث 3 مواقع للتوجيه + رسالة ترحيب محسّنة |
 
-### Document Management
-- Secure document upload (passport, photos, supporting docs)
-- Document status tracking (pending, verified, rejected)
-- Expiry date alerts for passports
-- Re-upload capability for rejected documents
+## تفاصيل تقنية
 
-### Application Tracking
-- Real-time status updates
-- Timeline view of application progress
-- Email/SMS notification preferences
-- Download approved visa documents
-
-### Payment & Wallet
-- Multiple payment methods integration
-- Digital wallet for balance and rewards
-- Transaction history
-- Invoice downloads
-- Refund request system
-
----
-
-## 🏢 Agent Portal
-
-### Agent Dashboard
-- Assigned applications overview
-- Performance metrics
-- Pending actions queue
-- Daily task list
-
-### Application Processing
-- View and verify customer applications
-- Document verification workflow
-- Status update controls
-- Internal notes and comments
-- Embassy submission tracking
-
-### Customer Management
-- Customer profiles access
-- Communication history
-- Application history per customer
-
----
-
-## ⚙️ Admin Panel
-
-### Dashboard
-- Platform analytics and KPIs
-- Revenue metrics
-- Application volume charts
-- Agent performance overview
-
-### User Management
-- Customer accounts management
-- Agent accounts with role assignment
-- Admin users management
-- Account status controls
-
-### Visa Configuration
-- Country and visa type management
-- Pricing configuration
-- Requirements management
-- Processing time settings
-- Document requirements per visa type
-
-### Application Management
-- All applications overview
-- Advanced filtering and search
-- Bulk actions
-- Export capabilities
-
-### Content Management
-- Homepage content editor
-- Country pages management
-- FAQ management
-- Terms and policies editor
-
-### Reports
-- Revenue reports
-- Application statistics
-- Agent performance reports
-- Export to CSV/PDF
-
----
-
-## 🔧 Backend & Database
-
-### Database Tables
-- **users**: Authentication and profile data
-- **user_roles**: Role-based access (customer, agent, admin)
-- **applications**: Visa application records
-- **application_documents**: Uploaded documents metadata
-- **application_status_history**: Status change logs
-- **countries**: Supported countries
-- **visa_types**: Visa categories and requirements
-- **payments**: Transaction records
-- **wallet_transactions**: Wallet activity
-- **notifications**: User notifications
-
-### Security
-- Row Level Security (RLS) policies for data protection
-- Role-based access control
-- Secure document storage with private buckets
-- Input validation and sanitization
-
-### Edge Functions
-- Document upload processing
-- Payment processing integration
-- Email notifications (using Resend)
-- Status update webhooks
-
----
-
-## 💳 Payment Integration
-
-- Stripe integration for secure payments
-- Support for credit/debit cards
-- Wallet top-up functionality
-- Automatic invoice generation
-- Refund processing
-
----
-
-## 📱 Key Features Summary
-
-| Feature | Customer | Agent | Admin |
-|---------|----------|-------|-------|
-| Apply for Visa | ✅ | - | - |
-| Upload Documents | ✅ | - | - |
-| Track Applications | ✅ | ✅ | ✅ |
-| Process Applications | - | ✅ | ✅ |
-| Verify Documents | - | ✅ | ✅ |
-| Manage Users | - | - | ✅ |
-| Configure Visa Types | - | - | ✅ |
-| View Reports | - | ✅ | ✅ |
-| Make Payments | ✅ | - | - |
-| Manage Wallet | ✅ | - | ✅ |
-
----
-
-## 🚀 Implementation Phases
-
-**Phase 1: Foundation**
-- Set up Lovable Cloud with database and auth
-- Create database schema with migrations
-- Implement authentication (signup, login, roles)
-- Build responsive layout with navigation
-
-**Phase 2: Public Interface**
-- Homepage with hero and search
-- Visa services listing pages
-- Country-specific visa information
-- Contact and about pages
-
-**Phase 3: Customer Portal**
-- User dashboard
-- Multi-step visa application wizard
-- Document upload system
-- Application tracking
-
-**Phase 4: Payment System**
-- Stripe integration
-- Wallet functionality
-- Payment history
-- Invoice generation
-
-**Phase 5: Agent & Admin Portals**
-- Agent dashboard and workflows
-- Admin panel with full controls
-- User and content management
-- Reporting and analytics
-
----
-
-This plan creates a production-ready travel and visa services platform with all the features you've requested, secured with proper authentication and role-based access control.
-
+- **React Router:** استخدام `navigate('/profile')` بدلاً من `navigate('/')`
+- **Toast Messages:** تحديث رسائل الترحيب لتعكس التوجه الجديد
+- **حالات التوجيه:**
+  - تسجيل الدخول: توجيه إلى `/profile` مع رسالة "مرحباً بعودتك!"
+  - إنشاء حساب: توجيه إلى `/profile` مع رسالة تدعو لاستكمال البيانات
+  - مستخدم مسجل مسبقاً: توجيه تلقائي إلى `/profile`
