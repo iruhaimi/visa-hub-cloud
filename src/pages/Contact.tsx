@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 import { 
   MapPin, 
   Phone, 
@@ -14,9 +14,10 @@ import {
   Clock, 
   MessageCircle,
   Send,
-  Building2,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Headphones,
+  Globe
 } from 'lucide-react';
 
 export default function Contact() {
@@ -39,31 +40,31 @@ export default function Contact() {
       icon: MapPin,
       titleAr: 'العنوان',
       titleEn: 'Address',
-      valueAr: 'الرياض، المملكة العربية السعودية\nطريق الملك فهد، برج المملكة، الطابق 15',
-      valueEn: 'Riyadh, Saudi Arabia\nKing Fahd Road, Kingdom Tower, 15th Floor'
+      valueAr: 'الرياض، المملكة العربية السعودية',
+      valueEn: 'Riyadh, Saudi Arabia'
     },
     {
       icon: Phone,
       titleAr: 'الهاتف',
       titleEn: 'Phone',
-      valueAr: '+966 11 XXX XXXX\n+966 50 XXX XXXX',
-      valueEn: '+966 11 XXX XXXX\n+966 50 XXX XXXX',
-      link: 'tel:+966500000000'
+      valueAr: '920034158',
+      valueEn: '920034158',
+      link: 'tel:920034158'
     },
     {
       icon: Mail,
       titleAr: 'البريد الإلكتروني',
       titleEn: 'Email',
-      valueAr: 'info@visago.sa\nsupport@visago.sa',
-      valueEn: 'info@visago.sa\nsupport@visago.sa',
-      link: 'mailto:info@visago.sa'
+      valueAr: 'info@rhalat.com',
+      valueEn: 'info@rhalat.com',
+      link: 'mailto:info@rhalat.com'
     },
     {
       icon: Clock,
       titleAr: 'ساعات العمل',
       titleEn: 'Working Hours',
-      valueAr: 'الأحد - الخميس: 9 صباحاً - 6 مساءً\nالجمعة - السبت: مغلق',
-      valueEn: 'Sun - Thu: 9 AM - 6 PM\nFri - Sat: Closed'
+      valueAr: 'الأحد - الخميس: 9 صباحاً - 6 مساءً',
+      valueEn: 'Sun - Thu: 9 AM - 6 PM'
     },
   ];
 
@@ -92,69 +93,131 @@ export default function Contact() {
     }));
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-16">
-        <div className="container-section text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-6">
-            <MessageCircle className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {isRTL ? 'تواصل معنا' : 'Contact Us'}
-          </h1>
-          <p className="text-lg opacity-90 max-w-2xl mx-auto">
-            {isRTL 
-              ? 'نحن هنا لمساعدتك. تواصل معنا في أي وقت وسنرد عليك في أسرع وقت ممكن'
-              : 'We are here to help. Reach out anytime and we will respond as soon as possible'
-            }
-          </p>
+      <section className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/85 py-20 overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute inset-0">
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+            transition={{ duration: 8, repeat: Infinity }}
+            className="absolute top-10 right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.15, 0.1] }}
+            transition={{ duration: 10, repeat: Infinity, delay: 2 }}
+            className="absolute bottom-10 left-10 w-80 h-80 bg-white/10 rounded-full blur-3xl"
+          />
+        </div>
+
+        <div className="container-section relative">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-6"
+            >
+              <Headphones className="w-10 h-10 text-white" />
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {isRTL ? 'تواصل معنا' : 'Contact Us'}
+            </h1>
+            <p className="text-lg text-white/80 max-w-2xl mx-auto">
+              {isRTL 
+                ? 'نحن هنا لمساعدتك. تواصل معنا في أي وقت وسنرد عليك في أسرع وقت ممكن'
+                : 'We are here to help. Reach out anytime and we will respond as soon as possible'
+              }
+            </p>
+          </motion.div>
         </div>
       </section>
 
-      <div className="container-section py-16">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Contact Info Cards */}
-          <div className="lg:col-span-1 space-y-4">
+      {/* Quick Contact Cards */}
+      <section className="py-8 -mt-8 relative z-10">
+        <div className="container-section">
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {contactInfo.map((info, index) => {
               const Icon = info.icon;
               return (
-                <Card key={index} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-5">
-                    <div className="flex gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <motion.div key={index} variants={itemVariants}>
+                  <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer h-full">
+                    <CardContent className="p-5 text-center">
+                      <motion.div 
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors"
+                      >
                         <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-1">
-                          {isRTL ? info.titleAr : info.titleEn}
-                        </h3>
-                        <p className="text-sm text-muted-foreground whitespace-pre-line">
-                          {isRTL ? info.valueAr : info.valueEn}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      </motion.div>
+                      <h3 className="font-semibold mb-1 text-sm">
+                        {isRTL ? info.titleAr : info.titleEn}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {isRTL ? info.valueAr : info.valueEn}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               );
             })}
+          </motion.div>
+        </div>
+      </section>
 
+      <div className="container-section py-12">
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Contact Methods */}
+          <motion.div 
+            className="lg:col-span-2 space-y-4"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             {/* WhatsApp Card */}
-            <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
-              <CardContent className="p-5">
-                <div className="flex gap-4 items-center">
-                  <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MessageCircle className="w-6 h-6 text-white" />
-                  </div>
+            <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 border-green-200/50 dark:border-green-800/50 overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <motion.div 
+                    whileHover={{ scale: 1.1 }}
+                    className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg"
+                  >
+                    <MessageCircle className="w-7 h-7 text-white" />
+                  </motion.div>
                   <div className="flex-1">
-                    <h3 className="font-semibold mb-1">
+                    <h3 className="font-bold text-lg mb-1">
                       {isRTL ? 'واتساب' : 'WhatsApp'}
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {isRTL ? 'تحدث معنا مباشرة' : 'Chat with us directly'}
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {isRTL ? 'تحدث معنا مباشرة وسنرد فوراً' : 'Chat with us directly'}
                     </p>
-                    <Button size="sm" className="bg-green-500 hover:bg-green-600" asChild>
-                      <a href="https://wa.me/966500000000" target="_blank" rel="noopener noreferrer">
+                    <Button className="bg-green-500 hover:bg-green-600 rounded-xl w-full" asChild>
+                      <a href="https://wa.me/966920034158?text=السلام%20عليكم،%20أريد%20الاستفسار%20عن%20خدمات%20التأشيرات" target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="w-4 h-4 ml-2" />
                         {isRTL ? 'ابدأ المحادثة' : 'Start Chat'}
                       </a>
                     </Button>
@@ -162,24 +225,122 @@ export default function Contact() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+
+            {/* Phone Card */}
+            <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <motion.div 
+                    whileHover={{ scale: 1.1 }}
+                    className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg"
+                  >
+                    <Phone className="w-7 h-7 text-primary-foreground" />
+                  </motion.div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">
+                      {isRTL ? 'اتصل بنا' : 'Call Us'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {isRTL ? 'متاحون من 9 ص - 6 م' : 'Available 9 AM - 6 PM'}
+                    </p>
+                    <Button variant="outline" className="rounded-xl w-full" asChild>
+                      <a href="tel:920034158">
+                        <Phone className="w-4 h-4 ml-2" />
+                        920034158
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Email Card */}
+            <Card className="border-border/50 overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <motion.div 
+                    whileHover={{ scale: 1.1 }}
+                    className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center"
+                  >
+                    <Mail className="w-7 h-7 text-muted-foreground" />
+                  </motion.div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">
+                      {isRTL ? 'البريد الإلكتروني' : 'Email Us'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {isRTL ? 'نرد خلال 24 ساعة' : 'We reply within 24 hours'}
+                    </p>
+                    <Button variant="outline" className="rounded-xl w-full" asChild>
+                      <a href="mailto:info@rhalat.com">
+                        <Mail className="w-4 h-4 ml-2" />
+                        info@rhalat.com
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Social Links */}
+            <Card className="border-border/50">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <Globe className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold">
+                    {isRTL ? 'تابعنا' : 'Follow Us'}
+                  </h3>
+                </div>
+                <div className="flex gap-3">
+                  {['twitter', 'instagram', 'facebook', 'linkedin'].map((social) => (
+                    <motion.a
+                      key={social}
+                      href="#"
+                      whileHover={{ scale: 1.1, y: -3 }}
+                      className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center hover:bg-primary/10 transition-colors"
+                    >
+                      <span className="text-xs font-medium text-muted-foreground uppercase">
+                        {social[0]}
+                      </span>
+                    </motion.a>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Contact Form */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Send className="w-5 h-5 text-primary" />
+          <motion.div 
+            className="lg:col-span-3"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="shadow-2xl border-0">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <Send className="w-5 h-5 text-primary" />
+                  </div>
                   {isRTL ? 'أرسل لنا رسالة' : 'Send Us a Message'}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 {isSubmitted ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle2 className="w-8 h-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-2">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-12"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200 }}
+                      className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
+                    >
+                      <CheckCircle2 className="w-10 h-10 text-green-600" />
+                    </motion.div>
+                    <h3 className="text-2xl font-bold mb-2">
                       {isRTL ? 'شكراً لتواصلك معنا!' : 'Thank You for Contacting Us!'}
                     </h3>
                     <p className="text-muted-foreground mb-6">
@@ -188,12 +349,12 @@ export default function Contact() {
                         : 'Your message has been received and we will contact you soon'
                       }
                     </p>
-                    <Button onClick={() => setIsSubmitted(false)}>
+                    <Button onClick={() => setIsSubmitted(false)} className="rounded-xl">
                       {isRTL ? 'إرسال رسالة أخرى' : 'Send Another Message'}
                     </Button>
-                  </div>
+                  </motion.div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">
@@ -205,6 +366,7 @@ export default function Contact() {
                           value={formData.name}
                           onChange={handleChange}
                           placeholder={isRTL ? 'أدخل اسمك' : 'Enter your name'}
+                          className="rounded-xl"
                           required
                         />
                       </div>
@@ -219,6 +381,7 @@ export default function Contact() {
                           value={formData.email}
                           onChange={handleChange}
                           placeholder="example@email.com"
+                          className="rounded-xl"
                           dir="ltr"
                           required
                         />
@@ -237,6 +400,7 @@ export default function Contact() {
                           value={formData.phone}
                           onChange={handleChange}
                           placeholder="+966 5XX XXX XXXX"
+                          className="rounded-xl"
                           dir="ltr"
                         />
                       </div>
@@ -250,6 +414,7 @@ export default function Contact() {
                           value={formData.subject}
                           onChange={handleChange}
                           placeholder={isRTL ? 'موضوع الرسالة' : 'Message subject'}
+                          className="rounded-xl"
                           required
                         />
                       </div>
@@ -266,19 +431,20 @@ export default function Contact() {
                         onChange={handleChange}
                         placeholder={isRTL ? 'اكتب رسالتك هنا...' : 'Write your message here...'}
                         rows={5}
+                        className="rounded-xl resize-none"
                         required
                       />
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                    <Button type="submit" size="lg" className="w-full rounded-xl" disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <Loader2 className="w-5 h-5 animate-spin ml-2" />
                           {isRTL ? 'جاري الإرسال...' : 'Sending...'}
                         </>
                       ) : (
                         <>
-                          <Send className="w-5 h-5" />
+                          <Send className="w-5 h-5 ml-2" />
                           {isRTL ? 'إرسال الرسالة' : 'Send Message'}
                         </>
                       )}
@@ -287,12 +453,17 @@ export default function Contact() {
                 )}
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         </div>
 
         {/* Map Section */}
-        <div className="mt-12">
-          <Card className="overflow-hidden">
+        <motion.div 
+          className="mt-12"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <Card className="overflow-hidden shadow-xl border-0">
             <div className="aspect-[21/9] bg-muted relative">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3624.6837453874037!2d46.6854!3d24.7114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjTCsDQyJzQxLjAiTiA0NsKwNDEnMDcuNCJF!5e0!3m2!1sen!2ssa!4v1234567890"
@@ -305,7 +476,7 @@ export default function Contact() {
               />
             </div>
           </Card>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

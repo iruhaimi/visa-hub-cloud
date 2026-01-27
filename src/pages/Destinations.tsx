@@ -1,27 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-  Filter, 
   Clock, 
   ArrowLeft,
   ArrowRight,
-  X
+  X,
+  Globe,
+  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SARSymbol from '@/components/ui/SARSymbol';
 import type { Country, VisaType } from '@/types/database';
 
 export default function Destinations() {
@@ -31,7 +26,6 @@ export default function Destinations() {
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState('all');
 
   const ArrowIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
 
@@ -83,133 +77,218 @@ export default function Destinations() {
     });
   }, [countries, searchQuery]);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <section className="gradient-hero py-16">
-        <div className="container-section">
-          <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+      <section className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/85 py-20 overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-32 -right-32 w-64 h-64 bg-white/5 rounded-full"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            className="absolute -bottom-20 -left-20 w-48 h-48 bg-white/5 rounded-full"
+          />
+        </div>
+
+        <div className="container-section relative">
+          <motion.div 
+            className="mx-auto max-w-3xl text-center"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-6"
+            >
+              <Globe className="w-10 h-10 text-white" />
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
               {t('countries.title')}
             </h1>
-            <p className="mt-4 text-lg text-white/80">
+            <p className="text-lg text-white/80 mb-8">
               {t('countries.subtitle')}
             </p>
 
-            <div className="mt-8">
-              <div className="flex gap-2 bg-white rounded-lg p-2 shadow-xl max-w-md mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="max-w-lg mx-auto"
+            >
+              <div className="flex gap-2 bg-white rounded-2xl p-2 shadow-2xl">
                 <div className="relative flex-1">
-                  <Search className="absolute start-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="text"
                     placeholder={t('hero.searchPlaceholder')}
-                    className="border-0 ps-10 focus-visible:ring-0"
+                    className="border-0 ps-12 py-6 text-base focus-visible:ring-0 rounded-xl"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
+                <Button size="lg" className="rounded-xl px-6">
+                  <Search className="h-5 w-5" />
+                </Button>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Countries Grid */}
-      <section className="py-12">
+      <section className="py-16">
         <div className="container-section">
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-muted-foreground">
-              {filteredCountries.length} {t('common.noResults').includes('لا') ? 'دولة' : 'countries'}
-            </p>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-between mb-8"
+          >
+            <div className="flex items-center gap-3">
+              <MapPin className="h-5 w-5 text-primary" />
+              <p className="text-muted-foreground">
+                <span className="font-semibold text-foreground">{filteredCountries.length}</span> وجهة متاحة
+              </p>
+            </div>
             {searchQuery && (
-              <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')}>
-                <X className="h-4 w-4 me-1" />
+              <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')} className="gap-2">
+                <X className="h-4 w-4" />
                 مسح البحث
               </Button>
             )}
-          </div>
+          </motion.div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-10 w-14" />
-                    <Skeleton className="h-5 w-32 mt-2" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-10 w-full mt-4" />
-                  </CardContent>
-                </Card>
+                <div key={i} className="rounded-2xl overflow-hidden border bg-card">
+                  <Skeleton className="h-32 w-full" />
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : filteredCountries.length === 0 ? (
-            <div className="text-center py-16">
-              <Search className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold">لا توجد نتائج</h3>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-20"
+            >
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+                <Search className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">لا توجد نتائج</h3>
               <p className="text-muted-foreground">جرب البحث بكلمة أخرى</p>
-            </div>
+            </motion.div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredCountries.map((country) => {
-                const minPrice = getCountryMinPrice(country.id);
-                const processingDays = getCountryProcessingDays(country.id);
-                const visaCount = getVisaTypesCount(country.id);
-                
-                return (
-                  <Card key={country.id} className="group overflow-hidden transition-all hover:shadow-lg">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-3">
+            <motion.div 
+              className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <AnimatePresence mode="popLayout">
+                {filteredCountries.map((country) => {
+                  const minPrice = getCountryMinPrice(country.id);
+                  const processingDays = getCountryProcessingDays(country.id);
+                  const visaCount = getVisaTypesCount(country.id);
+                  
+                  return (
+                    <motion.div
+                      key={country.id}
+                      variants={itemVariants}
+                      layout
+                      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                      className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300"
+                    >
+                      {/* Flag Background */}
+                      <div className="relative h-36 overflow-hidden">
                         <img
-                          src={country.flag_url || `https://flagcdn.com/w80/${country.code.toLowerCase()}.png`}
+                          src={country.flag_url || `https://flagcdn.com/w320/${country.code.toLowerCase()}.png`}
                           alt={country.name}
-                          className="h-12 w-16 rounded object-cover shadow-sm"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{country.name}</CardTitle>
-                          {visaCount > 0 && (
-                            <CardDescription>
-                              {visaCount} نوع تأشيرة
-                            </CardDescription>
+                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+                        
+                        {/* Badges */}
+                        <div className="absolute top-3 right-3 flex items-center gap-2">
+                          {processingDays && (
+                            <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm gap-1">
+                              <Clock className="h-3 w-3" />
+                              {processingDays} أيام
+                            </Badge>
                           )}
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        {processingDays && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span>{processingDays} {t('common.days')}</span>
-                          </div>
+                        
+                        {visaCount > 0 && (
+                          <Badge className="absolute top-3 left-3 bg-primary/90 backdrop-blur-sm">
+                            {visaCount} نوع تأشيرة
+                          </Badge>
                         )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-5">
+                        <h3 className="text-xl font-bold mb-3">{country.name}</h3>
+                        
                         {minPrice && (
-                          <div className="text-end">
-                            <p className="text-xs text-muted-foreground">{t('countries.startingFrom')}</p>
-                            <p className="text-xl font-bold text-primary">${minPrice}</p>
+                          <div className="flex items-baseline gap-2 mb-4">
+                            <span className="text-xs text-muted-foreground">يبدأ من</span>
+                            <span className="text-2xl font-bold text-primary flex items-center gap-1">
+                              {minPrice}
+                              <SARSymbol size="sm" className="text-primary" />
+                            </span>
                           </div>
                         )}
+
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1 rounded-xl" asChild>
+                            <Link to={`/country/${country.code}`}>
+                              التفاصيل
+                            </Link>
+                          </Button>
+                          <Button size="sm" className="flex-1 rounded-xl gap-1" asChild>
+                            <Link to={`/apply?country=${country.code}`}>
+                              قدّم الآن
+                              <ArrowIcon className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
-                      
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1" asChild>
-                          <Link to={`/country/${country.code}`}>
-                            {t('countries.details')}
-                          </Link>
-                        </Button>
-                        <Button size="sm" className="flex-1" asChild>
-                          <Link to={`/apply?country=${country.code}`}>
-                            {t('countries.applyNow')}
-                            <ArrowIcon className="h-4 w-4 ms-1 rtl-flip" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </motion.div>
           )}
         </div>
       </section>
