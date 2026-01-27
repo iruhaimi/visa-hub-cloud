@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import CountryCodePicker from '@/components/ui/CountryCodePicker';
 import { 
   MapPin, 
   Phone, 
@@ -395,22 +396,11 @@ export default function Contact() {
                           {isRTL ? 'رقم الجوال' : 'Phone Number'}
                         </Label>
                         <div className="flex gap-2" dir="ltr">
-                          <select
+                          <CountryCodePicker
                             value={formData.countryCode}
-                            onChange={(e) => setFormData(prev => ({ ...prev, countryCode: e.target.value }))}
-                            className="flex h-10 w-24 items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                          >
-                            <option value="+966">+966</option>
-                            <option value="+971">+971</option>
-                            <option value="+973">+973</option>
-                            <option value="+974">+974</option>
-                            <option value="+965">+965</option>
-                            <option value="+968">+968</option>
-                            <option value="+20">+20</option>
-                            <option value="+962">+962</option>
-                            <option value="+961">+961</option>
-                            <option value="+963">+963</option>
-                          </select>
+                            onChange={(value) => setFormData(prev => ({ ...prev, countryCode: value }))}
+                            isRTL={isRTL}
+                          />
                           <Input
                             id="phone"
                             name="phone"
