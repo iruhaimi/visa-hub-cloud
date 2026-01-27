@@ -3,6 +3,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
 import { 
   RotateCcw, 
@@ -15,15 +18,30 @@ import {
   ArrowRight,
   ArrowLeft,
   ChevronDown,
-  MessageCircle
+  MessageCircle,
+  Search,
+  Send,
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Refund() {
   const { language } = useLanguage();
+  const { toast } = useToast();
   const isRTL = language === 'ar';
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+  const [faqSearch, setFaqSearch] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    applicationNumber: '',
+    email: '',
+    phone: '',
+    reason: '',
+    additionalDetails: ''
+  });
 
   const refundScenarios = [
     {
@@ -138,6 +156,64 @@ export default function Refund() {
       answerEn: 'Yes, if you cancel after 24 hours but before embassy submission, you can get a 75% refund of service fees.',
     },
   ];
+
+  const refundReasons = [
+    { valueAr: 'تغيير خطط السفر', valueEn: 'Change of travel plans' },
+    { valueAr: 'مشكلة مالية', valueEn: 'Financial issue' },
+    { valueAr: 'وجدت خدمة أفضل', valueEn: 'Found a better service' },
+    { valueAr: 'تأخر في معالجة الطلب', valueEn: 'Delay in processing' },
+    { valueAr: 'خطأ في الطلب', valueEn: 'Error in application' },
+    { valueAr: 'سبب آخر', valueEn: 'Other reason' },
+  ];
+
+  const handleFormChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitRefund = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.applicationNumber || !formData.email || !formData.reason) {
+      toast({
+        title: isRTL ? 'خطأ' : 'Error',
+        description: isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    // Simulate form submission
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    toast({
+      title: isRTL ? 'تم إرسال الطلب بنجاح' : 'Request Submitted Successfully',
+      description: isRTL 
+        ? 'سنراجع طلبك ونتواصل معك خلال 2-3 أيام عمل'
+        : 'We will review your request and contact you within 2-3 business days',
+    });
+    
+    setFormData({
+      applicationNumber: '',
+      email: '',
+      phone: '',
+      reason: '',
+      additionalDetails: ''
+    });
+    setIsSubmitting(false);
+  };
+
+  const filteredFAQs = refundFAQs.filter(faq => {
+    if (!faqSearch.trim()) return true;
+    const searchLower = faqSearch.toLowerCase();
+    return (
+      faq.questionAr.toLowerCase().includes(searchLower) ||
+      faq.questionEn.toLowerCase().includes(searchLower) ||
+      faq.answerAr.toLowerCase().includes(searchLower) ||
+      faq.answerEn.toLowerCase().includes(searchLower)
+    );
+  });
 
   const processSteps = [
     {
@@ -339,92 +415,192 @@ export default function Refund() {
             <h2 className="text-2xl font-bold mb-6 text-center">
               {isRTL ? 'الأسئلة الشائعة حول الاسترجاع' : 'Refund FAQs'}
             </h2>
+            
+            {/* Search Box */}
+            <div className="relative mb-6">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={isRTL ? 'ابحث في الأسئلة الشائعة...' : 'Search FAQs...'}
+                value={faqSearch}
+                onChange={(e) => setFaqSearch(e.target.value)}
+                className="pr-10"
+              />
+            </div>
+
             <div className="space-y-3">
-              {refundFAQs.map((faq, index) => (
-                <Card 
-                  key={index} 
-                  className="overflow-hidden cursor-pointer transition-all hover:shadow-md"
-                  onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
-                >
-                  <CardContent className="p-0">
-                    <div className="flex items-center justify-between p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-sm">
-                          {index + 1}
-                        </div>
-                        <h4 className="font-medium">
-                          {isRTL ? faq.questionAr : faq.questionEn}
-                        </h4>
-                      </div>
-                      <motion.div
-                        animate={{ rotate: openFAQ === index ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                      </motion.div>
-                    </div>
-                    <AnimatePresence>
-                      {openFAQ === index && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="px-4 pb-4 pt-0">
-                            <div className="p-4 bg-muted/50 rounded-lg text-muted-foreground">
-                              {isRTL ? faq.answerAr : faq.answerEn}
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </CardContent>
+              {filteredFAQs.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <p className="text-muted-foreground">
+                    {isRTL ? 'لا توجد نتائج مطابقة لبحثك' : 'No results match your search'}
+                  </p>
                 </Card>
-              ))}
+              ) : (
+                filteredFAQs.map((faq, index) => (
+                  <Card 
+                    key={index} 
+                    className="overflow-hidden cursor-pointer transition-all hover:shadow-md"
+                    onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                  >
+                    <CardContent className="p-0">
+                      <div className="flex items-center justify-between p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-sm">
+                            {index + 1}
+                          </div>
+                          <h4 className="font-medium">
+                            {isRTL ? faq.questionAr : faq.questionEn}
+                          </h4>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: openFAQ === index ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                        </motion.div>
+                      </div>
+                      <AnimatePresence>
+                        {openFAQ === index && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-4 pt-0">
+                              <div className="p-4 bg-muted/50 rounded-lg text-muted-foreground">
+                                {isRTL ? faq.answerAr : faq.answerEn}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </section>
 
-          {/* Contact for Refund */}
-          <section>
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="py-8">
-                <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-right">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-8 h-8 text-primary" />
+          {/* Refund Request Form */}
+          <section className="mb-12">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  {isRTL ? 'نموذج طلب الاسترداد' : 'Refund Request Form'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmitRefund} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="applicationNumber">
+                        {isRTL ? 'رقم الطلب *' : 'Application Number *'}
+                      </Label>
+                      <Input
+                        id="applicationNumber"
+                        placeholder={isRTL ? 'مثال: APP-123456' : 'e.g., APP-123456'}
+                        value={formData.applicationNumber}
+                        onChange={(e) => handleFormChange('applicationNumber', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">
+                        {isRTL ? 'البريد الإلكتروني *' : 'Email Address *'}
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder={isRTL ? 'example@email.com' : 'example@email.com'}
+                        value={formData.email}
+                        onChange={(e) => handleFormChange('email', e.target.value)}
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-2">
-                      {isRTL ? 'لطلب استرداد' : 'To Request a Refund'}
-                    </h3>
-                    <p className="text-muted-foreground mb-2">
-                      {isRTL 
-                        ? 'أرسل بريداً إلكترونياً يتضمن رقم الطلب وسبب الاسترداد إلى:'
-                        : 'Send an email with your application number and refund reason to:'
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">
+                        {isRTL ? 'رقم الهاتف' : 'Phone Number'}
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder={isRTL ? '05xxxxxxxx' : '05xxxxxxxx'}
+                        value={formData.phone}
+                        onChange={(e) => handleFormChange('phone', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reason">
+                        {isRTL ? 'سبب الاسترداد *' : 'Refund Reason *'}
+                      </Label>
+                      <select
+                        id="reason"
+                        className="w-full h-10 px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        value={formData.reason}
+                        onChange={(e) => handleFormChange('reason', e.target.value)}
+                        required
+                      >
+                        <option value="">{isRTL ? 'اختر السبب' : 'Select reason'}</option>
+                        {refundReasons.map((reason, idx) => (
+                          <option key={idx} value={isRTL ? reason.valueAr : reason.valueEn}>
+                            {isRTL ? reason.valueAr : reason.valueEn}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="additionalDetails">
+                      {isRTL ? 'تفاصيل إضافية' : 'Additional Details'}
+                    </Label>
+                    <Textarea
+                      id="additionalDetails"
+                      placeholder={isRTL 
+                        ? 'أضف أي معلومات إضافية تساعدنا في معالجة طلبك...'
+                        : 'Add any additional information that helps us process your request...'
                       }
-                    </p>
-                    <a 
-                      href="mailto:info@rhalat.com" 
-                      className="text-primary font-medium hover:underline"
-                    >
-                      info@rhalat.com
-                    </a>
+                      value={formData.additionalDetails}
+                      onChange={(e) => handleFormChange('additionalDetails', e.target.value)}
+                      rows={4}
+                    />
                   </div>
-                  <div className="flex gap-3">
-                    <Button asChild>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {isRTL ? 'جاري الإرسال...' : 'Submitting...'}
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          {isRTL ? 'إرسال طلب الاسترداد' : 'Submit Refund Request'}
+                        </>
+                      )}
+                    </Button>
+                    <Button type="button" variant="outline" asChild>
                       <a href="mailto:info@rhalat.com">
-                        {isRTL ? 'طلب استرداد' : 'Request Refund'}
+                        <Mail className="w-4 h-4" />
+                        {isRTL ? 'أو أرسل بريداً إلكترونياً' : 'Or Send Email'}
                       </a>
                     </Button>
-                    <Button variant="outline" asChild>
-                      <Link to="/faq">
-                        <HelpCircle className="w-4 h-4" />
-                        {isRTL ? 'الأسئلة الشائعة' : 'FAQ'}
-                      </Link>
-                    </Button>
                   </div>
-                </div>
+
+                  <p className="text-sm text-muted-foreground text-center">
+                    {isRTL 
+                      ? 'سنقوم بمراجعة طلبك والرد عليك خلال 2-3 أيام عمل'
+                      : 'We will review your request and respond within 2-3 business days'
+                    }
+                  </p>
+                </form>
               </CardContent>
             </Card>
           </section>
