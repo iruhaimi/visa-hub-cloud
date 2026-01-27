@@ -213,7 +213,16 @@ export default function Auth() {
 
                   <div className="space-y-2">
                     <Label>{isRTL ? 'البريد الإلكتروني' : 'Email'}</Label>
-                    <Input type="email" placeholder="example@email.com" dir="ltr" {...signUpForm.register('email')} />
+                    <Input 
+                      type="email" 
+                      placeholder="example@email.com" 
+                      dir="ltr"
+                      lang="en"
+                      autoComplete="email"
+                      inputMode="email"
+                      style={{ textAlign: 'left' }}
+                      {...signUpForm.register('email')} 
+                    />
                     {signUpForm.formState.errors.email?.message && (
                       <p className="text-sm font-medium text-destructive">
                         {String(signUpForm.formState.errors.email.message)}
@@ -228,6 +237,9 @@ export default function Auth() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         dir="ltr"
+                        lang="en"
+                        autoComplete="new-password"
+                        style={{ textAlign: 'left' }}
                         className="pr-10"
                         {...signUpForm.register('password')}
                       />
@@ -259,6 +271,9 @@ export default function Auth() {
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         dir="ltr"
+                        lang="en"
+                        autoComplete="new-password"
+                        style={{ textAlign: 'left' }}
                         className="pr-10"
                         {...signUpForm.register('confirmPassword')}
                       />
@@ -292,7 +307,16 @@ export default function Auth() {
                 <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                   <div className="space-y-2">
                     <Label>{isRTL ? 'البريد الإلكتروني' : 'Email'}</Label>
-                    <Input type="email" placeholder="example@email.com" dir="ltr" {...signInForm.register('email')} />
+                    <Input 
+                      type="email" 
+                      placeholder="example@email.com" 
+                      dir="ltr"
+                      lang="en"
+                      autoComplete="email"
+                      inputMode="email"
+                      style={{ textAlign: 'left' }}
+                      {...signInForm.register('email')} 
+                    />
                     {signInForm.formState.errors.email?.message && (
                       <p className="text-sm font-medium text-destructive">
                         {String(signInForm.formState.errors.email.message)}
@@ -307,6 +331,9 @@ export default function Auth() {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         dir="ltr"
+                        lang="en"
+                        autoComplete="current-password"
+                        style={{ textAlign: 'left' }}
                         className="pr-10"
                         {...signInForm.register('password')}
                       />
