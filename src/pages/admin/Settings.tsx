@@ -56,6 +56,9 @@ interface VisaType {
   entry_type: string | null;
   is_active: boolean;
   requirements: string[];
+  price_notes: string | null;
+  price_notes_en: string | null;
+  fee_type: string | null;
   country?: Country;
 }
 
@@ -396,6 +399,9 @@ function VisaTypesManagement({
     entry_type: 'single',
     is_active: true,
     requirements: '',
+    price_notes: 'شامل رسوم التأشيرة',
+    price_notes_en: 'Visa fees included',
+    fee_type: 'included',
   });
 
   const resetForm = () => {
@@ -410,6 +416,9 @@ function VisaTypesManagement({
       entry_type: 'single',
       is_active: true,
       requirements: '',
+      price_notes: 'شامل رسوم التأشيرة',
+      price_notes_en: 'Visa fees included',
+      fee_type: 'included',
     });
     setEditingVisa(null);
   };
@@ -427,6 +436,9 @@ function VisaTypesManagement({
       entry_type: visa.entry_type || 'single',
       is_active: visa.is_active,
       requirements: Array.isArray(visa.requirements) ? visa.requirements.join('\n') : '',
+      price_notes: visa.price_notes || 'شامل رسوم التأشيرة',
+      price_notes_en: visa.price_notes_en || 'Visa fees included',
+      fee_type: visa.fee_type || 'included',
     });
     setIsOpen(true);
   };
@@ -449,6 +461,9 @@ function VisaTypesManagement({
         entry_type: formData.entry_type,
         is_active: formData.is_active,
         requirements: requirementsArray,
+        price_notes: formData.price_notes || null,
+        price_notes_en: formData.price_notes_en || null,
+        fee_type: formData.fee_type,
       };
 
       if (editingVisa) {
@@ -629,6 +644,47 @@ function VisaTypesManagement({
                     onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                   />
                   <Label>نشطة</Label>
+                </div>
+              </div>
+
+              {/* Price Notes Section */}
+              <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                <Label className="text-base font-semibold">ملاحظات الأسعار</Label>
+                
+                <div className="space-y-2">
+                  <Label>نوع الرسوم</Label>
+                  <Select
+                    value={formData.fee_type}
+                    onValueChange={(value) => setFormData({ ...formData, fee_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="included">شامل رسوم التأشيرة الحكومية</SelectItem>
+                      <SelectItem value="separate">رسوم التأشيرة تُدفع بشكل منفصل</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>ملاحظة السعر (عربي)</Label>
+                    <Input
+                      value={formData.price_notes}
+                      onChange={(e) => setFormData({ ...formData, price_notes: e.target.value })}
+                      placeholder="شامل رسوم التأشيرة"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>ملاحظة السعر (إنجليزي)</Label>
+                    <Input
+                      value={formData.price_notes_en}
+                      onChange={(e) => setFormData({ ...formData, price_notes_en: e.target.value })}
+                      placeholder="Visa fees included"
+                      dir="ltr"
+                    />
+                  </div>
                 </div>
               </div>
 

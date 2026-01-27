@@ -566,11 +566,14 @@ export type Database = {
           created_at: string
           description: string | null
           entry_type: string | null
+          fee_type: string | null
           id: string
           is_active: boolean | null
           max_stay_days: number | null
           name: string
           price: number
+          price_notes: string | null
+          price_notes_en: string | null
           processing_days: number
           requirements: Json | null
           updated_at: string
@@ -581,11 +584,14 @@ export type Database = {
           created_at?: string
           description?: string | null
           entry_type?: string | null
+          fee_type?: string | null
           id?: string
           is_active?: boolean | null
           max_stay_days?: number | null
           name: string
           price: number
+          price_notes?: string | null
+          price_notes_en?: string | null
           processing_days?: number
           requirements?: Json | null
           updated_at?: string
@@ -596,11 +602,14 @@ export type Database = {
           created_at?: string
           description?: string | null
           entry_type?: string | null
+          fee_type?: string | null
           id?: string
           is_active?: boolean | null
           max_stay_days?: number | null
           name?: string
           price?: number
+          price_notes?: string | null
+          price_notes_en?: string | null
           processing_days?: number
           requirements?: Json | null
           updated_at?: string
