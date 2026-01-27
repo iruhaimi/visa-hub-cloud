@@ -113,7 +113,7 @@ export default function Auth() {
     } else {
       toast({
         title: 'Account created!',
-        description: 'Welcome to VisaGo. Your account has been created successfully.',
+        description: 'Welcome to Otolat Rahlatcom. Your account has been created successfully.',
       });
       navigate('/dashboard');
     }
@@ -137,7 +137,7 @@ export default function Auth() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                   <Plane className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <span className="text-2xl font-bold">VisaGo</span>
+                <span className="text-2xl font-bold">Otolat Rahlatcom</span>
               </div>
               <CardTitle className="text-2xl">
                 {isSignUp ? 'Create an account' : 'Welcome back'}

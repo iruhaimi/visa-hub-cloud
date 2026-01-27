@@ -35,7 +35,7 @@ export default function Footer() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Plane className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">VisaGo</span>
+              <span className="text-xl font-bold text-foreground">Otolat Rahlatcom</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               Your trusted partner for seamless visa applications. We make international travel accessible and hassle-free.
@@ -43,15 +43,15 @@ export default function Footer() {
             <div className="mt-6 space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4" />
-                <span>support@visago.com</span>
+                <span>info@rhalat.com</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4" />
-                <span>+1 (555) 123-4567</span>
+                <span>920034158</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>123 Travel Street, New York, NY</span>
+                <span>Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd</span>
               </div>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} VisaGo. All rights reserved.
+            © {new Date().getFullYear()} Otolat Rahlatcom. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <a

@@ -57,7 +57,7 @@ export default function Header() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Plane className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">VisaGo</span>
+            <span className="text-xl font-bold text-foreground">Otolat Rahlatcom</span>
           </Link>
         </div>
 
