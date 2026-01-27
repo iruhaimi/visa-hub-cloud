@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Phone, CreditCard, Wallet, Save, Loader2, Camera, Upload, FileText, RotateCcw, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import { ProfileCompletionAlert } from '@/components/profile/ProfileCompletionAlert';
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { direction } = useLanguage();
@@ -198,9 +198,28 @@ const Profile = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  // Calculate missing profile fields
+  const missingFields = useMemo(() => {
+    const requiredFields = [
+      'full_name',
+      'phone',
+      'date_of_birth',
+      'nationality',
+      'passport_number',
+      'passport_expiry',
+      'address',
+      'city',
+      'country',
+    ];
+    return requiredFields.filter((field) => !formData[field as keyof typeof formData]);
+  }, [formData]);
+
   return (
     <div className="container mx-auto py-8 px-4" dir={direction}>
       <div className="max-w-4xl mx-auto">
+        {/* Profile Completion Alert */}
+        <ProfileCompletionAlert missingFields={missingFields} isRTL={isRTL} />
+
         {/* Header with Avatar Upload */}
         <div className="flex items-center gap-6 mb-8">
           <div className="relative group">
