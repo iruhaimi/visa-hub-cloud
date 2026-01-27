@@ -91,7 +91,7 @@ export default function Step5Terms() {
         </div>
         
         <ScrollArea className="h-[400px]">
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6" dir={direction === 'rtl' ? 'rtl' : 'ltr'} style={{ textAlign: direction === 'rtl' ? 'right' : 'left' }}>
             {termsContent.sections.map((section, index) => (
               <div key={index}>
                 <h4 className="font-semibold mb-2">{section.title}</h4>
