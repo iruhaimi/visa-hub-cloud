@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,25 +7,19 @@ import { useApplication } from '@/contexts/ApplicationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import CountryCodePicker from '@/components/ui/CountryCodePicker';
 import { User, Mail, Phone, ArrowLeft, ArrowRight } from 'lucide-react';
 
-const countryPhoneCodes = [
-  { code: '+966', country: 'السعودية', flag: '🇸🇦' },
-  { code: '+971', country: 'الإمارات', flag: '🇦🇪' },
-  { code: '+973', country: 'البحرين', flag: '🇧🇭' },
-  { code: '+968', country: 'عمان', flag: '🇴🇲' },
-  { code: '+965', country: 'الكويت', flag: '🇰🇼' },
-  { code: '+974', country: 'قطر', flag: '🇶🇦' },
-  { code: '+20', country: 'مصر', flag: '🇪🇬' },
-  { code: '+962', country: 'الأردن', flag: '🇯🇴' },
-];
+// Helper function to filter Arabic characters
+const filterArabicChars = (value: string): string => {
+  // Remove Arabic characters (Unicode range 0600-06FF and related ranges)
+  return value.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
+};
+
+// Helper function to filter non-numeric characters (allow only digits)
+const filterNonNumeric = (value: string): string => {
+  return value.replace(/[^0-9]/g, '');
+};
 
 export default function Step1BasicInfo() {
   const { t, direction } = useLanguage();
@@ -66,6 +60,26 @@ export default function Step1BasicInfo() {
       countryCode: watchedValues.countryCode,
     });
   }, [watchedValues.fullName, watchedValues.email, watchedValues.phone, watchedValues.countryCode, updateApplicationData]);
+
+  // Handle email input - filter Arabic characters in real-time
+  const handleEmailInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setValue('email', filtered);
+    }
+  }, [setValue]);
+
+  // Handle phone input - allow only digits
+  const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterNonNumeric(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setValue('phone', filtered);
+    }
+  }, [setValue]);
 
   const onSubmit = (data: FormData) => {
     updateApplicationData(data);
@@ -112,10 +126,13 @@ export default function Step1BasicInfo() {
           <Input
             id="email"
             type="email"
+            inputMode="email"
             {...register('email')}
+            onInput={handleEmailInput}
             placeholder="example@email.com"
-            className="h-12"
+            className="h-12 text-left"
             dir="ltr"
+            style={{ textAlign: 'left' }}
           />
           {errors.email && (
             <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -128,32 +145,21 @@ export default function Step1BasicInfo() {
             <Phone className="w-4 h-4" />
             {t('form.phone')}
           </Label>
-          <div className="flex gap-2">
-            <Select
+          <div className="flex flex-row-reverse gap-2">
+            <CountryCodePicker
               value={watchedValues.countryCode}
-              onValueChange={(value) => setValue('countryCode', value)}
-            >
-              <SelectTrigger className="w-[140px] h-12">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {countryPhoneCodes.map((item) => (
-                  <SelectItem key={item.code} value={item.code}>
-                    <span className="flex items-center gap-2">
-                      <span>{item.flag}</span>
-                      <span>{item.code}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(value) => setValue('countryCode', value)}
+            />
             <Input
               id="phone"
               type="tel"
+              inputMode="numeric"
               {...register('phone')}
+              onInput={handlePhoneInput}
               placeholder="5XXXXXXXX"
-              className="flex-1 h-12"
+              className="flex-1 h-12 text-left"
               dir="ltr"
+              style={{ textAlign: 'left' }}
             />
           </div>
           {errors.phone && (
