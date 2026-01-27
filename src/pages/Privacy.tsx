@@ -271,7 +271,7 @@ Last updated: January 2024`
 
       <div className="container-section py-12">
         <div className="max-w-4xl mx-auto">
-          {/* Regulatory Badge */}
+          {/* PDPL Compliance Notice */}
           <Card className="mb-8 border-primary/20 bg-primary/5">
             <CardContent className="py-6" dir={isRTL ? 'rtl' : 'ltr'}>
               <div className={`flex items-center gap-4 ${isRTL ? 'flex-row' : 'flex-row'}`}>
@@ -279,13 +279,10 @@ Last updated: January 2024`
                   <Shield className="w-6 h-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">
-                    {isRTL ? 'معتمد من سدايا' : 'SDAIA Compliant'}
-                  </Badge>
                   <p className={`text-muted-foreground leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
                     {isRTL 
-                      ? 'نلتزم بنظام حماية البيانات الشخصية السعودي ونعمل تحت إشراف الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا) لضمان حماية خصوصيتك وفقاً لأعلى المعايير.'
-                      : 'We comply with the Saudi Personal Data Protection Law and operate under the supervision of the Saudi Data and Artificial Intelligence Authority (SDAIA) to ensure your privacy is protected according to the highest standards.'
+                      ? 'نلتزم بتطبيق نظام حماية البيانات الشخصية السعودي والصادر من الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا) لضمان حماية خصوصيتك وفقاً لأعلى المعايير.'
+                      : 'We are committed to applying the Saudi Personal Data Protection Law issued by the Saudi Data and Artificial Intelligence Authority (SDAIA) to ensure your privacy is protected according to the highest standards.'
                     }
                   </p>
                 </div>
