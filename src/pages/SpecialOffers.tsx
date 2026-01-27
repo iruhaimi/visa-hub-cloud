@@ -50,18 +50,18 @@ function CountdownTimer({ endDate, size = 'sm' }: { endDate: Date; size?: 'sm' |
     return () => clearInterval(timer);
   }, [endDate]);
 
-  // RTL order: يوم - ساعة - دقيقة - ثانية (from right to left)
+  // RTL order: ثانية - دقيقة - ساعة - يوم (from right to left)
   const timeUnits = [
-    { value: timeLeft.seconds, label: 'ثانية' },
-    { value: timeLeft.minutes, label: 'دقيقة' },
-    { value: timeLeft.hours, label: 'ساعة' },
     { value: timeLeft.days, label: 'يوم' },
+    { value: timeLeft.hours, label: 'ساعة' },
+    { value: timeLeft.minutes, label: 'دقيقة' },
+    { value: timeLeft.seconds, label: 'ثانية' },
   ];
 
   const isLarge = size === 'lg';
 
   return (
-    <div className="flex items-center justify-center gap-2 sm:gap-3 flex-row-reverse">
+    <div className="flex items-center justify-center gap-2 sm:gap-3">
       {timeUnits.map((unit, index) => (
         <div key={index} className="text-center">
           <motion.div
