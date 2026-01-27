@@ -42,8 +42,8 @@ export default function Contact() {
       icon: MapPin,
       titleAr: 'العنوان',
       titleEn: 'Address',
-      valueAr: 'الرياض، المملكة العربية السعودية',
-      valueEn: 'Riyadh, Saudi Arabia'
+      valueAr: 'الرياض - حي الربيع - شارع أبي بن معاذ الأنصاري',
+      valueEn: 'Riyadh - Al-Rabi\' neighborhood - Ubay Bin Moaath Alansari Rd'
     },
     {
       icon: Phone,
