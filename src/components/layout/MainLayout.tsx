@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import HeaderArabic from './HeaderArabic';
 import FooterArabic from './FooterArabic';
 import FloatingWhatsApp from './FloatingWhatsApp';
+import CookieConsent from './CookieConsent';
 
 export default function MainLayout() {
   return (
@@ -12,6 +13,7 @@ export default function MainLayout() {
       </main>
       <FooterArabic />
       <FloatingWhatsApp />
+      <CookieConsent />
     </div>
   );
 }
