@@ -257,13 +257,13 @@ Last updated: January 2024`
           </Card>
 
           {/* Sections */}
-          <div className="space-y-6">
+          <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
             {sections.map((section, index) => {
               const Icon = section.icon;
               return (
                 <Card key={index}>
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3">
+                    <CardTitle className="flex items-center gap-3" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                       <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                         <Icon className="w-5 h-5 text-primary" />
                       </div>
@@ -273,6 +273,7 @@ Last updated: January 2024`
                   <CardContent>
                     <div 
                       className="text-muted-foreground whitespace-pre-line leading-relaxed prose prose-sm max-w-none"
+                      style={{ textAlign: isRTL ? 'right' : 'left' }}
                       dangerouslySetInnerHTML={{ 
                         __html: (isRTL ? section.contentAr : section.contentEn)
                           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')

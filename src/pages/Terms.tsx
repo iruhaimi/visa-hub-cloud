@@ -255,11 +255,11 @@ Address: Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd`
           </Card>
 
           {/* Full Terms */}
-          <div className="space-y-6">
+          <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
             {sections.map((section, index) => (
               <Card key={index}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-3">
+                  <CardTitle className="flex items-center gap-3" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     <Badge variant="outline" className="w-8 h-8 rounded-full p-0 flex items-center justify-center">
                       {index + 1}
                     </Badge>
@@ -267,7 +267,7 @@ Address: Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd`
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
+                  <p className="text-muted-foreground whitespace-pre-line leading-relaxed" style={{ textAlign: isRTL ? 'right' : 'left' }}>
                     {isRTL ? section.contentAr : section.contentEn}
                   </p>
                 </CardContent>

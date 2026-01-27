@@ -267,8 +267,8 @@ export default function SchengenDetail() {
             {direction === 'rtl' ? 'متطلبات تأشيرة شنغن' : 'Schengen Visa Requirements'}
           </h2>
           <Card>
-            <CardContent className="py-6">
-              <ul className="grid gap-3 sm:grid-cols-2">
+            <CardContent className="py-6" dir={direction === 'rtl' ? 'rtl' : 'ltr'}>
+              <ul className="grid gap-3 sm:grid-cols-2" style={{ textAlign: direction === 'rtl' ? 'right' : 'left' }}>
                 {schengenRequirements.map((req, i) => (
                   <motion.li 
                     key={i} 
@@ -282,7 +282,7 @@ export default function SchengenDetail() {
                   </motion.li>
                 ))}
               </ul>
-              <p className="mt-6 text-sm text-muted-foreground">
+              <p className="mt-6 text-sm text-muted-foreground" style={{ textAlign: direction === 'rtl' ? 'right' : 'left' }}>
                 {direction === 'rtl' 
                   ? '* قد تختلف المتطلبات حسب سفارة الدولة المختارة. تأكد من مراجعة المتطلبات الخاصة بالسفارة قبل التقديم.'
                   : '* Requirements may vary by embassy. Please verify specific embassy requirements before applying.'
