@@ -46,6 +46,8 @@ interface VisaType {
   name: string;
   description: string | null;
   price: number;
+  child_price: number | null;
+  infant_price: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;
@@ -58,11 +60,15 @@ interface VisaType {
   country_id: string;
 }
 
-// Pricing tiers for different traveler categories
-const TRAVELER_PRICING = {
-  adult: { label: 'بالغ (12+ سنة)', labelEn: 'Adult (12+)', multiplier: 1 },
-  child: { label: 'طفل (6-12 سنة)', labelEn: 'Child (6-12)', multiplier: 0.75 },
-  infant: { label: 'رضيع (أقل من 6)', labelEn: 'Infant (<6)', multiplier: 0.5 },
+// Default multipliers for age-based pricing (used when custom prices not set)
+const DEFAULT_CHILD_MULTIPLIER = 0.75;
+const DEFAULT_INFANT_MULTIPLIER = 0.5;
+
+// Pricing tiers labels
+const TRAVELER_LABELS = {
+  adult: { label: 'بالغ (12+ سنة)', labelEn: 'Adult (12+)' },
+  child: { label: 'طفل (6-12 سنة)', labelEn: 'Child (6-12)' },
+  infant: { label: 'رضيع (أقل من 6)', labelEn: 'Infant (<6)' },
 };
 
 export default function Pricing() {
@@ -427,8 +433,9 @@ export default function Pricing() {
                           <TableBody>
                             {visas.map((visa) => {
                               const adultPrice = visa.price;
-                              const childPrice = Math.round(visa.price * TRAVELER_PRICING.child.multiplier);
-                              const infantPrice = Math.round(visa.price * TRAVELER_PRICING.infant.multiplier);
+                              // Use custom prices from DB, or fallback to percentage-based calculation
+                              const childPrice = visa.child_price ?? Math.round(visa.price * DEFAULT_CHILD_MULTIPLIER);
+                              const infantPrice = visa.infant_price ?? Math.round(visa.price * DEFAULT_INFANT_MULTIPLIER);
                               
                               return (
                                 <TableRow key={visa.id} className="hover:bg-muted/30">

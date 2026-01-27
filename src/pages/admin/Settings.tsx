@@ -50,6 +50,8 @@ interface VisaType {
   name: string;
   description: string | null;
   price: number;
+  child_price: number | null;
+  infant_price: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;
@@ -393,6 +395,8 @@ function VisaTypesManagement({
     name: '',
     description: '',
     price: '',
+    child_price: '',
+    infant_price: '',
     processing_days: '7',
     validity_days: '',
     max_stay_days: '',
@@ -410,6 +414,8 @@ function VisaTypesManagement({
       name: '',
       description: '',
       price: '',
+      child_price: '',
+      infant_price: '',
       processing_days: '7',
       validity_days: '',
       max_stay_days: '',
@@ -430,6 +436,8 @@ function VisaTypesManagement({
       name: visa.name,
       description: visa.description || '',
       price: visa.price.toString(),
+      child_price: visa.child_price?.toString() || '',
+      infant_price: visa.infant_price?.toString() || '',
       processing_days: visa.processing_days.toString(),
       validity_days: visa.validity_days?.toString() || '',
       max_stay_days: visa.max_stay_days?.toString() || '',
@@ -455,6 +463,8 @@ function VisaTypesManagement({
         name: formData.name,
         description: formData.description || null,
         price: parseFloat(formData.price),
+        child_price: formData.child_price ? parseFloat(formData.child_price) : null,
+        infant_price: formData.infant_price ? parseFloat(formData.infant_price) : null,
         processing_days: parseInt(formData.processing_days),
         validity_days: formData.validity_days ? parseInt(formData.validity_days) : null,
         max_stay_days: formData.max_stay_days ? parseInt(formData.max_stay_days) : null,
@@ -580,16 +590,48 @@ function VisaTypesManagement({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>السعر (ريال)</Label>
-                  <Input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="500"
-                  />
+              {/* Pricing Section */}
+              <div className="p-4 bg-primary/5 rounded-lg space-y-4">
+                <Label className="text-base font-semibold">الأسعار (ريال سعودي)</Label>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>سعر البالغ (12+ سنة)</Label>
+                    <Input
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>سعر الطفل (6-12 سنة)</Label>
+                    <Input
+                      type="number"
+                      value={formData.child_price}
+                      onChange={(e) => setFormData({ ...formData, child_price: e.target.value })}
+                      placeholder="اتركه فارغاً لـ 75%"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {formData.child_price ? '' : `افتراضي: ${formData.price ? Math.round(parseFloat(formData.price) * 0.75) : 0} ريال (75%)`}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>سعر الرضيع ({'<'}6 سنوات)</Label>
+                    <Input
+                      type="number"
+                      value={formData.infant_price}
+                      onChange={(e) => setFormData({ ...formData, infant_price: e.target.value })}
+                      placeholder="اتركه فارغاً لـ 50%"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {formData.infant_price ? '' : `افتراضي: ${formData.price ? Math.round(parseFloat(formData.price) * 0.5) : 0} ريال (50%)`}
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>مدة المعالجة (أيام)</Label>
                   <Input
