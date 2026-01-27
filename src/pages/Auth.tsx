@@ -166,7 +166,13 @@ export default function Auth() {
                         <FormItem>
                           <FormLabel>{isRTL ? 'الاسم الكامل' : 'Full Name'}</FormLabel>
                           <FormControl>
-                            <Input placeholder={isRTL ? 'محمد أحمد' : 'John Doe'} {...field} />
+                            <Input 
+                              placeholder={isRTL ? 'محمد أحمد' : 'John Doe'} 
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -179,7 +185,15 @@ export default function Auth() {
                         <FormItem>
                           <FormLabel>{isRTL ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="example@email.com" dir="ltr" {...field} />
+                            <Input 
+                              type="email" 
+                              placeholder="example@email.com" 
+                              dir="ltr" 
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
