@@ -246,8 +246,8 @@ Last updated: January 2024`
         <div className="max-w-4xl mx-auto">
           {/* Introduction */}
           <Card className="mb-8">
-            <CardContent className="py-6">
-              <p className="text-muted-foreground leading-relaxed">
+            <CardContent className="py-6" dir={isRTL ? 'rtl' : 'ltr'}>
+              <p className={`text-muted-foreground leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
                 {isRTL 
                   ? 'نحن في وكالة عطلات رحلاتكم نلتزم بحماية خصوصيتك. توضح هذه السياسة كيفية جمع واستخدام وحماية معلوماتك الشخصية عند استخدام موقعنا وخدماتنا.'
                   : 'At Otolat Rahlatcom, we are committed to protecting your privacy. This policy explains how we collect, use, and protect your personal information when using our website and services.'
@@ -262,12 +262,12 @@ Last updated: January 2024`
               const Icon = section.icon;
               return (
                 <Card key={index}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3" style={{ textAlign: isRTL ? 'right' : 'left' }}>
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <CardHeader className="pb-3" dir={isRTL ? 'rtl' : 'ltr'}>
+                    <CardTitle className={`flex items-center gap-3 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Icon className="w-5 h-5 text-primary" />
                       </div>
-                      {isRTL ? section.titleAr : section.titleEn}
+                      <span>{isRTL ? section.titleAr : section.titleEn}</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
