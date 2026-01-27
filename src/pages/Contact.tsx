@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
+import { filterArabicChars, filterNonNumeric } from '@/lib/inputFilters';
 import { 
   MapPin, 
   Phone, 
@@ -89,11 +90,34 @@ export default function Contact() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    // Filter phone field to only allow numbers
+    const processedValue = name === 'phone' ? filterNonNumeric(value) : value;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: processedValue
     }));
   };
+
+  // Handle email input - filter Arabic characters in real-time
+  const handleEmailInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setFormData(prev => ({ ...prev, email: filtered }));
+    }
+  }, []);
+
+  // Handle phone input - allow only digits
+  const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterNonNumeric(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setFormData(prev => ({ ...prev, phone: filtered }));
+    }
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -355,11 +379,14 @@ export default function Contact() {
                           id="email"
                           name="email"
                           type="email"
+                          inputMode="email"
                           value={formData.email}
                           onChange={handleChange}
+                          onInput={handleEmailInput}
                           placeholder="example@email.com"
-                          className="rounded-xl"
+                          className="rounded-xl text-left"
                           dir="ltr"
+                          style={{ textAlign: 'left' }}
                           required
                         />
                       </div>
@@ -370,7 +397,7 @@ export default function Contact() {
                         <Label htmlFor="phone">
                           {isRTL ? 'رقم الجوال' : 'Phone Number'}
                         </Label>
-                        <div className="flex gap-2" dir="ltr">
+                        <div className="flex flex-row-reverse gap-2">
                           <CountryCodePicker
                             value={formData.countryCode}
                             onChange={(value) => setFormData(prev => ({ ...prev, countryCode: value }))}
@@ -380,10 +407,14 @@ export default function Contact() {
                             id="phone"
                             name="phone"
                             type="tel"
+                            inputMode="numeric"
                             value={formData.phone}
                             onChange={handleChange}
+                            onInput={handlePhoneInput}
                             placeholder="5XX XXX XXXX"
-                            className="rounded-xl flex-1 placeholder:text-muted-foreground/60"
+                            className="rounded-xl flex-1 text-left"
+                            dir="ltr"
+                            style={{ textAlign: 'left' }}
                           />
                         </div>
                       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
+import { filterArabicChars, filterNonNumeric } from '@/lib/inputFilters';
 import { 
   RotateCcw, 
   CheckCircle2,
@@ -168,8 +169,30 @@ export default function Refund() {
   ];
 
   const handleFormChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Filter phone field to only allow numbers
+    const processedValue = field === 'phone' ? filterNonNumeric(value) : value;
+    setFormData(prev => ({ ...prev, [field]: processedValue }));
   };
+
+  // Handle email input - filter Arabic characters in real-time
+  const handleEmailInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setFormData(prev => ({ ...prev, email: filtered }));
+    }
+  }, []);
+
+  // Handle phone input - allow only digits
+  const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterNonNumeric(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setFormData(prev => ({ ...prev, phone: filtered }));
+    }
+  }, []);
 
   const handleSubmitRefund = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -548,9 +571,13 @@ export default function Refund() {
                       <Input
                         id="email"
                         type="email"
-                        placeholder={isRTL ? 'example@email.com' : 'example@email.com'}
+                        inputMode="email"
+                        placeholder="example@email.com"
                         value={formData.email}
                         onChange={(e) => handleFormChange('email', e.target.value)}
+                        onInput={handleEmailInput}
+                        dir="ltr"
+                        style={{ textAlign: 'left' }}
                         required
                       />
                     </div>
@@ -564,9 +591,13 @@ export default function Refund() {
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder={isRTL ? '05xxxxxxxx' : '05xxxxxxxx'}
+                        inputMode="numeric"
+                        placeholder="5XXXXXXXX"
                         value={formData.phone}
                         onChange={(e) => handleFormChange('phone', e.target.value)}
+                        onInput={handlePhoneInput}
+                        dir="ltr"
+                        style={{ textAlign: 'left' }}
                       />
                     </div>
                     <div className="space-y-2">

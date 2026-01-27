@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion, AnimatePresence } from 'framer-motion';
+import { filterArabicChars, filterNonNumeric } from '@/lib/inputFilters';
 import { 
   Search, 
   FileText, 
@@ -145,6 +146,24 @@ export default function TrackApplication() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplicationResult | null>(null);
   const [searched, setSearched] = useState(false);
+
+  // Handle email/phone input based on search type
+  const handleSearchValueInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    if (searchType === 'email') {
+      const filtered = filterArabicChars(input.value);
+      if (filtered !== input.value) {
+        input.value = filtered;
+        setSearchValue(filtered);
+      }
+    } else {
+      const filtered = filterNonNumeric(input.value);
+      if (filtered !== input.value) {
+        input.value = filtered;
+        setSearchValue(filtered);
+      }
+    }
+  }, [searchType]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,14 +372,17 @@ export default function TrackApplication() {
                     <Input
                       id="searchValue"
                       type={searchType === 'email' ? 'email' : 'tel'}
+                      inputMode={searchType === 'email' ? 'email' : 'numeric'}
                       placeholder={searchType === 'phone' 
-                        ? '+966 5XXXXXXXX'
+                        ? '5XXXXXXXX'
                         : 'example@email.com'
                       }
                       value={searchValue}
                       onChange={(e) => setSearchValue(e.target.value)}
-                      className="text-base rounded-xl"
+                      onInput={handleSearchValueInput}
+                      className="text-base rounded-xl text-left"
                       dir="ltr"
+                      style={{ textAlign: 'left' }}
                     />
                   </div>
 

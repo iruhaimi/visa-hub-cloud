@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FloatingWhatsApp from '@/components/layout/FloatingWhatsApp';
+import { filterArabicChars } from '@/lib/inputFilters';
 import {
   Search,
   Loader2,
@@ -75,6 +76,16 @@ export default function TrackRefund() {
   const [isSearching, setIsSearching] = useState(false);
   const [refundRequest, setRefundRequest] = useState<RefundRequest | null>(null);
   const [notFound, setNotFound] = useState(false);
+
+  // Handle email input - filter Arabic characters in real-time
+  const handleEmailInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setSearchData(prev => ({ ...prev, email: filtered }));
+    }
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,11 +176,14 @@ export default function TrackRefund() {
                     <Input
                       id="email"
                       type="email"
+                      inputMode="email"
                       placeholder="أدخل البريد الإلكتروني المستخدم في الطلب"
                       value={searchData.email}
                       onChange={(e) => setSearchData(prev => ({ ...prev, email: e.target.value }))}
+                      onInput={handleEmailInput}
                       className="text-left"
                       dir="ltr"
+                      style={{ textAlign: 'left' }}
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={isSearching}>
