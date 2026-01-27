@@ -63,8 +63,8 @@ export default function Contact() {
       icon: Clock,
       titleAr: 'ساعات العمل',
       titleEn: 'Working Hours',
-      valueAr: 'الأحد - الخميس: 9 صباحاً - 6 مساءً',
-      valueEn: 'Sun - Thu: 9 AM - 6 PM'
+      valueAr: 'يومياً: ١٠ صباحاً - ١٠ مساءً',
+      valueEn: 'Daily: 10 AM - 10 PM'
     },
   ];
 
@@ -241,7 +241,7 @@ export default function Contact() {
                       {isRTL ? 'اتصل بنا' : 'Call Us'}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      {isRTL ? 'متاحون من 9 ص - 6 م' : 'Available 9 AM - 6 PM'}
+                      {isRTL ? 'متاحون من ١٠ ص - ١٠ م' : 'Available 10 AM - 10 PM'}
                     </p>
                     <Button variant="outline" className="rounded-xl w-full" asChild>
                       <a href="tel:920034158">
