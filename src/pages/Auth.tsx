@@ -63,6 +63,16 @@ export default function Auth() {
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
 
+  // Filter to remove Arabic characters from email and password fields
+  const filterArabicChars = (e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    // Remove Arabic characters (Unicode range \u0600-\u06FF)
+    const filtered = input.value.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
+    if (filtered !== input.value) {
+      input.value = filtered;
+    }
+  };
+
   useEffect(() => {
     if (user) {
       navigate('/profile');
@@ -220,6 +230,7 @@ export default function Auth() {
                       lang="en"
                       autoComplete="email"
                       inputMode="email"
+                      onInput={filterArabicChars}
                       style={{ textAlign: 'left' }}
                       {...signUpForm.register('email')} 
                     />
@@ -239,6 +250,7 @@ export default function Auth() {
                         dir="ltr"
                         lang="en"
                         autoComplete="new-password"
+                        onInput={filterArabicChars}
                         style={{ textAlign: 'left' }}
                         className="pr-10"
                         {...signUpForm.register('password')}
@@ -273,6 +285,7 @@ export default function Auth() {
                         dir="ltr"
                         lang="en"
                         autoComplete="new-password"
+                        onInput={filterArabicChars}
                         style={{ textAlign: 'left' }}
                         className="pr-10"
                         {...signUpForm.register('confirmPassword')}
@@ -314,6 +327,7 @@ export default function Auth() {
                       lang="en"
                       autoComplete="email"
                       inputMode="email"
+                      onInput={filterArabicChars}
                       style={{ textAlign: 'left' }}
                       {...signInForm.register('email')} 
                     />
@@ -333,6 +347,7 @@ export default function Auth() {
                         dir="ltr"
                         lang="en"
                         autoComplete="current-password"
+                        onInput={filterArabicChars}
                         style={{ textAlign: 'left' }}
                         className="pr-10"
                         {...signInForm.register('password')}
