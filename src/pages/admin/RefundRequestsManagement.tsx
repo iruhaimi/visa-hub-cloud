@@ -41,8 +41,10 @@ import {
   Mail,
   Phone,
   FileText,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -158,6 +160,57 @@ export default function RefundRequestsManagement() {
     });
   };
 
+  // Export to Excel
+  const handleExportExcel = () => {
+    if (!filteredRequests || filteredRequests.length === 0) {
+      toast({
+        title: 'لا توجد بيانات',
+        description: 'لا توجد طلبات للتصدير',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const exportData = filteredRequests.map((req) => ({
+      'رقم الطلب': req.application_number,
+      'البريد الإلكتروني': req.email,
+      'رقم الهاتف': req.phone || 'غير متوفر',
+      'سبب الاسترداد': req.reason,
+      'تفاصيل إضافية': req.additional_details || '-',
+      'الحالة': statusConfig[req.status]?.label || req.status,
+      'ملاحظات المسؤول': req.admin_notes || '-',
+      'تاريخ التقديم': format(new Date(req.created_at), 'dd/MM/yyyy HH:mm', { locale: ar }),
+      'تاريخ المعالجة': req.processed_at 
+        ? format(new Date(req.processed_at), 'dd/MM/yyyy HH:mm', { locale: ar }) 
+        : '-',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'طلبات الاسترداد');
+
+    // Set column widths
+    worksheet['!cols'] = [
+      { wch: 15 }, // رقم الطلب
+      { wch: 25 }, // البريد الإلكتروني
+      { wch: 15 }, // رقم الهاتف
+      { wch: 30 }, // سبب الاسترداد
+      { wch: 40 }, // تفاصيل إضافية
+      { wch: 12 }, // الحالة
+      { wch: 30 }, // ملاحظات المسؤول
+      { wch: 18 }, // تاريخ التقديم
+      { wch: 18 }, // تاريخ المعالجة
+    ];
+
+    const fileName = `طلبات_الاسترداد_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    toast({
+      title: 'تم التصدير',
+      description: `تم تصدير ${filteredRequests.length} طلب بنجاح`,
+    });
+  };
+
   // Stats
   const stats = {
     total: requests?.length || 0,
@@ -169,7 +222,7 @@ export default function RefundRequestsManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <RotateCcw className="w-6 h-6 text-primary" />
@@ -177,6 +230,10 @@ export default function RefundRequestsManagement() {
           </h1>
           <p className="text-muted-foreground">مراجعة ومعالجة طلبات استرداد المبالغ</p>
         </div>
+        <Button onClick={handleExportExcel} variant="outline" className="gap-2">
+          <Download className="w-4 h-4" />
+          تصدير إلى Excel
+        </Button>
       </div>
 
       {/* Stats Cards */}
