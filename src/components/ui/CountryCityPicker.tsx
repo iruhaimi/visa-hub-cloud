@@ -297,7 +297,6 @@ export function CityPicker({ country, value, onChange, isRTL = true, placeholder
           disabled={!country}
         >
           <span className="flex items-center gap-2">
-            {countryData && <span className="text-base">{countryData.flag}</span>}
             {value ? (
               <span className="text-sm">{value}</span>
             ) : (
@@ -339,7 +338,7 @@ export function CityPicker({ country, value, onChange, isRTL = true, placeholder
                   value === city && "bg-accent"
                 )}
               >
-                {countryData && <span className="text-xl">{countryData.flag}</span>}
+                <span className="flex-1 text-right">{city}</span>
                 <span className="flex-1 text-right">{city}</span>
                 {value === city && (
                   <Check className="h-4 w-4 text-primary" />
