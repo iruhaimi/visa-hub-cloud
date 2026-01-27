@@ -10,7 +10,8 @@ import {
   LogOut,
   Menu,
   ChevronLeft,
-  Gift
+  Gift,
+  RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,12 @@ export default function AdminLayout() {
       title: 'العروض الخاصة',
       icon: Gift,
       href: '/admin/offers',
+      show: isAdmin,
+    },
+    {
+      title: 'طلبات الاسترداد',
+      icon: RotateCcw,
+      href: '/admin/refunds',
       show: isAdmin,
     },
     {
