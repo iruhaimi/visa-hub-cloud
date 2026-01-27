@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +13,17 @@ import {
   Mail,
   HelpCircle,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  ChevronDown,
+  MessageCircle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Refund() {
   const { language } = useLanguage();
   const isRTL = language === 'ar';
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
   const refundScenarios = [
     {
@@ -89,6 +94,48 @@ export default function Refund() {
       refundableAr: 'غير قابلة للاسترداد بعد الشحن',
       refundableEn: 'Non-refundable once shipped',
       isRefundable: false,
+    },
+    {
+      titleAr: 'رسوم التأمين الصحي',
+      titleEn: 'Health Insurance Fees',
+      descAr: 'رسوم التأمين الصحي للسفر المطلوب لبعض الدول',
+      descEn: 'Travel health insurance required for some countries',
+      refundableAr: 'غير قابلة للاسترداد بعد إصدار الوثيقة',
+      refundableEn: 'Non-refundable once policy is issued',
+      isRefundable: false,
+    },
+  ];
+
+  const refundFAQs = [
+    {
+      questionAr: 'كم يستغرق استرداد المبلغ؟',
+      questionEn: 'How long does a refund take?',
+      answerAr: 'يتم معالجة طلبات الاسترداد خلال 2-3 أيام عمل، ويصل المبلغ إلى حسابك خلال 7-14 يوم عمل حسب البنك.',
+      answerEn: 'Refund requests are processed within 2-3 business days, and the amount reaches your account within 7-14 business days depending on your bank.',
+    },
+    {
+      questionAr: 'هل يمكنني استرداد المبلغ إذا رُفضت تأشيرتي؟',
+      questionEn: 'Can I get a refund if my visa is rejected?',
+      answerAr: 'للأسف لا، رفض التأشيرة من السفارة لا يخولك للاسترداد لأن الرسوم تُدفع مقابل الخدمة المقدمة وليس مقابل نتيجة الطلب.',
+      answerEn: 'Unfortunately no, visa rejection by the embassy does not entitle you to a refund as fees are paid for the service provided, not the application outcome.',
+    },
+    {
+      questionAr: 'ماذا يحدث إذا ألغيت موعدي في السفارة؟',
+      questionEn: 'What happens if I cancel my embassy appointment?',
+      answerAr: 'رسوم الموعد غير قابلة للاسترداد بعد حجز الموعد، لكن قد نتمكن من إعادة جدولة الموعد إذا كان ذلك متاحاً.',
+      answerEn: 'Appointment fees are non-refundable once booked, but we may be able to reschedule if available.',
+    },
+    {
+      questionAr: 'كيف أطلب استرداد المبلغ؟',
+      questionEn: 'How do I request a refund?',
+      answerAr: 'أرسل بريداً إلكترونياً إلى info@rhalat.com يتضمن رقم طلبك، سبب الاسترداد، وتفاصيل الدفع.',
+      answerEn: 'Send an email to info@rhalat.com with your application number, refund reason, and payment details.',
+    },
+    {
+      questionAr: 'هل يمكنني الحصول على استرداد جزئي؟',
+      questionEn: 'Can I get a partial refund?',
+      answerAr: 'نعم، إذا ألغيت بعد 24 ساعة وقبل تقديم الطلب للسفارة، يمكنك الحصول على استرداد 75% من رسوم الخدمة.',
+      answerEn: 'Yes, if you cancel after 24 hours but before embassy submission, you can get a 75% refund of service fees.',
     },
   ];
 
@@ -285,6 +332,58 @@ export default function Refund() {
                 </ul>
               </CardContent>
             </Card>
+          </section>
+
+          {/* Refund FAQs Section */}
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              {isRTL ? 'الأسئلة الشائعة حول الاسترجاع' : 'Refund FAQs'}
+            </h2>
+            <div className="space-y-3">
+              {refundFAQs.map((faq, index) => (
+                <Card 
+                  key={index} 
+                  className="overflow-hidden cursor-pointer transition-all hover:shadow-md"
+                  onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                >
+                  <CardContent className="p-0">
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold text-sm">
+                          {index + 1}
+                        </div>
+                        <h4 className="font-medium">
+                          {isRTL ? faq.questionAr : faq.questionEn}
+                        </h4>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: openFAQ === index ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                      </motion.div>
+                    </div>
+                    <AnimatePresence>
+                      {openFAQ === index && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-4 pb-4 pt-0">
+                            <div className="p-4 bg-muted/50 rounded-lg text-muted-foreground">
+                              {isRTL ? faq.answerAr : faq.answerEn}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </section>
 
           {/* Contact for Refund */}
