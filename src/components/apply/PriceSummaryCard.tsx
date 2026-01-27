@@ -16,7 +16,12 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
   const { applicationData, calculateTotal } = useApplication();
   const { serviceTotal, governmentTotal, grandTotal, breakdown } = calculateTotal();
   
-  const { travelers, visaFeesIncluded, visaTypeName, countryName } = applicationData;
+  const { travelers, visaFeesIncluded, visaTypeName, countryName, priceNotes, priceNotesEn } = applicationData;
+  
+  // Get the appropriate price note based on language
+  const displayPriceNote = direction === 'rtl' 
+    ? (priceNotes || 'شامل رسوم التأشيرة')
+    : (priceNotesEn || 'Visa fees included');
   
   const totalTravelers = travelers.adults + travelers.children + travelers.infants;
 
@@ -112,12 +117,12 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
         {visaFeesIncluded ? (
           <Badge variant="secondary" className="w-full justify-center py-2 bg-accent/20 text-accent-foreground">
             <CheckCircle2 className="w-4 h-4 me-2" />
-            {t('pricing.visaFeesIncluded')}
+            {displayPriceNote}
           </Badge>
         ) : (
           <Badge variant="secondary" className="w-full justify-center py-2 bg-warning/20 text-warning-foreground">
             <Info className="w-4 h-4 me-2" />
-            {t('pricing.visaFeesNotIncluded')}
+            {displayPriceNote}
           </Badge>
         )}
       </div>

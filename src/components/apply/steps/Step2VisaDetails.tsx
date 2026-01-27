@@ -107,13 +107,16 @@ export default function Step2VisaDetails() {
       if (selectedVisa) {
         // Calculate prices (example: child 75%, infant 25%)
         const basePrice = Number(selectedVisa.price);
+        const isFeesIncluded = selectedVisa.fee_type === 'included';
         updateApplicationData({
           visaTypeName: selectedVisa.name,
           adultPrice: basePrice,
           childPrice: Math.round(basePrice * 0.75),
           infantPrice: Math.round(basePrice * 0.25),
-          visaFeesIncluded: true, // Can be dynamic based on visa type
-          governmentFees: Math.round(basePrice * 0.3), // Example
+          visaFeesIncluded: isFeesIncluded,
+          governmentFees: isFeesIncluded ? 0 : Math.round(basePrice * 0.3),
+          priceNotes: selectedVisa.price_notes || '',
+          priceNotesEn: selectedVisa.price_notes_en || '',
         });
       }
     }

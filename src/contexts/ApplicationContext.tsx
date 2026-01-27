@@ -27,6 +27,8 @@ export interface ApplicationData {
   infantPrice: number;
   visaFeesIncluded: boolean;
   governmentFees: number;
+  priceNotes: string;
+  priceNotesEn: string;
   
   // Step 3: Requirements checked
   checkedRequirements: string[];
@@ -87,6 +89,8 @@ const initialApplicationData: ApplicationData = {
   infantPrice: 0,
   visaFeesIncluded: true,
   governmentFees: 0,
+  priceNotes: '',
+  priceNotesEn: '',
   checkedRequirements: [],
   uploadedDocuments: [],
   termsAccepted: false,
