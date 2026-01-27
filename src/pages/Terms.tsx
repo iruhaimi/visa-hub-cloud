@@ -167,10 +167,10 @@ See our Refund Policy for complete details.`
       titleEn: 'Amendments',
       contentAr: `نحتفظ بالحق في تعديل هذه الشروط والأحكام في أي وقت. سيتم نشر أي تعديلات على هذه الصفحة. استمرارك في استخدام خدماتنا بعد أي تعديل يعني موافقتك على الشروط المعدلة.
 
-آخر تحديث: يناير 2024`,
+آخر تحديث: يناير 2025`,
       contentEn: `We reserve the right to modify these terms and conditions at any time. Any modifications will be posted on this page. Your continued use of our services after any modification constitutes acceptance of the modified terms.
 
-Last updated: January 2024`
+Last updated: January 2025`
     },
     {
       titleAr: 'الاتصال بنا',
@@ -201,8 +201,8 @@ Address: Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd`
           </h1>
           <p className="text-lg opacity-90">
             {isRTL 
-              ? 'آخر تحديث: يناير 2024'
-              : 'Last updated: January 2024'
+              ? 'آخر تحديث: يناير 2025'
+              : 'Last updated: January 2025'
             }
           </p>
         </div>
