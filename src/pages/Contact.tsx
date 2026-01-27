@@ -284,31 +284,6 @@ export default function Contact() {
               </CardContent>
             </Card>
 
-            {/* Social Links */}
-            <Card className="border-border/50">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <Globe className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold">
-                    {isRTL ? 'تابعنا' : 'Follow Us'}
-                  </h3>
-                </div>
-                <div className="flex gap-3">
-                  {['twitter', 'instagram', 'facebook', 'linkedin'].map((social) => (
-                    <motion.a
-                      key={social}
-                      href="#"
-                      whileHover={{ scale: 1.1, y: -3 }}
-                      className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center hover:bg-primary/10 transition-colors"
-                    >
-                      <span className="text-xs font-medium text-muted-foreground uppercase">
-                        {social[0]}
-                      </span>
-                    </motion.a>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </motion.div>
 
           {/* Contact Form */}
