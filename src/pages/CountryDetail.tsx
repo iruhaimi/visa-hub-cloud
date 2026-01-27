@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft,
   ArrowRight,
@@ -13,21 +13,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { VisaCard } from '@/components/visa/VisaCard';
+import SchengenDetail from './SchengenDetail';
 import type { Country, VisaType } from '@/types/database';
 
 export default function CountryDetail() {
   const { countryCode } = useParams();
-  const navigate = useNavigate();
   const { t, direction } = useLanguage();
   const [country, setCountry] = useState<Country | null>(null);
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const ArrowIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
+  const isSchengen = countryCode?.toUpperCase() === 'SCHENGEN';
 
   useEffect(() => {
     async function fetchData() {
-      if (!countryCode) return;
+      if (!countryCode || isSchengen) {
+        setIsLoading(false);
+        return;
+      }
 
       const { data: countryData, error: countryError } = await supabase
         .from('countries')
@@ -57,7 +61,12 @@ export default function CountryDetail() {
     }
 
     fetchData();
-  }, [countryCode]);
+  }, [countryCode, isSchengen]);
+
+  // Handle Schengen special case
+  if (isSchengen) {
+    return <SchengenDetail />;
+  }
 
   if (isLoading) {
     return (
