@@ -1,22 +1,14 @@
 import * as React from "react";
-import { format, setMonth, setYear, getMonth, getYear } from "date-fns";
+import { format, setMonth, setYear, getMonth, getYear, getDaysInMonth, startOfMonth, getDay, addDays, isSameDay, isToday, isBefore, isAfter } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DatePickerProps {
@@ -36,9 +28,12 @@ const monthsAr = [
 ];
 
 const monthsEn = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
+
+const daysAr = ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+const daysEn = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 export function DatePicker({
   value,
@@ -51,14 +46,16 @@ export function DatePicker({
   className,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
+  const [view, setView] = React.useState<'days' | 'months' | 'years'>('days');
   const [calendarDate, setCalendarDate] = React.useState<Date>(
     value ? new Date(value) : new Date()
   );
   
   const selectedDate = value ? new Date(value) : undefined;
   const months = isRTL ? monthsAr : monthsEn;
+  const days = isRTL ? daysAr : daysEn;
   
-  // Generate years range (100 years back to 10 years forward)
+  // Generate years range
   const currentYear = new Date().getFullYear();
   const years = React.useMemo(() => {
     const startYear = minDate ? getYear(minDate) : currentYear - 100;
@@ -69,39 +66,71 @@ export function DatePicker({
     }
     return yearsList;
   }, [currentYear, minDate, maxDate]);
-  
-  const handleSelect = (date: Date | undefined) => {
-    if (date) {
-      const formattedDate = format(date, "yyyy-MM-dd");
-      onChange(formattedDate);
-    } else {
-      onChange("");
+
+  // Generate calendar days
+  const calendarDays = React.useMemo(() => {
+    const firstDay = startOfMonth(calendarDate);
+    const daysInMonth = getDaysInMonth(calendarDate);
+    const startDayOfWeek = getDay(firstDay);
+    
+    const days: (Date | null)[] = [];
+    
+    // Add empty cells for days before the first day of month
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null);
     }
+    
+    // Add days of the month
+    for (let i = 0; i < daysInMonth; i++) {
+      days.push(addDays(firstDay, i));
+    }
+    
+    return days;
+  }, [calendarDate]);
+  
+  const handleSelect = (date: Date) => {
+    const formattedDate = format(date, "yyyy-MM-dd");
+    onChange(formattedDate);
     setOpen(false);
   };
 
-  const handleMonthChange = (monthIndex: string) => {
-    const newDate = setMonth(calendarDate, parseInt(monthIndex));
+  const handleMonthSelect = (monthIndex: number) => {
+    const newDate = setMonth(calendarDate, monthIndex);
     setCalendarDate(newDate);
+    setView('days');
   };
 
-  const handleYearChange = (year: string) => {
-    const newDate = setYear(calendarDate, parseInt(year));
+  const handleYearSelect = (year: number) => {
+    const newDate = setYear(calendarDate, year);
     setCalendarDate(newDate);
+    setView('months');
   };
 
-  const disabledDays = (date: Date) => {
-    if (minDate && date < minDate) return true;
-    if (maxDate && date > maxDate) return true;
+  const isDisabled = (date: Date) => {
+    if (minDate && isBefore(date, minDate)) return true;
+    if (maxDate && isAfter(date, maxDate)) return true;
     return false;
   };
 
-  // Update calendar date when value changes
+  const goToPrevMonth = () => {
+    setCalendarDate(prev => setMonth(prev, getMonth(prev) - 1));
+  };
+
+  const goToNextMonth = () => {
+    setCalendarDate(prev => setMonth(prev, getMonth(prev) + 1));
+  };
+
   React.useEffect(() => {
     if (value) {
       setCalendarDate(new Date(value));
     }
   }, [value]);
+
+  React.useEffect(() => {
+    if (open) {
+      setView('days');
+    }
+  }, [open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -139,61 +168,188 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-0 shadow-xl border-border/50 bg-background" 
+        className="w-[320px] p-0 shadow-2xl border-border/30 bg-background rounded-2xl overflow-hidden" 
         align={isRTL ? "end" : "start"}
         sideOffset={8}
       >
-        {/* Month & Year Selectors */}
-        <div className="flex items-center gap-2 p-4 pb-2 border-b border-border/50">
-          {/* Month Selector */}
-          <Select
-            value={getMonth(calendarDate).toString()}
-            onValueChange={handleMonthChange}
+        {/* Header */}
+        <div className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-4">
+          <button
+            type="button"
+            onClick={() => setView(view === 'years' ? 'days' : 'years')}
+            className="text-sm opacity-80 hover:opacity-100 transition-opacity"
           >
-            <SelectTrigger className="flex-1 h-9 text-sm font-medium bg-muted/50 border-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-[280px]">
-              <ScrollArea className="h-[250px]">
-                {months.map((month, index) => (
-                  <SelectItem key={index} value={index.toString()}>
-                    {month}
-                  </SelectItem>
-                ))}
-              </ScrollArea>
-            </SelectContent>
-          </Select>
-
-          {/* Year Selector */}
-          <Select
-            value={getYear(calendarDate).toString()}
-            onValueChange={handleYearChange}
+            {getYear(calendarDate)}
+          </button>
+          <button
+            type="button"
+            onClick={() => setView(view === 'months' ? 'days' : 'months')}
+            className="block text-2xl font-bold hover:opacity-80 transition-opacity"
           >
-            <SelectTrigger className="w-[100px] h-9 text-sm font-medium bg-muted/50 border-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-[280px]">
-              <ScrollArea className="h-[250px]">
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </ScrollArea>
-            </SelectContent>
-          </Select>
+            {format(calendarDate, "d MMMM", { locale: isRTL ? ar : enUS })}
+          </button>
         </div>
 
-        <Calendar
-          mode="single"
-          month={calendarDate}
-          onMonthChange={setCalendarDate}
-          selected={selectedDate}
-          onSelect={handleSelect}
-          disabled={disabledDays}
-          initialFocus
-          className="rounded-lg"
-        />
+        {/* Content */}
+        <div className="p-4">
+          {view === 'days' && (
+            <>
+              {/* Month Navigation */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  type="button"
+                  onClick={goToPrevMonth}
+                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('months')}
+                  className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  {format(calendarDate, "MMMM yyyy", { locale: isRTL ? ar : enUS })}
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNextMonth}
+                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Days Header */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {days.map((day, i) => (
+                  <div key={i} className="h-9 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Days Grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((date, i) => (
+                  <div key={i} className="aspect-square">
+                    {date ? (
+                      <button
+                        type="button"
+                        disabled={isDisabled(date)}
+                        onClick={() => handleSelect(date)}
+                        className={cn(
+                          "w-full h-full rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200",
+                          "hover:bg-primary/10 hover:scale-110",
+                          isToday(date) && !selectedDate && "bg-accent text-accent-foreground ring-2 ring-primary/30",
+                          selectedDate && isSameDay(date, selectedDate) && "bg-primary text-primary-foreground shadow-lg hover:bg-primary",
+                          isDisabled(date) && "opacity-30 cursor-not-allowed hover:bg-transparent hover:scale-100"
+                        )}
+                      >
+                        {date.getDate()}
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {view === 'months' && (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  type="button"
+                  onClick={() => setCalendarDate(prev => setYear(prev, getYear(prev) - 1))}
+                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('years')}
+                  className="text-base font-semibold hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  {getYear(calendarDate)}
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalendarDate(prev => setYear(prev, getYear(prev) + 1))}
+                  className="p-2 rounded-full hover:bg-accent transition-colors"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {months.map((month, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleMonthSelect(i)}
+                    className={cn(
+                      "py-3 px-2 rounded-xl text-sm font-medium transition-all duration-200",
+                      "hover:bg-primary/10 hover:scale-105",
+                      getMonth(calendarDate) === i && "bg-primary text-primary-foreground shadow-md hover:bg-primary"
+                    )}
+                  >
+                    {month}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {view === 'years' && (
+            <ScrollArea className="h-[280px]">
+              <div className="grid grid-cols-3 gap-2 p-1">
+                {years.map((year) => (
+                  <button
+                    key={year}
+                    type="button"
+                    onClick={() => handleYearSelect(year)}
+                    className={cn(
+                      "py-3 px-2 rounded-xl text-sm font-medium transition-all duration-200",
+                      "hover:bg-primary/10 hover:scale-105",
+                      getYear(calendarDate) === year && "bg-primary text-primary-foreground shadow-md hover:bg-primary"
+                    )}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/30">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const today = new Date();
+              setCalendarDate(today);
+              handleSelect(today);
+            }}
+            className="text-primary hover:text-primary hover:bg-primary/10"
+          >
+            {isRTL ? "اليوم" : "Today"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              onChange("");
+              setOpen(false);
+            }}
+            className="text-muted-foreground"
+          >
+            {isRTL ? "مسح" : "Clear"}
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
