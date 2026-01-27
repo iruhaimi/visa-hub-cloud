@@ -211,7 +211,10 @@ export default function Auth() {
                                 type={showPassword ? 'text' : 'password'}
                                 placeholder="••••••••"
                                 dir="ltr"
-                                {...field}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
                               />
                               <Button
                                 type="button"
@@ -239,7 +242,15 @@ export default function Auth() {
                         <FormItem>
                           <FormLabel>{isRTL ? 'تأكيد كلمة المرور' : 'Confirm Password'}</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="••••••••" dir="ltr" {...field} />
+                            <Input 
+                              type="password" 
+                              placeholder="••••••••" 
+                              dir="ltr" 
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -261,7 +272,15 @@ export default function Auth() {
                         <FormItem>
                           <FormLabel>{isRTL ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="example@email.com" dir="ltr" {...field} />
+                            <Input 
+                              type="email" 
+                              placeholder="example@email.com" 
+                              dir="ltr" 
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -279,7 +298,10 @@ export default function Auth() {
                                 type={showPassword ? 'text' : 'password'}
                                 placeholder="••••••••"
                                 dir="ltr"
-                                {...field}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
                               />
                               <Button
                                 type="button"
