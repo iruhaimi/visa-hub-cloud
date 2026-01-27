@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -184,24 +185,57 @@ export default function Refund() {
 
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: isRTL ? 'تم إرسال الطلب بنجاح' : 'Request Submitted Successfully',
-      description: isRTL 
-        ? 'سنراجع طلبك ونتواصل معك خلال 2-3 أيام عمل'
-        : 'We will review your request and contact you within 2-3 business days',
-    });
-    
-    setFormData({
-      applicationNumber: '',
-      email: '',
-      phone: '',
-      reason: '',
-      additionalDetails: ''
-    });
-    setIsSubmitting(false);
+    try {
+      // Insert refund request into database
+      const { error } = await supabase
+        .from('refund_requests')
+        .insert({
+          application_number: formData.applicationNumber.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone?.trim() || null,
+          reason: formData.reason,
+          additional_details: formData.additionalDetails?.trim() || null,
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error('Error submitting refund request:', error);
+        toast({
+          title: isRTL ? 'خطأ' : 'Error',
+          description: isRTL 
+            ? 'حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.'
+            : 'An error occurred while submitting your request. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      toast({
+        title: isRTL ? 'تم إرسال الطلب بنجاح' : 'Request Submitted Successfully',
+        description: isRTL 
+          ? 'سنراجع طلبك ونتواصل معك خلال 2-3 أيام عمل'
+          : 'We will review your request and contact you within 2-3 business days',
+      });
+      
+      setFormData({
+        applicationNumber: '',
+        email: '',
+        phone: '',
+        reason: '',
+        additionalDetails: ''
+      });
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({
+        title: isRTL ? 'خطأ' : 'Error',
+        description: isRTL 
+          ? 'حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.'
+          : 'An unexpected error occurred. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredFAQs = refundFAQs.filter(faq => {
