@@ -1,6 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { 
   Shield, 
   Eye,
@@ -10,7 +9,14 @@ import {
   Trash2,
   Mail,
   Globe,
-  Cookie
+  Cookie,
+  AlertTriangle,
+  Users,
+  Scale,
+  Plane,
+  FileText,
+  Bot,
+  RefreshCw
 } from 'lucide-react';
 
 export default function Privacy() {
@@ -20,163 +26,328 @@ export default function Privacy() {
   const sections = [
     {
       icon: Shield,
-      titleAr: 'الامتثال لنظام حماية البيانات الشخصية',
-      titleEn: 'Personal Data Protection Law Compliance',
-      contentAr: `نلتزم في وكالة عطلات رحلاتكم بالعمل وفقاً لأحكام **نظام حماية البيانات الشخصية** الصادر بموجب المرسوم الملكي رقم (م/19) بتاريخ 09/02/1443هـ الموافق 16/09/2021م، والمعدّل بموجب المرسوم الملكي رقم (م/148) بتاريخ 05/09/1444هـ الموافق 27/03/2023م.
+      titleAr: 'من نحن',
+      titleEn: 'Who We Are',
+      contentAr: `**وكالة عطلات رحلاتكم للسياحة والسفر** هي الجهة المسؤولة عن بياناتك الشخصية (يُشار إليها بـ "نحن" أو "لنا" أو "خاصتنا" في إشعار الخصوصية هذا).
 
-**الجهة المنظمة:**
-نعمل وفقاً لأنظمة **الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا)** - الجهة المختصة بتنظيم وحماية البيانات الشخصية في المملكة العربية السعودية.
+يوضح إشعار الخصوصية هذا ما يلي:
+• من نحن
+• كيف نجمع بياناتك الشخصية ونشاركها ونستخدمها
+• كيف يمكنك ممارسة حقوق الخصوصية الخاصة بك
 
-**التزاماتنا:**
-• نعالج بياناتك الشخصية فقط للأغراض المحددة والمشروعة
-• نحصل على موافقتك قبل جمع أو معالجة بياناتك
-• نحترم حقوقك في الوصول والتصحيح والحذف
-• نطبق إجراءات أمنية صارمة لحماية بياناتك
-• نلتزم بالإفصاح والشفافية في التعامل مع بياناتك`,
-      contentEn: `At Otolat Rahlatcom, we operate in full compliance with the **Personal Data Protection Law (PDPL)** issued pursuant to Royal Decree No. (M/19) dated 09/02/1443 AH corresponding to 16/09/2021 G, and amended pursuant to Royal Decree No. (M/148) dated 05/09/1444 AH corresponding to 27/03/2023 G.
+نلتزم بالعمل وفقاً لأحكام **نظام حماية البيانات الشخصية** الصادر بموجب المرسوم الملكي رقم (م/19) بتاريخ 09/02/1443هـ الموافق 16/09/2021م، والمعدّل بموجب المرسوم الملكي رقم (م/148) بتاريخ 05/09/1444هـ الموافق 27/03/2023م.`,
+      contentEn: `**Otolat Rahlatcom Travel Agency** is the entity responsible for your personal data (referred to as "we", "us", or "our" in this privacy notice).
 
-**Regulatory Authority:**
-We operate under the supervision of the **Saudi Data and Artificial Intelligence Authority (SDAIA)** - the competent authority for regulating and protecting personal data in the Kingdom of Saudi Arabia.
+This privacy notice explains:
+• Who we are
+• How we collect, share, and use your personal data
+• How you can exercise your privacy rights
 
-**Our Commitments:**
-• We process your personal data only for specified and legitimate purposes
-• We obtain your consent before collecting or processing your data
-• We respect your rights to access, correct, and delete your data
-• We implement strict security measures to protect your data
-• We are committed to disclosure and transparency in handling your data`
+We operate in compliance with the **Personal Data Protection Law (PDPL)** issued pursuant to Royal Decree No. (M/19) dated 09/02/1443 AH corresponding to 16/09/2021 G, and amended pursuant to Royal Decree No. (M/148) dated 05/09/1444 AH corresponding to 27/03/2023 G.`
     },
     {
       icon: Database,
-      titleAr: 'المعلومات التي نجمعها',
-      titleEn: 'Information We Collect',
-      contentAr: `نجمع المعلومات التالية عند استخدامك لخدماتنا:
+      titleAr: 'البيانات الشخصية التي نجمعها منك',
+      titleEn: 'Personal Data We Collect From You',
+      contentAr: `نقوم بجمع البيانات الشخصية عند:
+• إكمال استمارة التواصل عبر الإنترنت
+• زيارة موقعنا الإلكتروني
+• استخدام تطبيقنا للجوال
+• طلب أو شراء أو استخدام خدمة منا
+• التواصل معنا (بما في ذلك المكالمات الهاتفية والواتساب والبريد الإلكتروني)
 
-**المعلومات الشخصية:**
-• الاسم الكامل
-• البريد الإلكتروني
-• رقم الهاتف
-• تاريخ الميلاد
-• الجنسية
-• رقم جواز السفر وتاريخ انتهائه
-• العنوان
+**أنواع البيانات التي نجمعها:**
 
-**المستندات:**
-• صور جواز السفر
-• الصور الشخصية
-• كشوف الحسابات البنكية
-• حجوزات السفر والفنادق
-• أي مستندات أخرى مطلوبة للتأشيرة
+**بيانات الهوية:** اسمك الكامل، الصور، جواز السفر، تاريخ الميلاد، الجنسية
 
-**معلومات الاستخدام:**
-• عنوان IP
-• نوع المتصفح
-• صفحات الموقع التي تزورها
-• تاريخ ووقت الزيارة`,
-      contentEn: `We collect the following information when you use our services:
+**بيانات الاتصال:** عنوان بريدك الإلكتروني، أرقام هاتفك، عنوان منزلك
 
-**Personal Information:**
-• Full name
-• Email address
-• Phone number
-• Date of birth
-• Nationality
-• Passport number and expiry date
-• Address
+**البيانات المالية:** تفاصيل بطاقتك الائتمانية، كشوف الحسابات البنكية
 
-**Documents:**
-• Passport copies
-• Personal photos
-• Bank statements
-• Travel and hotel bookings
-• Any other documents required for the visa
+**البيانات الحساسة:** شهادات طبية، معلومات صحية (عند الحاجة لطلب التأشيرة)
 
-**Usage Information:**
-• IP address
-• Browser type
-• Website pages you visit
-• Date and time of visit`
+من المهم أن تكون البيانات الشخصية التي نحتفظ بها عنك دقيقة ومحدثة. يرجى إبقاؤنا على اطلاع بأي تغييرات تطرأ على بياناتك الشخصية.`,
+      contentEn: `We collect personal data when you:
+• Complete an online contact form
+• Visit our website
+• Use our mobile application
+• Request, purchase, or use a service from us
+• Contact us (including phone calls, WhatsApp, and email)
+
+**Types of data we collect:**
+
+**Identity Data:** Your full name, photos, passport, date of birth, nationality
+
+**Contact Data:** Your email address, phone numbers, home address
+
+**Financial Data:** Your credit card details, bank statements
+
+**Sensitive Data:** Medical certificates, health information (when required for visa application)
+
+It is important that the personal data we hold about you is accurate and up to date. Please keep us informed of any changes to your personal data.`
+    },
+    {
+      icon: Users,
+      titleAr: 'البيانات الشخصية التي نجمعها من الآخرين',
+      titleEn: 'Personal Data We Collect From Others',
+      contentAr: `في بعض الأحيان نعمل مع أطراف ثالثة مختارة بعناية، وقد نتلقى بياناتك الشخصية منها. تشمل الأطراف الثالثة:
+
+• **السفارات والقنصليات:** معلومات حول حالة طلب التأشيرة
+• **شركاء الخدمة:** شركات الطيران والفنادق
+• **شركاء الأعمال:** الوكالات الأخرى التي نتعاون معها`,
+      contentEn: `Sometimes we work with carefully selected third parties, and we may receive your personal data from them. Third parties include:
+
+• **Embassies and Consulates:** Information about visa application status
+• **Service Partners:** Airlines and hotels
+• **Business Partners:** Other agencies we collaborate with`
+    },
+    {
+      icon: Scale,
+      titleAr: 'الأسس القانونية لمعالجة بياناتك',
+      titleEn: 'Legal Basis for Processing Your Data',
+      contentAr: `نقوم بمعالجة بياناتك الشخصية بناءً على الأسس القانونية التالية:
+
+**الموافقة:** عندما تمنحنا موافقة صريحة لمعالجة بياناتك لأغراض محددة
+
+**العقود:** عندما تكون المعالجة ضرورية لتنفيذ العقد الذي أنت طرف فيه (مثل معالجة طلب التأشيرة)
+
+**الالتزام القانوني:** عندما نحتاج إلى الامتثال لالتزام قانوني
+
+**المصالح المشروعة:** عندما يكون ذلك ضروريًا لمصالحنا المشروعة ولا تتعارض مصالحك وحقوقك مع تلك المصالح`,
+      contentEn: `We process your personal data based on the following legal grounds:
+
+**Consent:** When you give us explicit consent to process your data for specific purposes
+
+**Contracts:** When processing is necessary to perform a contract you are party to (such as processing a visa application)
+
+**Legal Obligation:** When we need to comply with a legal obligation
+
+**Legitimate Interests:** When necessary for our legitimate interests and your interests and rights do not conflict with those interests`
     },
     {
       icon: Eye,
-      titleAr: 'كيف نستخدم معلوماتك',
-      titleEn: 'How We Use Your Information',
-      contentAr: `نستخدم معلوماتك للأغراض التالية:
+      titleAr: 'كيف نستخدم بياناتك الشخصية',
+      titleEn: 'How We Use Your Personal Data',
+      contentAr: `نستخدم بياناتك الشخصية للأغراض التالية:
 
-1. **معالجة طلبات التأشيرة**: تقديم طلباتك للسفارات والقنصليات
-2. **التواصل معك**: إرسال تحديثات حول طلبك، الرد على استفساراتك
-3. **تحسين خدماتنا**: تحليل كيفية استخدام موقعنا لتحسين تجربة المستخدم
-4. **الامتثال القانوني**: تلبية المتطلبات القانونية والتنظيمية
-5. **الحماية من الاحتيال**: حماية موقعنا وعملائنا من الأنشطة الاحتيالية
-6. **التسويق** (بموافقتك): إرسال عروض وتحديثات حول خدماتنا`,
-      contentEn: `We use your information for the following purposes:
+**توفير المعلومات التي طلبتها:**
+أنواع البيانات: الهوية، التواصل (المصالح المشروعة)
 
-1. **Processing visa applications**: Submitting your applications to embassies and consulates
-2. **Communicating with you**: Sending updates about your application, responding to inquiries
-3. **Improving our services**: Analyzing website usage to improve user experience
-4. **Legal compliance**: Meeting legal and regulatory requirements
-5. **Fraud protection**: Protecting our website and customers from fraudulent activities
-6. **Marketing** (with your consent): Sending offers and updates about our services`
+**تقديم خدمة لك:**
+أنواع البيانات: الهوية والتواصل (العقود)
+
+**إدارة طلبات التأشيرة:**
+أنواع البيانات: بيانات الهوية والاتصال والبيانات المالية والحساسة (العقود)
+
+**تسويق منتجاتنا وخدماتنا:**
+أنواع البيانات: الهوية والتواصل (الموافقة)
+
+**طلب تعليقات وملاحظات:**
+أنواع البيانات: الهوية والتواصل (المصالح المشروعة)
+
+عندما نقوم بمعالجة بياناتك الشخصية لتحقيق مصالحنا المشروعة، يمكنك الاعتراض على معالجة بياناتك الشخصية.`,
+      contentEn: `We use your personal data for the following purposes:
+
+**Providing information you requested:**
+Data types: Identity, Contact (Legitimate Interests)
+
+**Providing a service to you:**
+Data types: Identity and Contact (Contracts)
+
+**Managing visa applications:**
+Data types: Identity, Contact, Financial, and Sensitive data (Contracts)
+
+**Marketing our products and services:**
+Data types: Identity and Contact (Consent)
+
+**Requesting feedback:**
+Data types: Identity and Contact (Legitimate Interests)
+
+When we process your personal data to achieve our legitimate interests, you can object to the processing of your personal data.`
     },
     {
       icon: Share2,
-      titleAr: 'مشاركة المعلومات',
-      titleEn: 'Information Sharing',
-      contentAr: `قد نشارك معلوماتك مع الأطراف التالية:
+      titleAr: 'مشاركة بياناتك الشخصية',
+      titleEn: 'Sharing Your Personal Data',
+      contentAr: `عند الضرورة، نقوم بمشاركة بياناتك الشخصية مع:
 
-**السفارات والقنصليات**: لمعالجة طلبات التأشيرة
+• **السفارات والقنصليات:** لمعالجة طلبات التأشيرة
+• **شركاء الخدمة:** شركات الطيران والإقامات
+• **مقدمي خدمات الدفع:** لمعالجة المدفوعات
+• **السلطات الضريبية والتنظيمية:** عند الحاجة
+• **السلطات الحكومية:** مثل معالجة التأشيرات
+• **السلطات القضائية والمحاكم:** عند الإجراءات القانونية
+• **وكالات إنفاذ القانون:** عند الطلب القانوني
 
-**مقدمي الخدمات**: شركات الدفع، خدمات التخزين السحابي
+**لا نبيع** بياناتك الشخصية لأي طرف ثالث أبداً.`,
+      contentEn: `When necessary, we share your personal data with:
 
-**الجهات الحكومية**: عند الطلب القانوني
+• **Embassies and Consulates:** For processing visa applications
+• **Service Partners:** Airlines and accommodations
+• **Payment Service Providers:** For processing payments
+• **Tax and Regulatory Authorities:** When required
+• **Government Authorities:** Such as visa processing
+• **Judicial Authorities and Courts:** For legal proceedings
+• **Law Enforcement Agencies:** When legally required
 
-**لا نبيع** معلوماتك الشخصية لأي طرف ثالث أبداً.`,
-      contentEn: `We may share your information with the following parties:
+We **never sell** your personal data to any third party.`
+    },
+    {
+      icon: Plane,
+      titleAr: 'نقل البيانات دولياً',
+      titleEn: 'International Data Transfers',
+      contentAr: `قد يتم نقل بياناتك الشخصية ومعالجتها في دول خارج المملكة العربية السعودية. قد لا توفر بعض هذه البلدان نفس مستوى حماية البيانات المتوفر في المملكة.
 
-**Embassies and Consulates**: For processing visa applications
+في حال نقل بياناتك الشخصية خارج المملكة العربية السعودية:
+• سيتم مشاركتها مع السفارات والقنصليات وشركائنا في الخدمة
+• نضمن وجود الضمانات المناسبة لحماية بياناتك
+• نلتزم بمتطلبات نظام حماية البيانات الشخصية السعودي (PDPL)
 
-**Service Providers**: Payment companies, cloud storage services
+يلتزم مقدمو خدماتنا وشركاؤنا بالحفاظ على سرية بياناتك الشخصية ولن يشاركوها مع أي أطراف ثالثة.`,
+      contentEn: `Your personal data may be transferred and processed in countries outside the Kingdom of Saudi Arabia. Some of these countries may not provide the same level of data protection available in the Kingdom.
 
-**Government Authorities**: When legally required
+When your personal data is transferred outside Saudi Arabia:
+• It will be shared with embassies, consulates, and our service partners
+• We ensure appropriate safeguards are in place to protect your data
+• We comply with Saudi Personal Data Protection Law (PDPL) requirements
 
-We **never sell** your personal information to any third party.`
+Our service providers and partners are committed to maintaining the confidentiality of your personal data and will not share it with any third parties.`
     },
     {
       icon: Lock,
-      titleAr: 'حماية المعلومات',
-      titleEn: 'Information Security',
+      titleAr: 'حماية بياناتك',
+      titleEn: 'Protecting Your Data',
       contentAr: `نتخذ إجراءات أمنية صارمة لحماية معلوماتك:
 
-• **تشفير SSL**: جميع البيانات المنقولة مشفرة
-• **تخزين آمن**: المستندات محفوظة في خوادم مشفرة
-• **التحكم في الوصول**: وصول محدود للموظفين المصرح لهم فقط
-• **المراقبة المستمرة**: مراقبة الأنظمة للكشف عن أي نشاط مشبوه
-• **التحديثات الأمنية**: تحديث منتظم لأنظمتنا الأمنية`,
+• **تشفير SSL:** جميع البيانات المنقولة مشفرة
+• **تخزين آمن:** المستندات محفوظة في خوادم مشفرة
+• **التحكم في الوصول:** وصول محدود للموظفين المصرح لهم فقط
+• **المراقبة المستمرة:** مراقبة الأنظمة للكشف عن أي نشاط مشبوه
+• **التحديثات الأمنية:** تحديث منتظم لأنظمتنا الأمنية`,
       contentEn: `We take strict security measures to protect your information:
 
-• **SSL Encryption**: All transmitted data is encrypted
-• **Secure Storage**: Documents stored on encrypted servers
-• **Access Control**: Limited access to authorized personnel only
-• **Continuous Monitoring**: Systems monitored for suspicious activity
-• **Security Updates**: Regular updates to our security systems`
+• **SSL Encryption:** All transmitted data is encrypted
+• **Secure Storage:** Documents stored on encrypted servers
+• **Access Control:** Limited access to authorized personnel only
+• **Continuous Monitoring:** Systems monitored for suspicious activity
+• **Security Updates:** Regular updates to our security systems`
     },
     {
       icon: Trash2,
-      titleAr: 'الاحتفاظ بالبيانات وحذفها',
-      titleEn: 'Data Retention and Deletion',
-      contentAr: `**مدة الاحتفاظ:**
-• نحتفظ ببياناتك للمدة اللازمة لمعالجة طلبك
-• بعد اكتمال الطلب، نحتفظ بالبيانات لمدة سنتين للرجوع إليها
-• بعد ذلك، يتم حذف البيانات بشكل آمن
+      titleAr: 'الاحتفاظ ببياناتك الشخصية',
+      titleEn: 'Retention of Your Personal Data',
+      contentAr: `نحتفظ بالبيانات الشخصية طالما كان ذلك ضروريًا للأغراض التالية:
 
-**حقك في الحذف:**
-يمكنك طلب حذف بياناتك في أي وقت عبر التواصل معنا. سنقوم بحذف جميع بياناتك خلال 30 يوماً، ما لم يكن هناك التزام قانوني بالاحتفاظ بها.`,
-      contentEn: `**Retention Period:**
-• We retain your data for as long as needed to process your application
-• After completion, we keep data for two years for reference
-• After that, data is securely deleted
+• **معالجة طلبك:** طوال فترة معالجة الطلب
+• **الالتزامات القانونية والتنظيمية:** وفقاً للمتطلبات القانونية
+• **الترافع في الدعاوى القانونية:** عند الحاجة
+• **المرجعية:** نحتفظ بالبيانات لمدة سنتين بعد اكتمال الطلب
 
-**Your Right to Deletion:**
-You can request deletion of your data at any time by contacting us. We will delete all your data within 30 days, unless legally required to retain it.`
+بعد انتهاء فترة الاحتفاظ، يتم حذف بياناتك بشكل آمن.`,
+      contentEn: `We retain personal data as long as necessary for the following purposes:
+
+• **Processing your application:** Throughout the application processing period
+• **Legal and regulatory obligations:** According to legal requirements
+• **Legal proceedings:** When needed
+• **Reference:** We keep data for two years after application completion
+
+After the retention period ends, your data is securely deleted.`
+    },
+    {
+      icon: Globe,
+      titleAr: 'حقوقك كصاحب بيانات',
+      titleEn: 'Your Rights as a Data Subject',
+      contentAr: `نعترف بحقوقك المتعلقة ببياناتك الشخصية وفقاً لنظام حماية البيانات الشخصية. يمكنك طلب ممارسة حقوقك في أي وقت عن طريق التواصل معنا:
+
+**الحق في الحصول على المعلومات:** الحصول على معلومات واضحة وشفافة حول كيفية جمع بياناتك واستخدامها ومشاركتها
+
+**الحق في الوصول:** طلب الوصول إلى بياناتك الشخصية والحصول على نسخة منها
+
+**الحق في التصحيح:** طلب تصحيح البيانات غير الدقيقة أو غير الكاملة
+
+**الحق في الحذف:** طلب حذف بياناتك الشخصية في ظروف معينة
+
+**الحق في التقييد:** طلب تقييد معالجة بياناتك الشخصية
+
+**الحق في نقل البيانات:** طلب استلام بياناتك بتنسيق منظم وقابل للقراءة آليًا
+
+**الحق في الاعتراض:** الاعتراض على معالجة بياناتك، بما في ذلك لأغراض التسويق المباشر
+
+**الحق في سحب الموافقة:** إذا كانت المعالجة تعتمد على موافقتك، فلديك الحق في سحب الموافقة في أي وقت
+
+قد تخضع هذه الحقوق لاستثناءات وقيود مختلفة وفقًا لنظام حماية البيانات الشخصية.`,
+      contentEn: `We recognize your rights regarding your personal data according to the Personal Data Protection Law. You can request to exercise your rights at any time by contacting us:
+
+**Right to Information:** Obtain clear and transparent information about how your data is collected, used, and shared
+
+**Right to Access:** Request access to your personal data and obtain a copy
+
+**Right to Correction:** Request correction of inaccurate or incomplete data
+
+**Right to Deletion:** Request deletion of your personal data in certain circumstances
+
+**Right to Restriction:** Request restriction of processing your personal data
+
+**Right to Data Portability:** Request to receive your data in a structured, machine-readable format
+
+**Right to Object:** Object to processing your data, including for direct marketing purposes
+
+**Right to Withdraw Consent:** If processing is based on your consent, you have the right to withdraw consent at any time
+
+These rights may be subject to various exceptions and limitations according to the Personal Data Protection Law.`
+    },
+    {
+      icon: AlertTriangle,
+      titleAr: 'تقديم شكوى بشأن حماية البيانات',
+      titleEn: 'Filing a Data Protection Complaint',
+      contentAr: `إذا كانت لديك أي شكاوى حول استخدام بياناتك الشخصية أو مخاوف بشأن كيفية التعامل مع بياناتك وحقوقك، يمكنك:
+
+**1. التواصل معنا مباشرة:**
+يمكنك تقديم شكوى إلينا باستخدام معلومات التواصل المذكورة أدناه
+
+**2. تقديم شكوى للجهة الرقابية:**
+إذا لم تكن راضيًا عن طريقة تعاملنا مع شكواك، يحق لك رفع شكوى مباشرة إلى **الهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا)**`,
+      contentEn: `If you have any complaints about the use of your personal data or concerns about how your data and rights are handled, you can:
+
+**1. Contact us directly:**
+You can submit a complaint to us using the contact information below
+
+**2. File a complaint with the regulatory authority:**
+If you are not satisfied with how we handled your complaint, you have the right to file a complaint directly with the **Saudi Data and Artificial Intelligence Authority (SDAIA)**`
+    },
+    {
+      icon: FileText,
+      titleAr: 'إشعار خرق البيانات',
+      titleEn: 'Data Breach Notification',
+      contentAr: `في حالة حدوث خرق للبيانات:
+
+• سنقوم بإخطار السلطة الإشرافية المختصة (سدايا) في غضون **72 ساعة** من علمنا بالخرق، كما هو مطلوب بموجب القانون
+
+• إذا كان من المحتمل أن يشكل الخرق خطرًا كبيرًا على حقوقك وحرياتك، سنقوم بإبلاغك دون تأخير غير مبرر
+
+• سنتخذ جميع الإجراءات اللازمة للحد من آثار الخرق وحماية بياناتك`,
+      contentEn: `In case of a data breach:
+
+• We will notify the competent supervisory authority (SDAIA) within **72 hours** of becoming aware of the breach, as required by law
+
+• If the breach is likely to pose a significant risk to your rights and freedoms, we will inform you without undue delay
+
+• We will take all necessary measures to mitigate the effects of the breach and protect your data`
+    },
+    {
+      icon: Bot,
+      titleAr: 'التوصيف واتخاذ القرارات الآلي',
+      titleEn: 'Profiling and Automated Decision-Making',
+      contentAr: `**التوصيف:**
+نحن لا نشارك في أي أنشطة إنشاء ملف تعريفي باستخدام بياناتك الشخصية
+
+**اتخاذ القرارات الآلي:**
+نحن لا نستخدم أي عمليات آلية لاتخاذ قرارات بشأنك والتي تنتج تأثيرات قانونية أو ذات أثر بالغ عليك`,
+      contentEn: `**Profiling:**
+We do not engage in any profiling activities using your personal data
+
+**Automated Decision-Making:**
+We do not use any automated processes to make decisions about you that produce legal effects or significantly affect you`
     },
     {
       icon: Cookie,
@@ -184,68 +355,62 @@ You can request deletion of your data at any time by contacting us. We will dele
       titleEn: 'Cookies',
       contentAr: `نستخدم ملفات تعريف الارتباط (Cookies) لـ:
 
-• **تحسين تجربة التصفح**: تذكر تفضيلاتك
-• **تحليل الاستخدام**: فهم كيفية استخدام الموقع
-• **الإعلانات**: عرض إعلانات ملائمة (بموافقتك)
+• **تحسين تجربة التصفح:** تذكر تفضيلاتك
+• **تحليل الاستخدام:** فهم كيفية استخدام الموقع
+• **الإعلانات:** عرض إعلانات ملائمة (بموافقتك)
 
 يمكنك التحكم في ملفات تعريف الارتباط من إعدادات متصفحك.`,
       contentEn: `We use cookies for:
 
-• **Improving browsing experience**: Remembering your preferences
-• **Usage analytics**: Understanding how the website is used
-• **Advertising**: Showing relevant ads (with your consent)
+• **Improving browsing experience:** Remembering your preferences
+• **Usage analytics:** Understanding how the website is used
+• **Advertising:** Showing relevant ads (with your consent)
 
 You can control cookies through your browser settings.`
     },
     {
-      icon: Globe,
-      titleAr: 'حقوقك',
-      titleEn: 'Your Rights',
-      contentAr: `لديك الحقوق التالية فيما يتعلق ببياناتك:
+      icon: RefreshCw,
+      titleAr: 'التغييرات على إشعار الخصوصية',
+      titleEn: 'Changes to This Privacy Notice',
+      contentAr: `يجوز لنا تحديث إشعار الخصوصية هذا بشكل دوري ليعكس التغييرات في ممارساتنا أو المتطلبات القانونية.
 
-• **الوصول**: طلب نسخة من بياناتك الشخصية
-• **التصحيح**: طلب تصحيح أي معلومات غير دقيقة
-• **الحذف**: طلب حذف بياناتك
-• **الاعتراض**: الاعتراض على معالجة بياناتك لأغراض معينة
-• **النقل**: طلب نقل بياناتك إلى جهة أخرى
-• **سحب الموافقة**: سحب موافقتك على المعالجة في أي وقت
+إذا أجرينا تغييرات جوهرية، سنقوم بـ:
+• نشر الإشعار المحدث على موقعنا الإلكتروني
+• مراجعة تاريخ "آخر تحديث" في أسفل هذا الإشعار
+• إخطارك عبر البريد الإلكتروني عند الضرورة`,
+      contentEn: `We may update this privacy notice periodically to reflect changes in our practices or legal requirements.
 
-لممارسة أي من هذه الحقوق، تواصل معنا عبر البريد الإلكتروني.`,
-      contentEn: `You have the following rights regarding your data:
-
-• **Access**: Request a copy of your personal data
-• **Correction**: Request correction of inaccurate information
-• **Deletion**: Request deletion of your data
-• **Objection**: Object to processing for certain purposes
-• **Portability**: Request transfer of your data to another party
-• **Withdraw Consent**: Withdraw your consent at any time
-
-To exercise any of these rights, contact us via email.`
+If we make material changes, we will:
+• Post the updated notice on our website
+• Revise the "Last Updated" date at the bottom of this notice
+• Notify you by email when necessary`
     },
     {
       icon: Mail,
-      titleAr: 'الاتصال بنا',
+      titleAr: 'تواصل معنا',
       titleEn: 'Contact Us',
-      contentAr: `لأي استفسارات حول سياسة الخصوصية أو بياناتك الشخصية:
+      contentAr: `إذا كان لديك أي أسئلة حول إشعار الخصوصية، استخدام بياناتك الشخصية، أو إذا كنت ترغب في ممارسة أي من حقوق الخصوصية الخاصة بك، يرجى التواصل معنا:
 
 **وكالة عطلات رحلاتكم للسياحة والسفر:**
-البريد الإلكتروني: info@rhalat.com
-الهاتف: 920034158
 
-**العنوان:**
-الرياض - حي الربيع - شارع أبي بن معاذ الأنصاري
+**عن طريق البريد الإلكتروني:** info@rhalat.com
 
-آخر تحديث: يناير 2024`,
-      contentEn: `For any inquiries about our privacy policy or your personal data:
+**عن طريق الهاتف:** 920034158
+
+**العنوان:** الرياض - حي الربيع - شارع أبي بن معاذ الأنصاري
+
+**آخر تحديث:** يناير 2025`,
+      contentEn: `If you have any questions about this privacy notice, the use of your personal data, or if you would like to exercise any of your privacy rights, please contact us:
 
 **Otolat Rahlatcom Travel Agency:**
-Email: info@rhalat.com
-Phone: 920034158
 
-**Address:**
-Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd
+**By Email:** info@rhalat.com
 
-Last updated: January 2024`
+**By Phone:** 920034158
+
+**Address:** Riyadh - Al-Rabi' neighborhood - Ubay Bin Moaath Alansari Rd
+
+**Last Updated:** January 2025`
     },
   ];
 
@@ -274,7 +439,7 @@ Last updated: January 2024`
           {/* PDPL Compliance Notice */}
           <Card className="mb-8 border-primary/20 bg-primary/5">
             <CardContent className="py-6" dir={isRTL ? 'rtl' : 'ltr'}>
-              <div className={`flex items-center gap-4 ${isRTL ? 'flex-row' : 'flex-row'}`}>
+              <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                   <Shield className="w-6 h-6 text-primary" />
                 </div>
@@ -287,18 +452,6 @@ Last updated: January 2024`
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Introduction */}
-          <Card className="mb-8">
-            <CardContent className="py-6" dir={isRTL ? 'rtl' : 'ltr'}>
-              <p className={`text-muted-foreground leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
-                {isRTL 
-                  ? 'نحن في وكالة عطلات رحلاتكم نلتزم بحماية خصوصيتك. توضح هذه السياسة كيفية جمع واستخدام وحماية معلوماتك الشخصية عند استخدام موقعنا وخدماتنا.'
-                  : 'At Otolat Rahlatcom, we are committed to protecting your privacy. This policy explains how we collect, use, and protect your personal information when using our website and services.'
-                }
-              </p>
             </CardContent>
           </Card>
 
