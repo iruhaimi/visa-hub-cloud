@@ -101,7 +101,7 @@ export default function FooterArabic() {
               </a>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 flex-shrink-0" />
-                <span>السبت - الخميس: ١٢ ظ - ١٠ م</span>
+                <span>يومياً: ١٠ ص - ١٠ م</span>
               </div>
             </div>
           </div>
