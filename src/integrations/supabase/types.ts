@@ -421,6 +421,59 @@ export type Database = {
         }
         Relationships: []
       }
+      refund_requests: {
+        Row: {
+          additional_details: string | null
+          admin_notes: string | null
+          application_number: string
+          created_at: string
+          email: string
+          id: string
+          phone: string | null
+          processed_at: string | null
+          processed_by: string | null
+          reason: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          additional_details?: string | null
+          admin_notes?: string | null
+          application_number: string
+          created_at?: string
+          email: string
+          id?: string
+          phone?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          additional_details?: string | null
+          admin_notes?: string | null
+          application_number?: string
+          created_at?: string
+          email?: string
+          id?: string
+          phone?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       special_offers: {
         Row: {
           badge: string | null
