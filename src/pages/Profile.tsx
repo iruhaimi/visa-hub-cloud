@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { ProfileCompletionAlert } from '@/components/profile/ProfileCompletionAlert';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
 import { CountryPicker, CityPicker } from '@/components/ui/CountryCityPicker';
+import { DatePicker } from '@/components/ui/DatePicker';
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { direction } = useLanguage();
@@ -331,12 +332,12 @@ const Profile = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="date_of_birth">{labels.dateOfBirth}</Label>
-                <Input
-                  id="date_of_birth"
-                  name="date_of_birth"
-                  type="date"
+                <DatePicker
                   value={formData.date_of_birth}
-                  onChange={handleInputChange}
+                  onChange={(value) => setFormData(prev => ({ ...prev, date_of_birth: value }))}
+                  isRTL={isRTL}
+                  placeholder={labels.dateOfBirth}
+                  maxDate={new Date()}
                 />
               </div>
               <div className="space-y-2">
@@ -449,12 +450,12 @@ const Profile = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="passport_expiry">{labels.passportExpiry}</Label>
-                <Input
-                  id="passport_expiry"
-                  name="passport_expiry"
-                  type="date"
+                <DatePicker
                   value={formData.passport_expiry}
-                  onChange={handleInputChange}
+                  onChange={(value) => setFormData(prev => ({ ...prev, passport_expiry: value }))}
+                  isRTL={isRTL}
+                  placeholder={labels.passportExpiry}
+                  minDate={new Date()}
                 />
               </div>
             </CardContent>
