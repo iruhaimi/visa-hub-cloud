@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  DollarSign, 
   Clock, 
   CheckCircle2, 
   Info,
@@ -10,7 +9,8 @@ import {
   Calendar,
   Shield,
   Sparkles,
-  Tag
+  Tag,
+  Wallet
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -228,7 +228,7 @@ export default function Pricing() {
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0"
                   >
-                    <DollarSign className="h-6 w-6 text-primary" />
+                    <Wallet className="h-6 w-6 text-primary" />
                   </motion.div>
                   <div>
                     <h3 className="font-bold mb-1">
@@ -416,7 +416,7 @@ export default function Pricing() {
                                 </span>
                               </TableHead>
                               <TableHead className="text-center">
-                                <DollarSign className="h-4 w-4 inline-block ml-1" />
+                                <SARSymbol size="xs" className="inline-block ml-1" />
                                 {isRTL ? 'رسوم التأشيرة' : 'Visa Fee'}
                               </TableHead>
                               <TableHead className="text-center">
@@ -473,9 +473,13 @@ export default function Pricing() {
                                   </TableCell>
                                   <TableCell className="text-center">
                                     {visa.fee_type === 'included' ? (
-                                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0 text-xs">
-                                        {isRTL ? 'شامل' : 'Included'}
-                                      </Badge>
+                                      <span className="font-bold text-green-600 flex items-center justify-center gap-1">
+                                        {govFees > 0 ? govFees : 0}
+                                        <SARSymbol size="sm" className="text-green-600" />
+                                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0 text-[10px] ms-1">
+                                          {isRTL ? 'شامل' : 'Inc.'}
+                                        </Badge>
+                                      </span>
                                     ) : (
                                       <span className="font-bold text-amber-600 flex items-center justify-center gap-1">
                                         {govFees}
@@ -599,9 +603,15 @@ export default function Pricing() {
                                   {isRTL ? 'رسوم التأشيرة الحكومية' : 'Government Visa Fee'}
                                 </span>
                                 {visa.fee_type === 'included' ? (
-                                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
-                                    {isRTL ? 'شامل في السعر' : 'Included'}
-                                  </Badge>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-green-600 flex items-center gap-1">
+                                      {govFees > 0 ? govFees : 0}
+                                      <SARSymbol size="sm" className="text-green-600" />
+                                    </span>
+                                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0 text-xs">
+                                      {isRTL ? 'شامل' : 'Inc.'}
+                                    </Badge>
+                                  </div>
                                 ) : (
                                   <span className="font-bold text-amber-600 flex items-center gap-1">
                                     {govFees}
