@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { ProfileCompletionAlert } from '@/components/profile/ProfileCompletionAl
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
 import { CountryPicker, CityPicker } from '@/components/ui/CountryCityPicker';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { filterNonNumeric as filterPhoneNonNumeric } from '@/lib/inputFilters';
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { direction } = useLanguage();
@@ -69,17 +70,27 @@ const Profile = () => {
     }
   }, [profile]);
 
-  // Filter to remove Arabic characters from phone field
+  // Filter to remove Arabic characters and non-numeric from phone field
   const filterArabicChars = (value: string) => {
     return value.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Filter Arabic characters from phone field
-    const processedValue = name === 'phone' ? filterArabicChars(value) : value;
+    // Filter phone field to only allow numbers
+    const processedValue = name === 'phone' ? filterPhoneNonNumeric(value) : value;
     setFormData(prev => ({ ...prev, [name]: processedValue }));
   };
+
+  // Handle phone input - allow only digits
+  const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterPhoneNonNumeric(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setFormData(prev => ({ ...prev, phone: filtered }));
+    }
+  }, []);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -386,10 +397,11 @@ const Profile = () => {
                     type="tel"
                     dir="ltr"
                     lang="en"
-                    inputMode="tel"
+                    inputMode="numeric"
                     style={{ textAlign: 'left' }}
                     value={formData.phone}
                     onChange={handleInputChange}
+                    onInput={handlePhoneInput}
                     placeholder="5XX XXX XXXX"
                     className="flex-1"
                   />
