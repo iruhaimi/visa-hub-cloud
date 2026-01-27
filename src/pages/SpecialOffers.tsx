@@ -50,12 +50,12 @@ function CountdownTimer({ endDate, size = 'sm' }: { endDate: Date; size?: 'sm' |
     return () => clearInterval(timer);
   }, [endDate]);
 
-  // RTL order: ثانية - دقيقة - ساعة - يوم (from right to left)
+  // Display order from left to right: ثانية - دقيقة - ساعة - يوم
   const timeUnits = [
-    { value: timeLeft.days, label: 'يوم' },
-    { value: timeLeft.hours, label: 'ساعة' },
-    { value: timeLeft.minutes, label: 'دقيقة' },
     { value: timeLeft.seconds, label: 'ثانية' },
+    { value: timeLeft.minutes, label: 'دقيقة' },
+    { value: timeLeft.hours, label: 'ساعة' },
+    { value: timeLeft.days, label: 'يوم' },
   ];
 
   const isLarge = size === 'lg';
