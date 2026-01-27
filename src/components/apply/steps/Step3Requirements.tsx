@@ -228,8 +228,8 @@ export default function Step3Requirements() {
           </li>
           <li>
             {direction === 'rtl' 
-              ? 'كشف الحساب يجب أن يكون مختوماً من البنك'
-              : 'Bank statement must be stamped by the bank'}
+              ? 'كشف الحساب آخر 3 شهور بالإنجليزية ويجب أن يكون حديثاً ومختوماً من البنك'
+              : 'Bank statement for the last 3 months in English, must be recent and stamped by the bank'}
           </li>
         </ul>
       </div>
