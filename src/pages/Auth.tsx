@@ -43,7 +43,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/profile');
     }
   }, [user, navigate]);
 
@@ -87,7 +87,7 @@ export default function Auth() {
         title: 'مرحباً بعودتك!',
         description: 'تم تسجيل الدخول بنجاح',
       });
-      navigate('/');
+      navigate('/profile');
     }
   };
 
@@ -109,9 +109,9 @@ export default function Auth() {
     } else {
       toast({
         title: 'تم إنشاء الحساب!',
-        description: 'مرحباً بك في عطلات رحلاتكم. تم إنشاء حسابك بنجاح.',
+        description: 'مرحباً بك في عطلات رحلاتكم! يرجى استكمال بياناتك الشخصية.',
       });
-      navigate('/');
+      navigate('/profile');
     }
   };
 
