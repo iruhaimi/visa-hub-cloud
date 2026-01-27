@@ -55,6 +55,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const [isSignUp, setIsSignUp] = useState(searchParams.get('mode') === 'signup');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -252,7 +253,27 @@ export default function Auth() {
 
                   <div className="space-y-2">
                     <Label>{isRTL ? 'تأكيد كلمة المرور' : 'Confirm Password'}</Label>
-                    <Input type="password" placeholder="••••••••" dir="ltr" {...signUpForm.register('confirmPassword')} />
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        dir="ltr"
+                        {...signUpForm.register('confirmPassword')}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={`absolute top-0 h-full px-3 hover:bg-transparent ${isRTL ? 'left-0' : 'right-0'}`}
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
                     {signUpForm.formState.errors.confirmPassword?.message && (
                       <p className="text-sm font-medium text-destructive">
                         {String(signUpForm.formState.errors.confirmPassword.message)}
