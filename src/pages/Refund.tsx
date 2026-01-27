@@ -628,6 +628,21 @@ export default function Refund() {
                     </Button>
                   </div>
 
+                  <div className="flex items-center justify-center gap-2 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      {isRTL 
+                        ? 'هل قدمت طلب استرداد مسبقاً؟'
+                        : 'Already submitted a refund request?'
+                      }
+                    </p>
+                    <Link 
+                      to="/track-refund" 
+                      className="text-sm text-primary hover:underline font-medium"
+                    >
+                      {isRTL ? 'تتبع حالة طلبك' : 'Track your request status'}
+                    </Link>
+                  </div>
+
                   <p className="text-sm text-muted-foreground text-center">
                     {isRTL 
                       ? 'سنقوم بمراجعة طلبك والرد عليك خلال 2-3 أيام عمل'
