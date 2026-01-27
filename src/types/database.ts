@@ -64,6 +64,9 @@ export interface VisaType {
   validity_days: number | null;
   max_stay_days: number | null;
   entry_type: string;
+  fee_type: string | null;
+  price_notes: string | null;
+  price_notes_en: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
