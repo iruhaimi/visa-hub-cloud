@@ -8,7 +8,8 @@ import {
   ArrowRight,
   X,
   Globe,
-  MapPin
+  MapPin,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SARSymbol from '@/components/ui/SARSymbol';
+import { 
+  SCHENGEN_INFO, 
+  filterOutSchengenCountries, 
+  getSchengenCountries,
+  isSchengenCountry 
+} from '@/lib/schengenCountries';
 import type { Country, VisaType } from '@/types/database';
 
 export default function Destinations() {
@@ -26,6 +33,7 @@ export default function Destinations() {
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSchengenCountries, setShowSchengenCountries] = useState(false);
 
   const ArrowIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
 
@@ -64,18 +72,55 @@ export default function Destinations() {
     return visaTypes.filter(v => v.country_id === countryId).length;
   };
 
+  // Get Schengen countries and their aggregated info
+  const schengenCountries = useMemo(() => getSchengenCountries(countries), [countries]);
+  
+  const schengenMinPrice = useMemo(() => {
+    const prices = schengenCountries
+      .map(c => getCountryMinPrice(c.id))
+      .filter((p): p is number => p !== null);
+    return prices.length > 0 ? Math.min(...prices) : null;
+  }, [schengenCountries, visaTypes]);
+
+  const schengenProcessingDays = useMemo(() => {
+    const days = schengenCountries
+      .map(c => getCountryProcessingDays(c.id))
+      .filter((d): d is number => d !== null);
+    return days.length > 0 ? Math.min(...days) : null;
+  }, [schengenCountries, visaTypes]);
+
+  const schengenVisaCount = useMemo(() => {
+    return schengenCountries.reduce((total, c) => total + getVisaTypesCount(c.id), 0);
+  }, [schengenCountries, visaTypes]);
+
+  // Filter out Schengen countries from main list
+  const nonSchengenCountries = useMemo(() => filterOutSchengenCountries(countries), [countries]);
+
   const filteredCountries = useMemo(() => {
-    return countries.filter((country) => {
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (!country.name.toLowerCase().includes(query) && 
-            !country.code.toLowerCase().includes(query)) {
-          return false;
-        }
-      }
-      return true;
+    if (!searchQuery) return nonSchengenCountries;
+    
+    const query = searchQuery.toLowerCase();
+    return nonSchengenCountries.filter((country) => {
+      return country.name.toLowerCase().includes(query) || 
+             country.code.toLowerCase().includes(query);
     });
-  }, [countries, searchQuery]);
+  }, [nonSchengenCountries, searchQuery]);
+
+  // Check if Schengen should appear in search results
+  const showSchengenInSearch = useMemo(() => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return SCHENGEN_INFO.name.toLowerCase().includes(query) || 
+           'شنغن'.includes(query) ||
+           'schengen'.includes(query) ||
+           'eu'.includes(query) ||
+           schengenCountries.some(c => 
+             c.name.toLowerCase().includes(query) || 
+             c.code.toLowerCase().includes(query)
+           );
+  }, [searchQuery, schengenCountries]);
+
+  const totalDestinations = filteredCountries.length + (showSchengenInSearch && schengenCountries.length > 0 ? 1 : 0);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -173,7 +218,7 @@ export default function Destinations() {
             <div className="flex items-center gap-3">
               <MapPin className="h-5 w-5 text-primary" />
               <p className="text-muted-foreground">
-                <span className="font-semibold text-foreground">{filteredCountries.length}</span> وجهة متاحة
+                <span className="font-semibold text-foreground">{totalDestinations}</span> وجهة متاحة
               </p>
             </div>
             {searchQuery && (
@@ -197,7 +242,7 @@ export default function Destinations() {
                 </div>
               ))}
             </div>
-          ) : filteredCountries.length === 0 ? (
+          ) : totalDestinations === 0 ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -217,6 +262,120 @@ export default function Destinations() {
               animate="visible"
             >
               <AnimatePresence mode="popLayout">
+                {/* Schengen Card */}
+                {showSchengenInSearch && schengenCountries.length > 0 && (
+                  <motion.div
+                    key="schengen"
+                    variants={itemVariants}
+                    layout
+                    className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300"
+                  >
+                    {/* Flag Background */}
+                    <div 
+                      className="relative h-36 overflow-hidden cursor-pointer"
+                      onClick={() => setShowSchengenCountries(!showSchengenCountries)}
+                    >
+                      <img
+                        src={SCHENGEN_INFO.flag_url}
+                        alt={SCHENGEN_INFO.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+                      
+                      {/* Badges */}
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                        {schengenProcessingDays && (
+                          <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm gap-1">
+                            <Clock className="h-3 w-3" />
+                            {schengenProcessingDays} أيام
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {schengenVisaCount > 0 && (
+                        <Badge className="absolute top-3 left-3 bg-primary/90 backdrop-blur-sm">
+                          {schengenCountries.length} دولة
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      <div 
+                        className="flex items-center justify-between mb-3 cursor-pointer"
+                        onClick={() => setShowSchengenCountries(!showSchengenCountries)}
+                      >
+                        <h3 className="text-xl font-bold">{SCHENGEN_INFO.name}</h3>
+                        <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${showSchengenCountries ? 'rotate-180' : ''}`} />
+                      </div>
+                      
+                      {schengenMinPrice && (
+                        <div className="flex items-baseline gap-2 mb-4">
+                          <span className="text-xs text-muted-foreground">يبدأ من</span>
+                          <span className="text-2xl font-bold text-primary flex items-center gap-1">
+                            {schengenMinPrice}
+                            <SARSymbol size="sm" className="text-primary" />
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Schengen Countries Dropdown */}
+                      <AnimatePresence>
+                        {showSchengenCountries && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden mb-4"
+                          >
+                            <div className="space-y-2 pt-2 border-t">
+                              {schengenCountries.map((country) => (
+                                <div 
+                                  key={country.id}
+                                  className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <img 
+                                      src={country.flag_url || `https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
+                                      alt={country.name}
+                                      className="w-6 h-4 object-cover rounded"
+                                    />
+                                    <span className="font-medium">{country.name}</span>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                                      <Link to={`/country/${country.code}`}>
+                                        التفاصيل
+                                      </Link>
+                                    </Button>
+                                    <Button size="sm" className="h-7 px-2 text-xs" asChild>
+                                      <Link to={`/apply?country=${country.code}`}>
+                                        قدّم
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full rounded-xl gap-1"
+                        onClick={() => setShowSchengenCountries(!showSchengenCountries)}
+                      >
+                        {showSchengenCountries ? 'إخفاء الدول' : 'عرض الدول'}
+                        <ChevronDown className={`h-4 w-4 transition-transform ${showSchengenCountries ? 'rotate-180' : ''}`} />
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Regular Countries */}
                 {filteredCountries.map((country) => {
                   const minPrice = getCountryMinPrice(country.id);
                   const processingDays = getCountryProcessingDays(country.id);
