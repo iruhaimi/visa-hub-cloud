@@ -52,6 +52,7 @@ interface VisaType {
   price: number;
   child_price: number | null;
   infant_price: number | null;
+  government_fees: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;
@@ -397,6 +398,7 @@ function VisaTypesManagement({
     price: '',
     child_price: '',
     infant_price: '',
+    government_fees: '',
     processing_days: '7',
     validity_days: '',
     max_stay_days: '',
@@ -416,6 +418,7 @@ function VisaTypesManagement({
       price: '',
       child_price: '',
       infant_price: '',
+      government_fees: '',
       processing_days: '7',
       validity_days: '',
       max_stay_days: '',
@@ -438,6 +441,7 @@ function VisaTypesManagement({
       price: visa.price.toString(),
       child_price: visa.child_price?.toString() || '',
       infant_price: visa.infant_price?.toString() || '',
+      government_fees: visa.government_fees?.toString() || '',
       processing_days: visa.processing_days.toString(),
       validity_days: visa.validity_days?.toString() || '',
       max_stay_days: visa.max_stay_days?.toString() || '',
@@ -465,6 +469,7 @@ function VisaTypesManagement({
         price: parseFloat(formData.price),
         child_price: formData.child_price ? parseFloat(formData.child_price) : null,
         infant_price: formData.infant_price ? parseFloat(formData.infant_price) : null,
+        government_fees: formData.government_fees ? parseFloat(formData.government_fees) : 0,
         processing_days: parseInt(formData.processing_days),
         validity_days: formData.validity_days ? parseInt(formData.validity_days) : null,
         max_stay_days: formData.max_stay_days ? parseInt(formData.max_stay_days) : null,
@@ -628,6 +633,20 @@ function VisaTypesManagement({
                       {formData.infant_price ? '' : `افتراضي: ${formData.price ? Math.round(parseFloat(formData.price) * 0.5) : 0} ريال (50%)`}
                     </p>
                   </div>
+                </div>
+
+                {/* Government Fees */}
+                <div className="space-y-2">
+                  <Label>رسوم التأشيرة الحكومية (ريال سعودي)</Label>
+                  <Input
+                    type="number"
+                    value={formData.government_fees}
+                    onChange={(e) => setFormData({ ...formData, government_fees: e.target.value })}
+                    placeholder="0 إذا كانت شاملة في السعر"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    أدخل قيمة رسوم التأشيرة الحكومية (تظهر في جدول الأسعار)
+                  </p>
                 </div>
               </div>
 
