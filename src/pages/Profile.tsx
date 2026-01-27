@@ -82,10 +82,14 @@ const Profile = () => {
     setFormData(prev => ({ ...prev, [name]: processedValue }));
   };
 
-  // Handle phone input - allow only digits
+  // Handle phone input - allow only digits and limit to 9 characters
   const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
-    const filtered = filterPhoneNonNumeric(input.value);
+    let filtered = filterPhoneNonNumeric(input.value);
+    // Limit to 9 digits
+    if (filtered.length > 9) {
+      filtered = filtered.slice(0, 9);
+    }
     if (filtered !== input.value) {
       input.value = filtered;
       setFormData(prev => ({ ...prev, phone: filtered }));
@@ -398,11 +402,12 @@ const Profile = () => {
                     dir="ltr"
                     lang="en"
                     inputMode="numeric"
+                    maxLength={9}
                     style={{ textAlign: 'left' }}
                     value={formData.phone}
                     onChange={handleInputChange}
                     onInput={handlePhoneInput}
-                    placeholder="5XX XXX XXXX"
+                    placeholder="5XXXXXXXX"
                     className="flex-1"
                   />
                 </div>

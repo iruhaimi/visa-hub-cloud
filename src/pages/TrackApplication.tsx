@@ -157,7 +157,11 @@ export default function TrackApplication() {
         setSearchValue(filtered);
       }
     } else {
-      const filtered = filterNonNumeric(input.value);
+      let filtered = filterNonNumeric(input.value);
+      // Limit to 9 digits for phone
+      if (filtered.length > 9) {
+        filtered = filtered.slice(0, 9);
+      }
       if (filtered !== input.value) {
         input.value = filtered;
         setSearchValue(filtered);
@@ -373,6 +377,7 @@ export default function TrackApplication() {
                       id="searchValue"
                       type={searchType === 'email' ? 'email' : 'tel'}
                       inputMode={searchType === 'email' ? 'email' : 'numeric'}
+                      maxLength={searchType === 'phone' ? 9 : undefined}
                       placeholder={searchType === 'phone' 
                         ? '5XXXXXXXX'
                         : 'example@email.com'
