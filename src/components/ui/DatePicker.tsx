@@ -1,7 +1,7 @@
 import * as React from "react";
-import { format } from "date-fns";
+import { format, setMonth, setYear, getMonth, getYear } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,6 +10,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DatePickerProps {
   value?: string;
@@ -22,6 +30,16 @@ interface DatePickerProps {
   className?: string;
 }
 
+const monthsAr = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+];
+
+const monthsEn = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 export function DatePicker({
   value,
   onChange,
@@ -33,12 +51,27 @@ export function DatePicker({
   className,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
+  const [calendarDate, setCalendarDate] = React.useState<Date>(
+    value ? new Date(value) : new Date()
+  );
   
   const selectedDate = value ? new Date(value) : undefined;
+  const months = isRTL ? monthsAr : monthsEn;
+  
+  // Generate years range (100 years back to 10 years forward)
+  const currentYear = new Date().getFullYear();
+  const years = React.useMemo(() => {
+    const startYear = minDate ? getYear(minDate) : currentYear - 100;
+    const endYear = maxDate ? getYear(maxDate) : currentYear + 10;
+    const yearsList = [];
+    for (let year = endYear; year >= startYear; year--) {
+      yearsList.push(year);
+    }
+    return yearsList;
+  }, [currentYear, minDate, maxDate]);
   
   const handleSelect = (date: Date | undefined) => {
     if (date) {
-      // Format as YYYY-MM-DD for storage
       const formattedDate = format(date, "yyyy-MM-dd");
       onChange(formattedDate);
     } else {
@@ -47,11 +80,28 @@ export function DatePicker({
     setOpen(false);
   };
 
+  const handleMonthChange = (monthIndex: string) => {
+    const newDate = setMonth(calendarDate, parseInt(monthIndex));
+    setCalendarDate(newDate);
+  };
+
+  const handleYearChange = (year: string) => {
+    const newDate = setYear(calendarDate, parseInt(year));
+    setCalendarDate(newDate);
+  };
+
   const disabledDays = (date: Date) => {
     if (minDate && date < minDate) return true;
     if (maxDate && date > maxDate) return true;
     return false;
   };
+
+  // Update calendar date when value changes
+  React.useEffect(() => {
+    if (value) {
+      setCalendarDate(new Date(value));
+    }
+  }, [value]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -93,8 +143,51 @@ export function DatePicker({
         align={isRTL ? "end" : "start"}
         sideOffset={8}
       >
+        {/* Month & Year Selectors */}
+        <div className="flex items-center gap-2 p-4 pb-2 border-b border-border/50">
+          {/* Month Selector */}
+          <Select
+            value={getMonth(calendarDate).toString()}
+            onValueChange={handleMonthChange}
+          >
+            <SelectTrigger className="flex-1 h-9 text-sm font-medium bg-muted/50 border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-[280px]">
+              <ScrollArea className="h-[250px]">
+                {months.map((month, index) => (
+                  <SelectItem key={index} value={index.toString()}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </ScrollArea>
+            </SelectContent>
+          </Select>
+
+          {/* Year Selector */}
+          <Select
+            value={getYear(calendarDate).toString()}
+            onValueChange={handleYearChange}
+          >
+            <SelectTrigger className="w-[100px] h-9 text-sm font-medium bg-muted/50 border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-[280px]">
+              <ScrollArea className="h-[250px]">
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </ScrollArea>
+            </SelectContent>
+          </Select>
+        </div>
+
         <Calendar
           mode="single"
+          month={calendarDate}
+          onMonthChange={setCalendarDate}
           selected={selectedDate}
           onSelect={handleSelect}
           disabled={disabledDays}
