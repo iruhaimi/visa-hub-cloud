@@ -273,6 +273,48 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_destinations: {
+        Row: {
+          country: string
+          country_en: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          is_active: boolean
+          link_url: string | null
+          name: string
+          name_en: string | null
+          updated_at: string
+        }
+        Insert: {
+          country: string
+          country_en?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          is_active?: boolean
+          link_url?: string | null
+          name: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          country_en?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          link_url?: string | null
+          name?: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null

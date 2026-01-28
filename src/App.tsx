@@ -43,6 +43,7 @@ import UsersManagement from "@/pages/admin/UsersManagement";
 import Settings from "@/pages/admin/Settings";
 import OffersManagement from "@/pages/admin/OffersManagement";
 import RefundRequestsManagement from "@/pages/admin/RefundRequestsManagement";
+import HeroManagement from "@/pages/admin/HeroManagement";
 
 // Agent Pages
 import AgentDashboard from "@/pages/agent/AgentDashboard";
@@ -103,6 +104,7 @@ const App = () => (
                 <Route path="settings" element={<Settings />} />
                 <Route path="offers" element={<OffersManagement />} />
                 <Route path="refunds" element={<RefundRequestsManagement />} />
+                <Route path="hero" element={<HeroManagement />} />
               </Route>
 
               {/* Agent Routes */}

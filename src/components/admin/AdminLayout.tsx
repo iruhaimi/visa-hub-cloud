@@ -11,7 +11,8 @@ import {
   Menu,
   ChevronLeft,
   Gift,
-  RotateCcw
+  RotateCcw,
+  Image
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,12 @@ export default function AdminLayout() {
       title: 'طلبات الاسترداد',
       icon: RotateCcw,
       href: '/admin/refunds',
+      show: isAdmin,
+    },
+    {
+      title: 'إدارة Hero',
+      icon: Image,
+      href: '/admin/hero',
       show: isAdmin,
     },
     {
