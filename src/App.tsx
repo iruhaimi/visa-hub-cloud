@@ -32,6 +32,7 @@ import Auth from "@/pages/Auth";
 import Profile from "@/pages/Profile";
 import MyApplications from "@/pages/MyApplications";
 import SpecialOffers from "@/pages/SpecialOffers";
+import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 
 // Admin Pages
@@ -82,8 +83,9 @@ const App = () => (
                 <Route path="/offers" element={<SpecialOffers />} />
               </Route>
 
-              {/* Auth Route */}
+              {/* Auth Routes */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Admin Routes */}
               <Route 
