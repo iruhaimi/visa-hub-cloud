@@ -1,18 +1,18 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
-import { User, Mail, Phone, ArrowLeft, ArrowRight } from 'lucide-react';
+import { User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
 
 // Helper function to filter Arabic characters
 const filterArabicChars = (value: string): string => {
-  // Remove Arabic characters (Unicode range 0600-06FF and related ranges)
   return value.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
 };
 
@@ -21,9 +21,19 @@ const filterNonNumeric = (value: string): string => {
   return value.replace(/[^0-9]/g, '');
 };
 
+// Extract phone number without country code
+const extractPhoneNumber = (phone: string | null): string => {
+  if (!phone) return '';
+  // Remove common country codes and spaces
+  const cleaned = phone.replace(/^\+?\d{1,3}[\s-]?/, '').replace(/\D/g, '');
+  return cleaned.slice(0, 9);
+};
+
 export default function Step1BasicInfo() {
   const { t, direction } = useLanguage();
-  const { applicationData, updateApplicationData, goToNextStep, isStepValid } = useApplication();
+  const { applicationData, updateApplicationData, goToNextStep } = useApplication();
+  const { user, profile, isLoading: authLoading } = useAuth();
+  const [hasPreFilled, setHasPreFilled] = useState(false);
 
   const schema = z.object({
     fullName: z.string().min(3, t('validation.required')),
@@ -52,6 +62,26 @@ export default function Step1BasicInfo() {
 
   const watchedValues = watch();
 
+  // Pre-fill form with profile data when user is logged in
+  useEffect(() => {
+    if (!hasPreFilled && !authLoading && user && profile) {
+      const profilePhone = extractPhoneNumber(profile.phone);
+      
+      // Only pre-fill if fields are empty
+      if (!applicationData.fullName && profile.full_name) {
+        setValue('fullName', profile.full_name);
+      }
+      if (!applicationData.email && user.email) {
+        setValue('email', user.email);
+      }
+      if (!applicationData.phone && profilePhone) {
+        setValue('phone', profilePhone);
+      }
+      
+      setHasPreFilled(true);
+    }
+  }, [hasPreFilled, authLoading, user, profile, applicationData, setValue]);
+
   useEffect(() => {
     updateApplicationData({
       fullName: watchedValues.fullName,
@@ -75,7 +105,6 @@ export default function Step1BasicInfo() {
   const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
     let filtered = filterNonNumeric(input.value);
-    // Limit to 9 digits
     if (filtered.length > 9) {
       filtered = filtered.slice(0, 9);
     }
@@ -91,6 +120,16 @@ export default function Step1BasicInfo() {
   };
 
   const ArrowIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
+  const isLoggedIn = !!user;
+  const hasCompleteData = !!(watchedValues.fullName && watchedValues.email && watchedValues.phone?.length === 9);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -102,6 +141,18 @@ export default function Step1BasicInfo() {
             : 'Enter your basic information to contact you'}
         </p>
       </div>
+
+      {/* Show logged-in status with pre-filled indicator */}
+      {isLoggedIn && hasCompleteData && (
+        <div className="p-4 bg-accent/50 rounded-lg border border-primary/20 flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+          <div className="text-sm text-foreground">
+            {direction === 'rtl' 
+              ? 'تم تعبئة بياناتك تلقائياً من ملفك الشخصي. يمكنك تعديلها إذا لزم الأمر.' 
+              : 'Your data has been auto-filled from your profile. You can modify it if needed.'}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         {/* Full Name */}
