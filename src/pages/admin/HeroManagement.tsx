@@ -25,9 +25,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Loader2, Image, ArrowUp, ArrowDown, Eye, EyeOff, Type, BarChart3, Save, ImageIcon, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Image, Eye, EyeOff, Type, BarChart3, Save, ImageIcon, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { SortableDestinationRow } from '@/components/admin/SortableDestinationRow';
 
 interface HeroDestination {
   id: string;
@@ -280,31 +296,47 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
-      const { error } = await supabase
-        .from('hero_destinations')
-        .update({ display_order: newOrder })
-        .eq('id', id);
-      if (error) throw error;
+    mutationFn: async (updates: { id: string; newOrder: number }[]) => {
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('hero_destinations')
+          .update({ display_order: update.newOrder })
+          .eq('id', update.id);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-hero-destinations'] });
       queryClient.invalidateQueries({ queryKey: ['hero-destinations'] });
+      toast.success('تم تحديث الترتيب بنجاح');
+    },
+    onError: (error) => {
+      toast.error('حدث خطأ في تحديث الترتيب');
     },
   });
 
-  const moveUp = (destination: HeroDestination, index: number) => {
-    if (index === 0 || !destinations) return;
-    const prevDest = destinations[index - 1];
-    reorderMutation.mutate({ id: destination.id, newOrder: prevDest.display_order });
-    reorderMutation.mutate({ id: prevDest.id, newOrder: destination.display_order });
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const moveDown = (destination: HeroDestination, index: number) => {
-    if (!destinations || index === destinations.length - 1) return;
-    const nextDest = destinations[index + 1];
-    reorderMutation.mutate({ id: destination.id, newOrder: nextDest.display_order });
-    reorderMutation.mutate({ id: nextDest.id, newOrder: destination.display_order });
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && destinations) {
+      const oldIndex = destinations.findIndex((d) => d.id === active.id);
+      const newIndex = destinations.findIndex((d) => d.id === over.id);
+      
+      const newOrder = arrayMove(destinations, oldIndex, newIndex);
+      const updates = newOrder.map((dest, index) => ({
+        id: dest.id,
+        newOrder: index + 1,
+      }));
+      
+      reorderMutation.mutate(updates);
+    }
   };
 
   if (isLoading) {
@@ -469,109 +501,51 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
         </Dialog>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className={isRTL ? "text-right" : ""}>الترتيب</TableHead>
-              <TableHead className={isRTL ? "text-right" : ""}>الصورة</TableHead>
-              <TableHead className={isRTL ? "text-right" : ""}>الوجهة</TableHead>
-              <TableHead className={isRTL ? "text-right" : ""}>الدولة</TableHead>
-              <TableHead className={isRTL ? "text-right" : ""}>الحالة</TableHead>
-              <TableHead className={isRTL ? "text-right" : ""}>الإجراءات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {destinations?.map((dest, index) => (
-              <TableRow key={dest.id}>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => moveUp(dest, index)}
-                      disabled={index === 0}
-                    >
-                      <ArrowUp className="h-4 w-4" />
-                    </Button>
-                    <span className="w-6 text-center">{index + 1}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => moveDown(dest, index)}
-                      disabled={index === destinations.length - 1}
-                    >
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <img 
-                    src={dest.image_url} 
-                    alt={dest.name}
-                    className="h-12 w-16 object-cover rounded-md"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder.svg';
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">
-                  <div>
-                    <div>{dest.name}</div>
-                    {dest.name_en && (
-                      <div className="text-xs text-muted-foreground" dir="ltr">{dest.name_en}</div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{dest.country}</Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={dest.is_active}
-                      onCheckedChange={(checked) => 
-                        toggleActiveMutation.mutate({ id: dest.id, is_active: checked })
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={isRTL ? "text-right" : ""}>الترتيب</TableHead>
+                <TableHead className={isRTL ? "text-right" : ""}>الصورة</TableHead>
+                <TableHead className={isRTL ? "text-right" : ""}>الوجهة</TableHead>
+                <TableHead className={isRTL ? "text-right" : ""}>الدولة</TableHead>
+                <TableHead className={isRTL ? "text-right" : ""}>الحالة</TableHead>
+                <TableHead className={isRTL ? "text-right" : ""}>الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {destinations && destinations.length > 0 ? (
+                <SortableContext
+                  items={destinations.map((d) => d.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {destinations.map((dest, index) => (
+                    <SortableDestinationRow
+                      key={dest.id}
+                      destination={dest}
+                      index={index}
+                      onEdit={openEdit}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                      onToggleActive={(id, is_active) =>
+                        toggleActiveMutation.mutate({ id, is_active })
                       }
                     />
-                    {dest.is_active ? (
-                      <Eye className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(dest)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-destructive"
-                      onClick={() => {
-                        if (confirm('هل أنت متأكد من حذف هذه الوجهة؟')) {
-                          deleteMutation.mutate(dest.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {(!destinations || destinations.length === 0) && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  لا توجد وجهات مضافة
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                  ))}
+                </SortableContext>
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    لا توجد وجهات مضافة
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </DndContext>
       </CardContent>
     </Card>
   );
