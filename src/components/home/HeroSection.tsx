@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-import heroBg from '@/assets/hero-bg.jpg';
+import heroBgFallback from '@/assets/hero-bg.jpg';
 // Fallback images
 import destinationDubai from '@/assets/destination-dubai.jpg';
 import destinationParis from '@/assets/destination-paris.jpg';
@@ -87,6 +87,9 @@ export default function HeroSection() {
     if (!s) return isRTL ? fallbackAr : (fallbackEn || fallbackAr);
     return isRTL ? s.ar : s.en;
   };
+
+  // Get background image URL
+  const heroBg = settings['background_image']?.ar || heroBgFallback;
 
   const destinations = (dbDestinations && dbDestinations.length > 0) ? dbDestinations : fallbackDestinations;
 

@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Loader2, Image, ArrowUp, ArrowDown, Eye, EyeOff, Type, BarChart3, Save } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Image, ArrowUp, ArrowDown, Eye, EyeOff, Type, BarChart3, Save, ImageIcon, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -65,7 +65,7 @@ export default function HeroManagement() {
       </div>
 
       <Tabs defaultValue="destinations" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-xl grid-cols-4">
           <TabsTrigger value="destinations" className="gap-2">
             <Image className="h-4 w-4" />
             الوجهات
@@ -77,6 +77,10 @@ export default function HeroManagement() {
           <TabsTrigger value="stats" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             الإحصائيات
+          </TabsTrigger>
+          <TabsTrigger value="background" className="gap-2">
+            <ImageIcon className="h-4 w-4" />
+            الخلفية
           </TabsTrigger>
         </TabsList>
 
@@ -90,6 +94,10 @@ export default function HeroManagement() {
 
         <TabsContent value="stats" className="mt-6">
           <TextsManagement isRTL={isRTL} category="stats" title="الإحصائيات والأرقام" />
+        </TabsContent>
+
+        <TabsContent value="background" className="mt-6">
+          <BackgroundManagement isRTL={isRTL} />
         </TabsContent>
       </Tabs>
     </div>
@@ -727,6 +735,233 @@ function TextsManagement({ isRTL, category, title }: { isRTL: boolean; category:
             );
           })}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Background Image Management Component
+function BackgroundManagement({ isRTL }: { isRTL: boolean }) {
+  const queryClient = useQueryClient();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Fetch current background setting
+  const { data: bgSetting, isLoading } = useQuery({
+    queryKey: ['admin-hero-background'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hero_settings')
+        .select('*')
+        .eq('key', 'background_image')
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as HeroSetting | null;
+    },
+  });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('حجم الصورة يجب أن يكون أقل من 10MB');
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `hero-bg-${Date.now()}.${fileExt}`;
+    const filePath = `hero-backgrounds/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async (imageUrl: string) => {
+      if (bgSetting) {
+        const { error } = await supabase
+          .from('hero_settings')
+          .update({ value: imageUrl, updated_at: new Date().toISOString() })
+          .eq('id', bgSetting.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('hero_settings')
+          .insert({
+            key: 'background_image',
+            value: imageUrl,
+            value_en: imageUrl,
+            type: 'image',
+            category: 'background',
+            display_order: 0,
+            is_active: true,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-hero-background'] });
+      queryClient.invalidateQueries({ queryKey: ['hero-settings'] });
+      toast.success('تم تحديث صورة الخلفية بنجاح');
+      setImageFile(null);
+    },
+    onError: (error) => {
+      toast.error('حدث خطأ: ' + error.message);
+    },
+  });
+
+  const handleSave = async () => {
+    if (!imageFile && !imagePreview) {
+      toast.error('يرجى اختيار صورة');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      let finalUrl = imagePreview || '';
+      if (imageFile) {
+        finalUrl = await uploadImage(imageFile);
+      }
+      await saveMutation.mutateAsync(finalUrl);
+    } catch (error: any) {
+      toast.error('حدث خطأ: ' + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const currentBgUrl = imagePreview || bgSetting?.value || '';
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ImageIcon className="h-5 w-5" />
+          صورة الخلفية
+        </CardTitle>
+        <CardDescription>
+          تغيير صورة الخلفية الرئيسية في قسم Hero - يُفضل صورة بأبعاد 1920x1080 أو أكبر
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Current Background Preview */}
+        <div className="space-y-3">
+          <Label className="text-base">الصورة الحالية</Label>
+          <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-dashed border-border bg-muted">
+            {currentBgUrl ? (
+              <img
+                src={currentBgUrl}
+                alt="Hero Background"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                }}
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+                <ImageIcon className="h-16 w-16 mb-2" />
+                <span>لا توجد صورة خلفية محددة</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Upload New Background */}
+        <div className="space-y-3">
+          <Label className="text-base">رفع صورة جديدة</Label>
+          <div className="border-2 border-dashed rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
+            <label className="cursor-pointer block">
+              <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <span className="text-lg font-medium block mb-1">اضغط لرفع صورة جديدة</span>
+              <span className="text-sm text-muted-foreground block">
+                الحد الأقصى: 10MB - يُفضل أبعاد 1920x1080 أو أكبر
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+            </label>
+          </div>
+          {imageFile && (
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <ImageIcon className="h-5 w-5 text-primary" />
+              <span className="flex-1">{imageFile.name}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setImageFile(null);
+                  setImagePreview(bgSetting?.value || null);
+                }}
+              >
+                إلغاء
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Or URL Input */}
+        <div className="space-y-3">
+          <Label className="text-base">أو أدخل رابط الصورة</Label>
+          <Input
+            value={!imageFile ? (imagePreview || '') : ''}
+            onChange={(e) => {
+              setImagePreview(e.target.value);
+              setImageFile(null);
+            }}
+            placeholder="https://example.com/background.jpg"
+            dir="ltr"
+          />
+        </div>
+
+        {/* Save Button */}
+        <Button
+          onClick={handleSave}
+          disabled={isUploading || saveMutation.isPending || (!imageFile && imagePreview === bgSetting?.value)}
+          className="w-full gap-2"
+          size="lg"
+        >
+          {(isUploading || saveMutation.isPending) ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              جاري الحفظ...
+            </>
+          ) : (
+            <>
+              <Save className="h-5 w-5" />
+              حفظ صورة الخلفية
+            </>
+          )}
+        </Button>
       </CardContent>
     </Card>
   );
