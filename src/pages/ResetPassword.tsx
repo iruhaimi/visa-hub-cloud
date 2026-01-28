@@ -1,16 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plane, Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, Shield, Lock, KeyRound, XCircle, Check, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import logo from '@/assets/logo.jpeg';
+
+// Password strength checker
+const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
+  let score = 0;
+  
+  if (password.length >= 6) score += 20;
+  if (password.length >= 8) score += 15;
+  if (password.length >= 12) score += 15;
+  if (/[a-z]/.test(password)) score += 10;
+  if (/[A-Z]/.test(password)) score += 15;
+  if (/[0-9]/.test(password)) score += 15;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 10;
+
+  if (score < 30) return { score, label: 'ضعيفة', color: 'bg-destructive' };
+  if (score < 50) return { score, label: 'متوسطة', color: 'bg-orange-500' };
+  if (score < 75) return { score, label: 'جيدة', color: 'bg-yellow-500' };
+  return { score, label: 'قوية', color: 'bg-green-500' };
+};
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
@@ -21,6 +42,56 @@ const resetPasswordSchema = z.object({
 });
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
+// Password requirements component
+function PasswordRequirements({ password, isRTL }: { password: string; isRTL: boolean }) {
+  const requirements = useMemo(() => [
+    { 
+      met: password.length >= 6, 
+      text: isRTL ? '6 أحرف على الأقل' : 'At least 6 characters' 
+    },
+    { 
+      met: /[a-z]/.test(password), 
+      text: isRTL ? 'حرف صغير واحد على الأقل' : 'At least one lowercase letter' 
+    },
+    { 
+      met: /[A-Z]/.test(password), 
+      text: isRTL ? 'حرف كبير واحد على الأقل' : 'At least one uppercase letter' 
+    },
+    { 
+      met: /[0-9]/.test(password), 
+      text: isRTL ? 'رقم واحد على الأقل' : 'At least one number' 
+    },
+  ], [password, isRTL]);
+
+  if (!password) return null;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="space-y-2 mt-3 p-3 bg-muted/50 rounded-lg"
+    >
+      {requirements.map((req, index) => (
+        <motion.div 
+          key={index}
+          initial={{ opacity: 0, x: isRTL ? 10 : -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.05 }}
+          className={`flex items-center gap-2 text-sm ${req.met ? 'text-green-600' : 'text-muted-foreground'}`}
+        >
+          {req.met ? (
+            <Check className="h-4 w-4 text-green-600" />
+          ) : (
+            <X className="h-4 w-4 text-muted-foreground" />
+          )}
+          <span>{req.text}</span>
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
 
 export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
@@ -82,6 +153,11 @@ export default function ResetPassword() {
     },
   });
 
+  const watchedPassword = form.watch('password');
+  const watchedConfirmPassword = form.watch('confirmPassword');
+  const passwordStrength = getPasswordStrength(watchedPassword);
+  const passwordsMatch = watchedPassword && watchedConfirmPassword && watchedPassword === watchedConfirmPassword;
+
   const handleSubmit = async (data: ResetPasswordFormData) => {
     setIsLoading(true);
     
@@ -111,13 +187,25 @@ export default function ResetPassword() {
   // Show loading state while checking session
   if (isValidSession === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">
-            {isRTL ? 'جاري التحقق...' : 'Verifying...'}
-          </p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-muted/30" dir={isRTL ? 'rtl' : 'ltr'}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-4"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mx-auto">
+              <Shield className="h-10 w-10 text-primary animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground font-medium">
+              {isRTL ? 'جاري التحقق من الرابط...' : 'Verifying link...'}
+            </p>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -125,33 +213,49 @@ export default function ResetPassword() {
   // Show error if no valid session
   if (isValidSession === false) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4" dir={isRTL ? 'rtl' : 'ltr'}>
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-                <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-            <CardTitle>
-              {isRTL ? 'رابط غير صالح' : 'Invalid Link'}
-            </CardTitle>
-            <CardDescription>
-              {isRTL 
-                ? 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
-                : 'This password reset link is invalid or has expired. Please request a new one.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link to="/auth?mode=forgot-password">
-                {isRTL ? 'طلب رابط جديد' : 'Request New Link'}
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-background via-background to-muted/30" dir={isRTL ? 'rtl' : 'ltr'}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Card className="w-full max-w-md border-destructive/20">
+            <CardHeader className="text-center pb-2">
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.2 }}
+                className="flex justify-center mb-4"
+              >
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+                  <XCircle className="h-10 w-10 text-destructive" />
+                </div>
+              </motion.div>
+              <CardTitle className="text-xl">
+                {isRTL ? 'رابط غير صالح أو منتهي' : 'Invalid or Expired Link'}
+              </CardTitle>
+              <CardDescription className="mt-2">
+                {isRTL 
+                  ? 'قد يكون الرابط قد انتهت صلاحيته أو تم استخدامه مسبقاً. يرجى طلب رابط جديد لإعادة تعيين كلمة المرور.'
+                  : 'This link may have expired or already been used. Please request a new password reset link.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button asChild className="w-full h-12">
+                <Link to="/auth?mode=forgot-password">
+                  <KeyRound className="h-4 w-4 me-2" />
+                  {isRTL ? 'طلب رابط جديد' : 'Request New Link'}
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="w-full">
+                <Link to="/">
+                  {isRTL ? <ArrowRight className="h-4 w-4 me-2" /> : <ArrowLeft className="h-4 w-4 me-2" />}
+                  {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -159,167 +263,347 @@ export default function ResetPassword() {
   return (
     <div className={`flex min-h-screen ${isRTL ? 'flex-row-reverse' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Left side - Form */}
-      <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+      <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-gradient-to-br from-background via-background to-muted/30">
         <div className="mx-auto w-full max-w-sm lg:w-96">
-          <div className="mb-8">
-            <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+          <motion.div 
+            initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="mb-8"
+          >
+            <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               {isRTL ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
               {isRTL ? 'العودة للرئيسية' : 'Back to home'}
             </Link>
-          </div>
+          </motion.div>
 
-          <Card className="border-0 shadow-none sm:border sm:shadow-sm">
-            <CardHeader className="space-y-1 px-0 sm:px-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                  <Plane className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <span className="text-2xl font-bold">عطلات رحلاتكم</span>
-              </div>
-              <CardTitle className="text-2xl">
-                {isSuccess 
-                  ? (isRTL ? 'تم بنجاح!' : 'Success!')
-                  : (isRTL ? 'تعيين كلمة مرور جديدة' : 'Set New Password')
-                }
-              </CardTitle>
-              <CardDescription>
-                {isSuccess
-                  ? (isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Your password has been changed successfully')
-                  : (isRTL ? 'أدخل كلمة المرور الجديدة لحسابك' : 'Enter your new password')
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-0 sm:px-6">
-              {isSuccess ? (
-                <div className="text-center space-y-6">
-                  <div className="flex justify-center">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                      <CheckCircle2 className="h-10 w-10 text-primary" />
-                    </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="border-0 shadow-none sm:border sm:shadow-lg">
+              <CardHeader className="space-y-1 px-0 sm:px-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 overflow-hidden">
+                    <img src={logo} alt="Logo" className="h-full w-full object-cover" />
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-muted-foreground">
-                      {isRTL 
-                        ? 'يمكنك الآن استخدام كلمة المرور الجديدة لتسجيل الدخول'
-                        : 'You can now use your new password to sign in'}
-                    </p>
-                  </div>
-                  <Button asChild className="w-full">
-                    <Link to="/auth">
-                      {isRTL ? 'تسجيل الدخول' : 'Sign In'}
-                    </Link>
-                  </Button>
+                  <span className="text-xl font-bold">عطلات رحلاتكم</span>
                 </div>
-              ) : (
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{isRTL ? 'كلمة المرور الجديدة' : 'New Password'}</Label>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        dir="ltr"
-                        lang="en"
-                        autoComplete="new-password"
-                        onInput={filterArabicChars}
-                        style={{ textAlign: 'left' }}
-                        className="pr-10"
-                        {...form.register('password')}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
+                
+                <AnimatePresence mode="wait">
+                  {isSuccess ? (
+                    <motion.div
+                      key="success"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <CardTitle className="text-2xl text-green-600">
+                        {isRTL ? '🎉 تم بنجاح!' : '🎉 Success!'}
+                      </CardTitle>
+                      <CardDescription className="text-base">
+                        {isRTL ? 'تم تغيير كلمة المرور بنجاح' : 'Your password has been changed successfully'}
+                      </CardDescription>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="form"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <CardTitle className="text-2xl flex items-center gap-2">
+                        <Lock className="h-6 w-6 text-primary" />
+                        {isRTL ? 'كلمة مرور جديدة' : 'New Password'}
+                      </CardTitle>
+                      <CardDescription>
+                        {isRTL ? 'أنشئ كلمة مرور قوية وآمنة لحسابك' : 'Create a strong and secure password'}
+                      </CardDescription>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardHeader>
+              
+              <CardContent className="px-0 sm:px-6">
+                <AnimatePresence mode="wait">
+                  {isSuccess ? (
+                    <motion.div 
+                      key="success-content"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="text-center space-y-6"
+                    >
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", delay: 0.2 }}
+                        className="flex justify-center"
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full" />
+                          <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-green-500/10">
+                            <CheckCircle2 className="h-12 w-12 text-green-500" />
+                          </div>
+                        </div>
+                      </motion.div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-muted-foreground">
+                          {isRTL 
+                            ? 'يمكنك الآن استخدام كلمة المرور الجديدة لتسجيل الدخول إلى حسابك'
+                            : 'You can now use your new password to sign in to your account'}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Button asChild className="w-full h-12" size="lg">
+                          <Link to="/auth">
+                            {isRTL ? 'تسجيل الدخول الآن' : 'Sign In Now'}
+                          </Link>
+                        </Button>
+                        <Button variant="outline" asChild className="w-full">
+                          <Link to="/">
+                            {isRTL ? 'العودة للرئيسية' : 'Back to Home'}
+                          </Link>
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.form 
+                      key="form-content"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onSubmit={form.handleSubmit(handleSubmit)} 
+                      className="space-y-5"
+                    >
+                      {/* New Password Field */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <KeyRound className="h-4 w-4" />
+                          {isRTL ? 'كلمة المرور الجديدة' : 'New Password'}
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="••••••••"
+                            dir="ltr"
+                            lang="en"
+                            autoComplete="new-password"
+                            onInput={filterArabicChars}
+                            style={{ textAlign: 'left' }}
+                            className="h-12 pe-10"
+                            {...form.register('password')}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute end-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                        
+                        {/* Password Strength Indicator */}
+                        {watchedPassword && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-2"
+                          >
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                {isRTL ? 'قوة كلمة المرور:' : 'Password strength:'}
+                              </span>
+                              <span className={`font-medium ${
+                                passwordStrength.score < 30 ? 'text-destructive' :
+                                passwordStrength.score < 50 ? 'text-orange-500' :
+                                passwordStrength.score < 75 ? 'text-yellow-600' : 'text-green-600'
+                              }`}>
+                                {isRTL ? passwordStrength.label : 
+                                  passwordStrength.score < 30 ? 'Weak' :
+                                  passwordStrength.score < 50 ? 'Fair' :
+                                  passwordStrength.score < 75 ? 'Good' : 'Strong'
+                                }
+                              </span>
+                            </div>
+                            <Progress 
+                              value={passwordStrength.score} 
+                              className={`h-2 ${passwordStrength.color}`}
+                            />
+                          </motion.div>
+                        )}
+                        
+                        {/* Password Requirements */}
+                        <PasswordRequirements password={watchedPassword} isRTL={isRTL} />
+                        
+                        {form.formState.errors.password?.message && (
+                          <p className="text-sm font-medium text-destructive">
+                            {String(form.formState.errors.password.message)}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Confirm Password Field */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Lock className="h-4 w-4" />
+                          {isRTL ? 'تأكيد كلمة المرور' : 'Confirm Password'}
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            placeholder="••••••••"
+                            dir="ltr"
+                            lang="en"
+                            autoComplete="new-password"
+                            onInput={filterArabicChars}
+                            style={{ textAlign: 'left' }}
+                            className={`h-12 pe-10 ${
+                              watchedConfirmPassword && (passwordsMatch 
+                                ? 'border-green-500 focus-visible:ring-green-500' 
+                                : 'border-destructive focus-visible:ring-destructive')
+                            }`}
+                            {...form.register('confirmPassword')}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute end-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                        
+                        {/* Match indicator */}
+                        {watchedConfirmPassword && (
+                          <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className={`flex items-center gap-2 text-sm ${passwordsMatch ? 'text-green-600' : 'text-destructive'}`}
+                          >
+                            {passwordsMatch ? (
+                              <>
+                                <Check className="h-4 w-4" />
+                                <span>{isRTL ? 'كلمات المرور متطابقة' : 'Passwords match'}</span>
+                              </>
+                            ) : (
+                              <>
+                                <X className="h-4 w-4" />
+                                <span>{isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match'}</span>
+                              </>
+                            )}
+                          </motion.div>
+                        )}
+                        
+                        {form.formState.errors.confirmPassword?.message && (
+                          <p className="text-sm font-medium text-destructive">
+                            {String(form.formState.errors.confirmPassword.message)}
+                          </p>
+                        )}
+                      </div>
+
+                      <Button 
+                        type="submit" 
+                        className="w-full h-12" 
+                        size="lg"
+                        disabled={isLoading || !passwordsMatch}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                            {isRTL ? 'جاري التحديث...' : 'Updating...'}
+                          </>
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <>
+                            <Shield className="me-2 h-4 w-4" />
+                            {isRTL ? 'تحديث كلمة المرور' : 'Update Password'}
+                          </>
                         )}
                       </Button>
-                    </div>
-                    {form.formState.errors.password?.message && (
-                      <p className="text-sm font-medium text-destructive">
-                        {String(form.formState.errors.password.message)}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>{isRTL ? 'تأكيد كلمة المرور' : 'Confirm Password'}</Label>
-                    <div className="relative">
-                      <Input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        dir="ltr"
-                        lang="en"
-                        autoComplete="new-password"
-                        onInput={filterArabicChars}
-                        style={{ textAlign: 'left' }}
-                        className="pr-10"
-                        {...form.register('confirmPassword')}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                    {form.formState.errors.confirmPassword?.message && (
-                      <p className="text-sm font-medium text-destructive">
-                        {String(form.formState.errors.confirmPassword.message)}
-                      </p>
-                    )}
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                    {isRTL ? 'تحديث كلمة المرور' : 'Update Password'}
-                  </Button>
-                </form>
-              )}
-            </CardContent>
-          </Card>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
 
-      {/* Right side - Image/Branding */}
+      {/* Right side - Image/Branding (Desktop only) */}
       <div className="relative hidden w-0 flex-1 lg:block">
         <div className="absolute inset-0 gradient-hero">
           <div className="flex h-full flex-col items-center justify-center px-12 text-center">
-            <h2 className="text-4xl font-bold text-white">
-              {isRTL ? 'تأمين حسابك' : 'Securing Your Account'}
-            </h2>
-            <p className="mt-4 max-w-md text-lg text-white/90">
-              {isRTL 
-                ? 'أنشئ كلمة مرور قوية وآمنة لحماية حسابك ومعلوماتك الشخصية.'
-                : 'Create a strong and secure password to protect your account and personal information.'
-              }
-            </p>
-            <div className={`mt-12 space-y-4 text-white/80 text-start ${isRTL ? 'text-right' : 'text-left'}`}>
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-white" />
-                <span>{isRTL ? 'استخدم 6 أحرف على الأقل' : 'Use at least 6 characters'}</span>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="mb-8">
+                <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm mx-auto">
+                  <Shield className="h-12 w-12 text-white" />
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-white" />
-                <span>{isRTL ? 'امزج بين الأحرف والأرقام' : 'Mix letters and numbers'}</span>
+              
+              <h2 className="text-4xl font-bold text-white">
+                {isRTL ? 'تأمين حسابك' : 'Securing Your Account'}
+              </h2>
+              <p className="mt-4 max-w-md text-lg text-white/90">
+                {isRTL 
+                  ? 'أنشئ كلمة مرور قوية وآمنة لحماية حسابك ومعلوماتك الشخصية.'
+                  : 'Create a strong and secure password to protect your account and personal information.'
+                }
+              </p>
+              
+              <div className={`mt-12 space-y-4 text-white/80 text-start ${isRTL ? 'text-right' : 'text-left'}`}>
+                <motion.div 
+                  initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                    <Check className="h-4 w-4 text-white" />
+                  </div>
+                  <span>{isRTL ? 'استخدم 6 أحرف على الأقل' : 'Use at least 6 characters'}</span>
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                    <Check className="h-4 w-4 text-white" />
+                  </div>
+                  <span>{isRTL ? 'امزج بين الأحرف الكبيرة والصغيرة' : 'Mix uppercase and lowercase letters'}</span>
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                    <Check className="h-4 w-4 text-white" />
+                  </div>
+                  <span>{isRTL ? 'أضف أرقام ورموز خاصة' : 'Add numbers and special symbols'}</span>
+                </motion.div>
               </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-white" />
-                <span>{isRTL ? 'أضف رموز خاصة للمزيد من الأمان' : 'Add special symbols for extra security'}</span>
-              </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
