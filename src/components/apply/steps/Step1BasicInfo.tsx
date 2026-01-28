@@ -2,6 +2,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
-import { User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle, Loader2, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle, Loader2, LogIn, UserPlus, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Helper function to filter Arabic characters
@@ -139,6 +140,17 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
         {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
         {isRTL ? 'تسجيل الدخول' : 'Sign In'}
       </Button>
+
+      {/* Forgot Password Link */}
+      <div className="text-center">
+        <Link 
+          to="/auth?mode=forgot-password" 
+          className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+        >
+          <KeyRound className="w-3 h-3" />
+          {isRTL ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+        </Link>
+      </div>
     </form>
   );
 }
