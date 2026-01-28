@@ -1,24 +1,39 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowLeft, ChevronLeft, ChevronRight, Shield, Clock, CheckCircle2, Plane } from 'lucide-react';
+import { Search, ArrowLeft, ChevronLeft, ChevronRight, Shield, Clock, CheckCircle2, Plane, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 import heroBg from '@/assets/hero-bg.jpg';
+// Fallback images for when database images fail
 import destinationDubai from '@/assets/destination-dubai.jpg';
 import destinationParis from '@/assets/destination-paris.jpg';
 import destinationIstanbul from '@/assets/destination-istanbul.jpg';
 import destinationLondon from '@/assets/destination-london.jpg';
-import logo from '@/assets/logo.jpeg';
 
-const destinations = [
-  { id: 1, name: 'دبي', nameEn: 'Dubai', image: destinationDubai, country: 'الإمارات' },
-  { id: 2, name: 'باريس', nameEn: 'Paris', image: destinationParis, country: 'فرنسا' },
-  { id: 3, name: 'إسطنبول', nameEn: 'Istanbul', image: destinationIstanbul, country: 'تركيا' },
-  { id: 4, name: 'لندن', nameEn: 'London', image: destinationLondon, country: 'بريطانيا' },
+interface HeroDestination {
+  id: string;
+  name: string;
+  name_en: string | null;
+  country: string;
+  country_en: string | null;
+  image_url: string;
+  display_order: number;
+  is_active: boolean;
+  link_url: string | null;
+}
+
+// Fallback destinations if database is empty
+const fallbackDestinations = [
+  { id: '1', name: 'دبي', name_en: 'Dubai', image_url: destinationDubai, country: 'الإمارات', country_en: 'UAE', display_order: 1, is_active: true, link_url: '/destinations' },
+  { id: '2', name: 'باريس', name_en: 'Paris', image_url: destinationParis, country: 'فرنسا', country_en: 'France', display_order: 2, is_active: true, link_url: '/destinations' },
+  { id: '3', name: 'إسطنبول', name_en: 'Istanbul', image_url: destinationIstanbul, country: 'تركيا', country_en: 'Turkey', display_order: 3, is_active: true, link_url: '/destinations' },
+  { id: '4', name: 'لندن', name_en: 'London', image_url: destinationLondon, country: 'بريطانيا', country_en: 'UK', display_order: 4, is_active: true, link_url: '/destinations' },
 ];
 
 export default function HeroSection() {
@@ -27,15 +42,46 @@ export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const isRTL = direction === 'rtl';
 
+  // Fetch destinations from database
+  const { data: dbDestinations, isLoading } = useQuery({
+    queryKey: ['hero-destinations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hero_destinations')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      if (error) throw error;
+      return data as HeroDestination[];
+    },
+  });
+
+  // Use database destinations or fallback
+  const destinations = (dbDestinations && dbDestinations.length > 0) ? dbDestinations : fallbackDestinations;
+
   useEffect(() => {
+    if (destinations.length === 0) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % destinations.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [destinations.length]);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % destinations.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + destinations.length) % destinations.length);
+
+  // Get display name based on language
+  const getDisplayName = (dest: HeroDestination) => {
+    return isRTL ? dest.name : (dest.name_en || dest.name);
+  };
+
+  const getDisplayCountry = (dest: HeroDestination) => {
+    return isRTL ? dest.country : (dest.country_en || dest.country);
+  };
+
+  if (destinations.length === 0 && !isLoading) {
+    return null;
+  }
 
   return (
     <section className="relative min-h-[90vh] overflow-hidden">
@@ -124,41 +170,51 @@ export default function HeroSection() {
             >
               {/* Main Slider */}
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSlide}
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.5 }}
-                    className="absolute inset-0"
-                  >
-                    <img 
-                      src={destinations[currentSlide].image} 
-                      alt={destinations[currentSlide].name}
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    
-                    {/* Destination Info */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                      <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        <p className="text-sm opacity-80 mb-1">{destinations[currentSlide].country}</p>
-                        <h3 className="text-3xl font-bold mb-3">{destinations[currentSlide].name}</h3>
-                        <Button asChild variant="secondary" size="sm" className="rounded-full">
-                          <Link to="/destinations">
-                            استكشف الآن
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                          </Link>
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                {isLoading ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlide}
+                      initial={{ opacity: 0, scale: 1.1 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.5 }}
+                      className="absolute inset-0"
+                    >
+                      <img 
+                        src={destinations[currentSlide]?.image_url} 
+                        alt={getDisplayName(destinations[currentSlide])}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      
+                      {/* Destination Info */}
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                        <motion.div
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          <p className="text-sm opacity-80 mb-1">{getDisplayCountry(destinations[currentSlide])}</p>
+                          <h3 className="text-3xl font-bold mb-3">{getDisplayName(destinations[currentSlide])}</h3>
+                          <Button asChild variant="secondary" size="sm" className="rounded-full">
+                            <Link to={destinations[currentSlide]?.link_url || '/destinations'}>
+                              استكشف الآن
+                              <ArrowLeft className="h-4 w-4 mr-2" />
+                            </Link>
+                          </Button>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                )}
 
                 {/* Navigation Arrows */}
                 <button
@@ -232,12 +288,15 @@ export default function HeroSection() {
                 }`}
               >
                 <img 
-                  src={dest.image} 
-                  alt={dest.name}
+                  src={dest.image_url} 
+                  alt={getDisplayName(dest)}
                   className="h-20 w-28 object-cover transition-transform group-hover:scale-110"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">{dest.name}</span>
+                  <span className="text-white text-sm font-medium">{getDisplayName(dest)}</span>
                 </div>
               </button>
             ))}
