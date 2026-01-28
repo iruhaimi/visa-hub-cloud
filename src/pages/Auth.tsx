@@ -38,6 +38,12 @@ const signInSchema = z.object({
   password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('يرجى إدخال بريد إلكتروني صحيح'),
+});
+
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
 const signUpSchema = z.object({
   fullName: z.string().min(2, 'الاسم يجب أن يكون حرفين على الأقل').max(100),
   email: z.string().email('يرجى إدخال بريد إلكتروني صحيح'),
@@ -53,10 +59,13 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
-  const [isSignUp, setIsSignUp] = useState(searchParams.get('mode') === 'signup');
+  const mode = searchParams.get('mode');
+  const [isSignUp, setIsSignUp] = useState(mode === 'signup');
+  const [isForgotPassword, setIsForgotPassword] = useState(mode === 'forgot-password');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, signIn, signUp } = useAuth();
@@ -80,7 +89,10 @@ export default function Auth() {
   }, [user, navigate]);
 
   useEffect(() => {
-    setIsSignUp(searchParams.get('mode') === 'signup');
+    const mode = searchParams.get('mode');
+    setIsSignUp(mode === 'signup');
+    setIsForgotPassword(mode === 'forgot-password');
+    setResetEmailSent(false);
   }, [searchParams]);
 
   const signInForm = useForm<SignInFormData>({
@@ -98,6 +110,13 @@ export default function Auth() {
       email: '',
       password: '',
       confirmPassword: '',
+    },
+  });
+
+  const forgotPasswordForm = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
     },
   });
 
@@ -175,6 +194,34 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (data: ForgotPasswordFormData) => {
+    setIsLoading(true);
+    
+    const redirectUrl = `${window.location.origin}/auth?mode=reset-password`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+      redirectTo: redirectUrl,
+    });
+    
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: isRTL ? 'فشل إرسال الرابط' : 'Failed to send link',
+        description: error.message,
+      });
+    } else {
+      setResetEmailSent(true);
+      toast({
+        title: isRTL ? 'تم إرسال الرابط!' : 'Link sent!',
+        description: isRTL 
+          ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني'
+          : 'Password reset link has been sent to your email',
+      });
+    }
+  };
+
   return (
     <div className={`flex min-h-screen ${isRTL ? 'flex-row-reverse' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Left side - Form */}
@@ -196,20 +243,91 @@ export default function Auth() {
                 <span className="text-2xl font-bold">عطلات رحلاتكم</span>
               </div>
               <CardTitle className="text-2xl">
-                {isSignUp 
-                  ? (isRTL ? 'إنشاء حساب جديد' : 'Create an account')
-                  : (isRTL ? 'مرحباً بعودتك' : 'Welcome back')
+                {isForgotPassword
+                  ? (isRTL ? 'استعادة كلمة المرور' : 'Reset Password')
+                  : isSignUp 
+                    ? (isRTL ? 'إنشاء حساب جديد' : 'Create an account')
+                    : (isRTL ? 'مرحباً بعودتك' : 'Welcome back')
                 }
               </CardTitle>
               <CardDescription>
-                {isSignUp
-                  ? (isRTL ? 'أدخل بياناتك لإنشاء حسابك' : 'Enter your details to create your account')
-                  : (isRTL ? 'أدخل بياناتك للوصول إلى حسابك' : 'Enter your credentials to access your account')
+                {isForgotPassword
+                  ? (isRTL ? 'أدخل بريدك الإلكتروني لإرسال رابط إعادة تعيين كلمة المرور' : 'Enter your email to receive a password reset link')
+                  : isSignUp
+                    ? (isRTL ? 'أدخل بياناتك لإنشاء حسابك' : 'Enter your details to create your account')
+                    : (isRTL ? 'أدخل بياناتك للوصول إلى حسابك' : 'Enter your credentials to access your account')
                 }
               </CardDescription>
             </CardHeader>
             <CardContent className="px-0 sm:px-6">
-              {isSignUp ? (
+              {isForgotPassword ? (
+                resetEmailSent ? (
+                  <div className="text-center space-y-4">
+                    <div className="flex justify-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                        <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold">
+                      {isRTL ? 'تم إرسال الرابط!' : 'Link Sent!'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {isRTL 
+                        ? 'تحقق من بريدك الإلكتروني واتبع الرابط لإعادة تعيين كلمة المرور'
+                        : 'Check your email and follow the link to reset your password'}
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setResetEmailSent(false);
+                      }}
+                    >
+                      {isRTL ? 'العودة لتسجيل الدخول' : 'Back to Sign In'}
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>{isRTL ? 'البريد الإلكتروني' : 'Email'}</Label>
+                      <Input 
+                        type="email" 
+                        placeholder="example@email.com" 
+                        dir="ltr"
+                        lang="en"
+                        autoComplete="email"
+                        inputMode="email"
+                        onInput={filterArabicChars}
+                        style={{ textAlign: 'left' }}
+                        {...forgotPasswordForm.register('email')} 
+                      />
+                      {forgotPasswordForm.formState.errors.email?.message && (
+                        <p className="text-sm font-medium text-destructive">
+                          {String(forgotPasswordForm.formState.errors.email.message)}
+                        </p>
+                      )}
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                      {isRTL ? 'إرسال رابط الاستعادة' : 'Send Reset Link'}
+                    </Button>
+
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPassword(false)}
+                        className="text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        {isRTL ? 'العودة لتسجيل الدخول' : 'Back to Sign In'}
+                      </button>
+                    </div>
+                  </form>
+                )
+              ) : isSignUp ? (
                 <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                   <div className="space-y-2">
                     <Label>{isRTL ? 'الاسم الكامل' : 'Full Name'}</Label>
@@ -377,34 +495,46 @@ export default function Auth() {
                     {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                     {isRTL ? 'تسجيل الدخول' : 'Sign In'}
                   </Button>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(true)}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {isRTL ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+                    </button>
+                  </div>
                 </form>
               )}
 
-              <div className="mt-6 text-center text-sm">
-                {isSignUp ? (
-                  <p className="text-muted-foreground">
-                    {isRTL ? 'لديك حساب بالفعل؟ ' : 'Already have an account? '}
-                    <button
-                      type="button"
-                      onClick={() => setIsSignUp(false)}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {isRTL ? 'تسجيل الدخول' : 'Sign in'}
-                    </button>
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground">
-                    {isRTL ? 'ليس لديك حساب؟ ' : "Don't have an account? "}
-                    <button
-                      type="button"
-                      onClick={() => setIsSignUp(true)}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {isRTL ? 'إنشاء حساب' : 'Sign up'}
-                    </button>
-                  </p>
-                )}
-              </div>
+              {!isForgotPassword && (
+                <div className="mt-6 text-center text-sm">
+                  {isSignUp ? (
+                    <p className="text-muted-foreground">
+                      {isRTL ? 'لديك حساب بالفعل؟ ' : 'Already have an account? '}
+                      <button
+                        type="button"
+                        onClick={() => setIsSignUp(false)}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {isRTL ? 'تسجيل الدخول' : 'Sign in'}
+                      </button>
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      {isRTL ? 'ليس لديك حساب؟ ' : "Don't have an account? "}
+                      <button
+                        type="button"
+                        onClick={() => setIsSignUp(true)}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {isRTL ? 'إنشاء حساب' : 'Sign up'}
+                      </button>
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
