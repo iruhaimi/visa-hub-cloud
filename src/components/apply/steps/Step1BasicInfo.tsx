@@ -5,11 +5,14 @@ import { z } from 'zod';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
-import { User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle, Loader2, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 // Helper function to filter Arabic characters
 const filterArabicChars = (value: string): string => {
@@ -24,16 +27,265 @@ const filterNonNumeric = (value: string): string => {
 // Extract phone number without country code
 const extractPhoneNumber = (phone: string | null): string => {
   if (!phone) return '';
-  // Remove common country codes and spaces
   const cleaned = phone.replace(/^\+?\d{1,3}[\s-]?/, '').replace(/\D/g, '');
   return cleaned.slice(0, 9);
 };
 
-export default function Step1BasicInfo() {
+// Sign In Form Component
+function SignInForm({ onSuccess }: { onSuccess: () => void }) {
+  const { direction } = useLanguage();
+  const { signIn } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const isRTL = direction === 'rtl';
+
+  const schema = z.object({
+    email: z.string().email(isRTL ? 'يرجى إدخال بريد إلكتروني صحيح' : 'Please enter a valid email'),
+    password: z.string().min(6, isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters'),
+  });
+
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: { email: '', password: '' },
+  });
+
+  const handleEmailInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setValue('email', filtered);
+    }
+  }, [setValue]);
+
+  const handlePasswordInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setValue('password', filtered);
+    }
+  }, [setValue]);
+
+  const onSubmit = async (data: { email: string; password: string }) => {
+    setIsLoading(true);
+    const { error } = await signIn(data.email, data.password);
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: isRTL ? 'فشل تسجيل الدخول' : 'Login Failed',
+        description: error.message === 'Invalid login credentials'
+          ? (isRTL ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' : 'Invalid email or password')
+          : error.message,
+      });
+    } else {
+      toast({
+        title: isRTL ? 'مرحباً بعودتك!' : 'Welcome back!',
+        description: isRTL ? 'تم تسجيل الدخول بنجاح' : 'Logged in successfully',
+      });
+      onSuccess();
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Mail className="w-4 h-4" />
+          {isRTL ? 'البريد الإلكتروني' : 'Email'}
+        </Label>
+        <Input
+          type="email"
+          placeholder="example@email.com"
+          dir="ltr"
+          inputMode="email"
+          onInput={handleEmailInput}
+          style={{ textAlign: 'left' }}
+          className="h-12"
+          {...register('email')}
+        />
+        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>{isRTL ? 'كلمة المرور' : 'Password'}</Label>
+        <div className="relative">
+          <Input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            dir="ltr"
+            onInput={handlePasswordInput}
+            style={{ textAlign: 'left' }}
+            className="h-12 pe-10"
+            {...register('password')}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute end-0 top-0 h-full px-3 hover:bg-transparent"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+          </Button>
+        </div>
+        {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+      </div>
+
+      <Button type="submit" size="lg" className="w-full h-12 gap-2" disabled={isLoading}>
+        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+        {isRTL ? 'تسجيل الدخول' : 'Sign In'}
+      </Button>
+    </form>
+  );
+}
+
+// Sign Up Form Component
+function SignUpForm({ onSuccess }: { onSuccess: () => void }) {
+  const { direction } = useLanguage();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const isRTL = direction === 'rtl';
+
+  const schema = z.object({
+    fullName: z.string().min(2, isRTL ? 'الاسم يجب أن يكون حرفين على الأقل' : 'Name must be at least 2 characters'),
+    email: z.string().email(isRTL ? 'يرجى إدخال بريد إلكتروني صحيح' : 'Please enter a valid email'),
+    password: z.string().min(6, isRTL ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters'),
+  });
+
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: { fullName: '', email: '', password: '' },
+  });
+
+  const handleEmailInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setValue('email', filtered);
+    }
+  }, [setValue]);
+
+  const handlePasswordInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const filtered = filterArabicChars(input.value);
+    if (filtered !== input.value) {
+      input.value = filtered;
+      setValue('password', filtered);
+    }
+  }, [setValue]);
+
+  const onSubmit = async (data: { fullName: string; email: string; password: string }) => {
+    setIsLoading(true);
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: { full_name: data.fullName },
+      },
+    });
+    setIsLoading(false);
+
+    if (error) {
+      let message = error.message;
+      if (error.message.includes('already registered')) {
+        message = isRTL ? 'هذا البريد الإلكتروني مسجل مسبقاً' : 'This email is already registered';
+      }
+      toast({
+        variant: 'destructive',
+        title: isRTL ? 'فشل إنشاء الحساب' : 'Registration Failed',
+        description: message,
+      });
+    } else {
+      toast({
+        title: isRTL ? 'تم إنشاء الحساب!' : 'Account Created!',
+        description: isRTL ? 'مرحباً بك في عطلات رحلاتكم!' : 'Welcome to Otolat Rahlatcom!',
+      });
+      onSuccess();
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <User className="w-4 h-4" />
+          {isRTL ? 'الاسم الكامل' : 'Full Name'}
+        </Label>
+        <Input
+          placeholder={isRTL ? 'أدخل اسمك الكامل' : 'Enter your full name'}
+          className="h-12"
+          {...register('fullName')}
+        />
+        {errors.fullName && <p className="text-sm text-destructive">{errors.fullName.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Mail className="w-4 h-4" />
+          {isRTL ? 'البريد الإلكتروني' : 'Email'}
+        </Label>
+        <Input
+          type="email"
+          placeholder="example@email.com"
+          dir="ltr"
+          inputMode="email"
+          onInput={handleEmailInput}
+          style={{ textAlign: 'left' }}
+          className="h-12"
+          {...register('email')}
+        />
+        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>{isRTL ? 'كلمة المرور' : 'Password'}</Label>
+        <div className="relative">
+          <Input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            dir="ltr"
+            onInput={handlePasswordInput}
+            style={{ textAlign: 'left' }}
+            className="h-12 pe-10"
+            {...register('password')}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute end-0 top-0 h-full px-3 hover:bg-transparent"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+          </Button>
+        </div>
+        {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+      </div>
+
+      <Button type="submit" size="lg" className="w-full h-12 gap-2" disabled={isLoading}>
+        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+        {isRTL ? 'إنشاء حساب' : 'Create Account'}
+      </Button>
+    </form>
+  );
+}
+
+// Logged In User Form
+function LoggedInUserForm() {
   const { t, direction } = useLanguage();
   const { applicationData, updateApplicationData, goToNextStep } = useApplication();
   const { user, profile, isLoading: authLoading } = useAuth();
   const [hasPreFilled, setHasPreFilled] = useState(false);
+  const [autoAdvanceTriggered, setAutoAdvanceTriggered] = useState(false);
 
   const schema = z.object({
     fullName: z.string().min(3, t('validation.required')),
@@ -62,12 +314,15 @@ export default function Step1BasicInfo() {
 
   const watchedValues = watch();
 
-  // Pre-fill form with profile data when user is logged in
+  // Pre-fill and check for auto-advance
   useEffect(() => {
     if (!hasPreFilled && !authLoading && user && profile) {
       const profilePhone = extractPhoneNumber(profile.phone);
       
-      // Only pre-fill if fields are empty
+      const preFilledName = applicationData.fullName || profile.full_name || '';
+      const preFilledEmail = applicationData.email || user.email || '';
+      const preFilledPhone = applicationData.phone || profilePhone || '';
+      
       if (!applicationData.fullName && profile.full_name) {
         setValue('fullName', profile.full_name);
       }
@@ -79,19 +334,42 @@ export default function Step1BasicInfo() {
       }
       
       setHasPreFilled(true);
+      
+      // Check if all data is complete for auto-advance
+      const isComplete = !!(
+        preFilledName && 
+        preFilledEmail.includes('@') && 
+        preFilledPhone.length === 9
+      );
+      
+      if (isComplete && !autoAdvanceTriggered) {
+        setAutoAdvanceTriggered(true);
+        // Update application data first
+        updateApplicationData({
+          fullName: preFilledName,
+          email: preFilledEmail,
+          phone: preFilledPhone,
+          countryCode: applicationData.countryCode || '+966',
+        });
+        // Auto-advance after a brief delay
+        setTimeout(() => {
+          goToNextStep();
+        }, 300);
+      }
     }
-  }, [hasPreFilled, authLoading, user, profile, applicationData, setValue]);
+  }, [hasPreFilled, authLoading, user, profile, applicationData, setValue, goToNextStep, updateApplicationData, autoAdvanceTriggered]);
 
   useEffect(() => {
-    updateApplicationData({
-      fullName: watchedValues.fullName,
-      email: watchedValues.email,
-      phone: watchedValues.phone,
-      countryCode: watchedValues.countryCode,
-    });
-  }, [watchedValues.fullName, watchedValues.email, watchedValues.phone, watchedValues.countryCode, updateApplicationData]);
+    if (hasPreFilled) {
+      updateApplicationData({
+        fullName: watchedValues.fullName,
+        email: watchedValues.email,
+        phone: watchedValues.phone,
+        countryCode: watchedValues.countryCode,
+      });
+    }
+  }, [watchedValues.fullName, watchedValues.email, watchedValues.phone, watchedValues.countryCode, updateApplicationData, hasPreFilled]);
 
-  // Handle email input - filter Arabic characters in real-time
   const handleEmailInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
     const filtered = filterArabicChars(input.value);
@@ -101,7 +379,6 @@ export default function Step1BasicInfo() {
     }
   }, [setValue]);
 
-  // Handle phone input - allow only digits and limit to 9 characters
   const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
     let filtered = filterNonNumeric(input.value);
@@ -120,30 +397,23 @@ export default function Step1BasicInfo() {
   };
 
   const ArrowIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
-  const isLoggedIn = !!user;
   const hasCompleteData = !!(watchedValues.fullName && watchedValues.email && watchedValues.phone?.length === 9);
 
-  if (authLoading) {
+  if (authLoading || autoAdvanceTriggered) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">
+          {direction === 'rtl' ? 'جاري تحميل بياناتك...' : 'Loading your data...'}
+        </p>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">{t('wizard.step1')}</h2>
-        <p className="text-muted-foreground mt-2">
-          {direction === 'rtl' 
-            ? 'أدخل بياناتك الأساسية للتواصل معك' 
-            : 'Enter your basic information to contact you'}
-        </p>
-      </div>
-
       {/* Show logged-in status with pre-filled indicator */}
-      {isLoggedIn && hasCompleteData && (
+      {hasCompleteData && (
         <div className="p-4 bg-accent/50 rounded-lg border border-primary/20 flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-primary shrink-0" />
           <div className="text-sm text-foreground">
@@ -237,5 +507,89 @@ export default function Step1BasicInfo() {
         <ArrowIcon className="w-4 h-4" />
       </Button>
     </form>
+  );
+}
+
+// Main Step 1 Component
+export default function Step1BasicInfo() {
+  const { direction } = useLanguage();
+  const { user, isLoading: authLoading } = useAuth();
+  const { goToNextStep } = useApplication();
+  const [authCompleted, setAuthCompleted] = useState(false);
+
+  const handleAuthSuccess = useCallback(() => {
+    setAuthCompleted(true);
+  }, []);
+
+  // When auth is completed, the user state will update
+  useEffect(() => {
+    if (authCompleted && user) {
+      // User just logged in, the LoggedInUserForm will handle pre-fill and auto-advance
+      setAuthCompleted(false);
+    }
+  }, [authCompleted, user, goToNextStep]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // User is logged in - show the logged-in form
+  if (user) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold">
+            {direction === 'rtl' ? 'البيانات الأساسية' : 'Basic Information'}
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            {direction === 'rtl' 
+              ? 'أدخل بياناتك الأساسية للتواصل معك' 
+              : 'Enter your basic information to contact you'}
+          </p>
+        </div>
+        <LoggedInUserForm />
+      </div>
+    );
+  }
+
+  // User is not logged in - show login/register tabs
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold">
+          {direction === 'rtl' ? 'تسجيل الدخول للمتابعة' : 'Sign in to Continue'}
+        </h2>
+        <p className="text-muted-foreground mt-2">
+          {direction === 'rtl' 
+            ? 'سجل دخولك أو أنشئ حساباً جديداً لمتابعة طلب التأشيرة' 
+            : 'Sign in or create an account to continue your visa application'}
+        </p>
+      </div>
+
+      <Tabs defaultValue="signin" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="signin" className="gap-2">
+            <LogIn className="w-4 h-4" />
+            {direction === 'rtl' ? 'تسجيل الدخول' : 'Sign In'}
+          </TabsTrigger>
+          <TabsTrigger value="signup" className="gap-2">
+            <UserPlus className="w-4 h-4" />
+            {direction === 'rtl' ? 'حساب جديد' : 'Sign Up'}
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="signin">
+          <SignInForm onSuccess={handleAuthSuccess} />
+        </TabsContent>
+        
+        <TabsContent value="signup">
+          <SignUpForm onSuccess={handleAuthSuccess} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
