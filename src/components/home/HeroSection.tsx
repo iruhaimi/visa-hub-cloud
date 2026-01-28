@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 import heroBg from '@/assets/hero-bg.jpg';
-// Fallback images for when database images fail
+// Fallback images
 import destinationDubai from '@/assets/destination-dubai.jpg';
 import destinationParis from '@/assets/destination-paris.jpg';
 import destinationIstanbul from '@/assets/destination-istanbul.jpg';
@@ -28,7 +28,13 @@ interface HeroDestination {
   link_url: string | null;
 }
 
-// Fallback destinations if database is empty
+interface HeroSetting {
+  key: string;
+  value: string;
+  value_en: string | null;
+}
+
+// Fallback destinations
 const fallbackDestinations = [
   { id: '1', name: 'دبي', name_en: 'Dubai', image_url: destinationDubai, country: 'الإمارات', country_en: 'UAE', display_order: 1, is_active: true, link_url: '/destinations' },
   { id: '2', name: 'باريس', name_en: 'Paris', image_url: destinationParis, country: 'فرنسا', country_en: 'France', display_order: 2, is_active: true, link_url: '/destinations' },
@@ -37,13 +43,13 @@ const fallbackDestinations = [
 ];
 
 export default function HeroSection() {
-  const { t, direction } = useLanguage();
+  const { direction } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const isRTL = direction === 'rtl';
 
-  // Fetch destinations from database
-  const { data: dbDestinations, isLoading } = useQuery({
+  // Fetch destinations
+  const { data: dbDestinations, isLoading: loadingDestinations } = useQuery({
     queryKey: ['hero-destinations'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -56,7 +62,32 @@ export default function HeroSection() {
     },
   });
 
-  // Use database destinations or fallback
+  // Fetch settings
+  const { data: dbSettings } = useQuery({
+    queryKey: ['hero-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hero_settings')
+        .select('key, value, value_en')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data as HeroSetting[];
+    },
+  });
+
+  // Create settings map
+  const settings: Record<string, { ar: string; en: string }> = {};
+  dbSettings?.forEach(s => {
+    settings[s.key] = { ar: s.value, en: s.value_en || s.value };
+  });
+
+  // Helper to get setting value
+  const getSetting = (key: string, fallbackAr: string, fallbackEn?: string) => {
+    const s = settings[key];
+    if (!s) return isRTL ? fallbackAr : (fallbackEn || fallbackAr);
+    return isRTL ? s.ar : s.en;
+  };
+
   const destinations = (dbDestinations && dbDestinations.length > 0) ? dbDestinations : fallbackDestinations;
 
   useEffect(() => {
@@ -70,33 +101,20 @@ export default function HeroSection() {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % destinations.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + destinations.length) % destinations.length);
 
-  // Get display name based on language
-  const getDisplayName = (dest: HeroDestination) => {
-    return isRTL ? dest.name : (dest.name_en || dest.name);
-  };
+  const getDisplayName = (dest: HeroDestination) => isRTL ? dest.name : (dest.name_en || dest.name);
+  const getDisplayCountry = (dest: HeroDestination) => isRTL ? dest.country : (dest.country_en || dest.country);
 
-  const getDisplayCountry = (dest: HeroDestination) => {
-    return isRTL ? dest.country : (dest.country_en || dest.country);
-  };
-
-  if (destinations.length === 0 && !isLoading) {
-    return null;
-  }
+  if (destinations.length === 0 && !loadingDestinations) return null;
 
   return (
     <section className="relative min-h-[90vh] overflow-hidden">
-      {/* Background Image with Overlay */}
+      {/* Background */}
       <div className="absolute inset-0">
-        <img 
-          src={heroBg} 
-          alt="Travel destinations" 
-          className="h-full w-full object-cover"
-        />
+        <img src={heroBg} alt="Travel destinations" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
       </div>
 
       <div className="container-section relative z-10 flex flex-col min-h-[90vh] py-8">
-        {/* Main Hero Content */}
         <div className="flex-1 flex flex-col lg:flex-row items-center gap-8 lg:gap-12 pt-8">
           {/* Left Content */}
           <div className="flex-1 text-center lg:text-start">
@@ -107,17 +125,21 @@ export default function HeroSection() {
             >
               <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
                 <Plane className="h-3 w-3 ml-1" />
-                عطلات رحلاتكم للسياحة والسفر
+                {getSetting('badge_text', 'عطلات رحلاتكم للسياحة والسفر', 'Otolat Rahlatcom Travel & Tourism')}
               </Badge>
               
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
-                رحلتك تبدأ
-                <span className="block text-primary mt-2">من هنا</span>
+                {getSetting('main_title_line1', 'رحلتك تبدأ', 'Your Journey')}
+                <span className="block text-primary mt-2">
+                  {getSetting('main_title_line2', 'من هنا', 'Starts Here')}
+                </span>
               </h1>
               
               <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-                نقدم لك خدمات التأشيرات والسفر بأعلى جودة وأفضل الأسعار. 
-                احصل على تأشيرتك بكل سهولة ويسر مع فريقنا المتخصص.
+                {getSetting('description', 
+                  'نقدم لك خدمات التأشيرات والسفر بأعلى جودة وأفضل الأسعار. احصل على تأشيرتك بكل سهولة ويسر مع فريقنا المتخصص.',
+                  'We offer you visa and travel services with the highest quality and best prices. Get your visa easily with our specialized team.'
+                )}
               </p>
 
               {/* Search Box */}
@@ -127,7 +149,7 @@ export default function HeroSection() {
                     <Search className="absolute start-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="text"
-                      placeholder="ابحث عن وجهتك..."
+                      placeholder={getSetting('search_placeholder', 'ابحث عن وجهتك...', 'Search your destination...')}
                       className="border-0 ps-10 bg-transparent focus-visible:ring-0 h-12"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -135,7 +157,7 @@ export default function HeroSection() {
                   </div>
                   <Button asChild size="lg" className="h-12 px-6 rounded-lg">
                     <Link to="/destinations">
-                      ابحث الآن
+                      {getSetting('search_button', 'ابحث الآن', 'Search Now')}
                       <ArrowLeft className="h-4 w-4 mr-2" />
                     </Link>
                   </Button>
@@ -146,21 +168,25 @@ export default function HeroSection() {
               <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2 bg-card/50 px-4 py-2 rounded-full border border-border/50">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
-                  <span>98% نسبة النجاح</span>
+                  <span>
+                    {getSetting('stat_success_rate', '98%', '98%')} {getSetting('stat_success_label', 'نسبة النجاح', 'Success Rate')}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 bg-card/50 px-4 py-2 rounded-full border border-border/50">
                   <Shield className="h-4 w-4 text-primary" />
-                  <span>+50 دولة</span>
+                  <span>
+                    {getSetting('stat_countries', '+50', '+50')} {getSetting('stat_countries_label', 'دولة', 'Countries')}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 bg-card/50 px-4 py-2 rounded-full border border-border/50">
                   <Clock className="h-4 w-4 text-primary" />
-                  <span>دعم متواصل</span>
+                  <span>{getSetting('stat_support', 'دعم متواصل', '24/7 Support')}</span>
                 </div>
               </div>
             </motion.div>
           </div>
 
-          {/* Right Content - Destination Cards Slider */}
+          {/* Right Content - Slider */}
           <div className="flex-1 w-full max-w-lg lg:max-w-xl">
             <motion.div
               initial={{ opacity: 0, x: 50 }}
@@ -168,9 +194,8 @@ export default function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              {/* Main Slider */}
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl">
-                {isLoading ? (
+                {loadingDestinations ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
@@ -188,14 +213,10 @@ export default function HeroSection() {
                         src={destinations[currentSlide]?.image_url} 
                         alt={getDisplayName(destinations[currentSlide])}
                         className="h-full w-full object-cover"
-                        onError={(e) => {
-                          // Fallback to placeholder if image fails
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
-                        }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                       
-                      {/* Destination Info */}
                       <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                         <motion.div
                           initial={{ y: 20, opacity: 0 }}
@@ -206,7 +227,7 @@ export default function HeroSection() {
                           <h3 className="text-3xl font-bold mb-3">{getDisplayName(destinations[currentSlide])}</h3>
                           <Button asChild variant="secondary" size="sm" className="rounded-full">
                             <Link to={destinations[currentSlide]?.link_url || '/destinations'}>
-                              استكشف الآن
+                              {isRTL ? 'استكشف الآن' : 'Explore Now'}
                               <ArrowLeft className="h-4 w-4 mr-2" />
                             </Link>
                           </Button>
@@ -216,7 +237,7 @@ export default function HeroSection() {
                   </AnimatePresence>
                 )}
 
-                {/* Navigation Arrows */}
+                {/* Navigation */}
                 <button
                   onClick={prevSlide}
                   className="absolute top-1/2 right-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
@@ -230,16 +251,14 @@ export default function HeroSection() {
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
-                {/* Dots Indicator */}
+                {/* Dots */}
                 <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2">
                   {destinations.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentSlide(index)}
                       className={`h-2 rounded-full transition-all ${
-                        index === currentSlide 
-                          ? 'w-8 bg-white' 
-                          : 'w-2 bg-white/50 hover:bg-white/70'
+                        index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
                       }`}
                     />
                   ))}
@@ -253,20 +272,28 @@ export default function HeroSection() {
                     <CheckCircle2 className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">تأشيرات مُنجزة</p>
-                    <p className="text-lg font-bold">+10,000</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getSetting('card_visas_label', 'تأشيرات مُنجزة', 'Visas Completed')}
+                    </p>
+                    <p className="text-lg font-bold">
+                      {getSetting('card_visas_count', '+10,000', '+10,000')}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="hidden lg:block absolute -right-8 bottom-1/4 bg-card rounded-xl p-4 shadow-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-success" />
+                  <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">متوسط المعالجة</p>
-                    <p className="text-lg font-bold">5 أيام</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getSetting('card_processing_label', 'متوسط المعالجة', 'Avg. Processing')}
+                    </p>
+                    <p className="text-lg font-bold">
+                      {getSetting('card_processing_time', '5 أيام', '5 Days')}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -274,7 +301,7 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Bottom Destination Thumbnails */}
+        {/* Thumbnails */}
         <div className="mt-8 pb-4">
           <div className="flex items-center justify-center gap-4 overflow-x-auto pb-2">
             {destinations.map((dest, index) => (
@@ -291,9 +318,7 @@ export default function HeroSection() {
                   src={dest.image_url} 
                   alt={getDisplayName(dest)}
                   className="h-20 w-28 object-cover transition-transform group-hover:scale-110"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <span className="text-white text-sm font-medium">{getDisplayName(dest)}</span>
