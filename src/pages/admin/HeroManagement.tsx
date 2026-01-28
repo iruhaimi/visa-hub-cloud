@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -23,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Loader2, Image, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Image, ArrowUp, ArrowDown, Eye, EyeOff, Type, BarChart3, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -40,11 +42,63 @@ interface HeroDestination {
   created_at: string;
 }
 
+interface HeroSetting {
+  id: string;
+  key: string;
+  value: string;
+  value_en: string | null;
+  type: string;
+  category: string;
+  display_order: number;
+  is_active: boolean;
+}
+
 export default function HeroManagement() {
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
-  const queryClient = useQueryClient();
 
+  return (
+    <div className={cn("space-y-6", isRTL && "text-right")}>
+      <div>
+        <h1 className="text-2xl font-bold">إدارة قسم Hero</h1>
+        <p className="text-muted-foreground">إدارة الوجهات والنصوص والإحصائيات في الصفحة الرئيسية</p>
+      </div>
+
+      <Tabs defaultValue="destinations" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="destinations" className="gap-2">
+            <Image className="h-4 w-4" />
+            الوجهات
+          </TabsTrigger>
+          <TabsTrigger value="texts" className="gap-2">
+            <Type className="h-4 w-4" />
+            النصوص
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            الإحصائيات
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="destinations" className="mt-6">
+          <DestinationsManagement isRTL={isRTL} />
+        </TabsContent>
+
+        <TabsContent value="texts" className="mt-6">
+          <TextsManagement isRTL={isRTL} category="general" title="النصوص الرئيسية" />
+        </TabsContent>
+
+        <TabsContent value="stats" className="mt-6">
+          <TextsManagement isRTL={isRTL} category="stats" title="الإحصائيات والأرقام" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Destinations Management Component
+function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editingDestination, setEditingDestination] = useState<HeroDestination | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -62,7 +116,6 @@ export default function HeroManagement() {
     link_url: '/destinations',
   });
 
-  // Fetch destinations
   const { data: destinations, isLoading } = useQuery({
     queryKey: ['admin-hero-destinations'],
     queryFn: async () => {
@@ -146,7 +199,6 @@ export default function HeroManagement() {
       setIsUploading(true);
       let finalImageUrl = formData.image_url;
 
-      // Upload new image if selected
       if (imageFile) {
         finalImageUrl = await uploadImage(imageFile);
       }
@@ -256,267 +308,426 @@ export default function HeroManagement() {
   }
 
   return (
-    <div className={cn("space-y-6", isRTL && "text-right")}>
-      <div>
-        <h1 className="text-2xl font-bold">إدارة قسم Hero</h1>
-        <p className="text-muted-foreground">إضافة وتعديل وحذف الوجهات في شريط العرض الرئيسي</p>
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
           <CardTitle className="flex items-center gap-2">
             <Image className="h-5 w-5" />
             الوجهات المميزة
           </CardTitle>
-          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                إضافة وجهة
-              </Button>
-            </DialogTrigger>
-            <DialogContent className={cn("max-w-lg", isRTL && "text-right")}>
-              <DialogHeader>
-                <DialogTitle>{editingDestination ? 'تعديل الوجهة' : 'إضافة وجهة جديدة'}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
-                {/* Image Upload */}
-                <div className="space-y-2">
-                  <Label>صورة الوجهة</Label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    {imagePreview ? (
-                      <div className="relative">
-                        <img 
-                          src={imagePreview} 
-                          alt="Preview" 
-                          className="h-40 w-full object-cover rounded-lg mx-auto"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 left-2"
-                          onClick={() => {
-                            setImageFile(null);
-                            setImagePreview(null);
-                            setFormData({ ...formData, image_url: '' });
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer block py-8">
-                        <Image className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">اضغط لرفع صورة</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageChange}
-                        />
-                      </label>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">الحد الأقصى: 5MB - يُفضل أبعاد 800x1000</p>
-                </div>
-
-                {/* Or URL */}
-                <div className="space-y-2">
-                  <Label>أو رابط الصورة</Label>
-                  <Input
-                    value={formData.image_url}
-                    onChange={(e) => {
-                      setFormData({ ...formData, image_url: e.target.value });
-                      setImagePreview(e.target.value);
-                      setImageFile(null);
-                    }}
-                    placeholder="https://..."
-                    dir="ltr"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>اسم الوجهة (عربي)</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="مثال: دبي"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>اسم الوجهة (إنجليزي)</Label>
-                    <Input
-                      value={formData.name_en}
-                      onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
-                      placeholder="e.g., Dubai"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>الدولة (عربي)</Label>
-                    <Input
-                      value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      placeholder="مثال: الإمارات"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>الدولة (إنجليزي)</Label>
-                    <Input
-                      value={formData.country_en}
-                      onChange={(e) => setFormData({ ...formData, country_en: e.target.value })}
-                      placeholder="e.g., UAE"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>رابط الوجهة</Label>
-                  <Input
-                    value={formData.link_url}
-                    onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
-                    placeholder="/destinations"
-                    dir="ltr"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
-                  <Label>عرض الوجهة</Label>
-                </div>
-
-                <Button 
-                  className="w-full" 
-                  onClick={() => saveMutation.mutate()}
-                  disabled={saveMutation.isPending || isUploading || !formData.name || !formData.country || (!formData.image_url && !imageFile)}
-                >
-                  {(saveMutation.isPending || isUploading) ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                      جاري الحفظ...
-                    </>
-                  ) : (
-                    editingDestination ? 'حفظ التغييرات' : 'إضافة الوجهة'
-                  )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={isRTL ? "text-right" : ""}>الترتيب</TableHead>
-                <TableHead className={isRTL ? "text-right" : ""}>الصورة</TableHead>
-                <TableHead className={isRTL ? "text-right" : ""}>الوجهة</TableHead>
-                <TableHead className={isRTL ? "text-right" : ""}>الدولة</TableHead>
-                <TableHead className={isRTL ? "text-right" : ""}>الحالة</TableHead>
-                <TableHead className={isRTL ? "text-right" : ""}>الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {destinations?.map((dest, index) => (
-                <TableRow key={dest.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveUp(dest, index)}
-                        disabled={index === 0}
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <span className="w-6 text-center">{index + 1}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveDown(dest, index)}
-                        disabled={index === destinations.length - 1}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <img 
-                      src={dest.image_url} 
-                      alt={dest.name}
-                      className="h-12 w-16 object-cover rounded-md"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <div>
-                      <div>{dest.name}</div>
-                      {dest.name_en && (
-                        <div className="text-xs text-muted-foreground" dir="ltr">{dest.name_en}</div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{dest.country}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={dest.is_active}
-                        onCheckedChange={(checked) => 
-                          toggleActiveMutation.mutate({ id: dest.id, is_active: checked })
-                        }
+          <CardDescription>إدارة الوجهات التي تظهر في شريط العرض الرئيسي</CardDescription>
+        </div>
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              إضافة وجهة
+            </Button>
+          </DialogTrigger>
+          <DialogContent className={cn("max-w-lg", isRTL && "text-right")}>
+            <DialogHeader>
+              <DialogTitle>{editingDestination ? 'تعديل الوجهة' : 'إضافة وجهة جديدة'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label>صورة الوجهة</Label>
+                <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="h-40 w-full object-cover rounded-lg mx-auto"
                       />
-                      {dest.is_active ? (
-                        <Eye className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(dest)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-destructive"
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 left-2"
                         onClick={() => {
-                          if (confirm('هل أنت متأكد من حذف هذه الوجهة؟')) {
-                            deleteMutation.mutate(dest.id);
-                          }
+                          setImageFile(null);
+                          setImagePreview(null);
+                          setFormData({ ...formData, image_url: '' });
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {(!destinations || destinations.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    لا توجد وجهات مضافة
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                  ) : (
+                    <label className="cursor-pointer block py-8">
+                      <Image className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                      <span className="text-sm text-muted-foreground">اضغط لرفع صورة</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">الحد الأقصى: 5MB - يُفضل أبعاد 800x1000</p>
+              </div>
+
+              {/* Or URL */}
+              <div className="space-y-2">
+                <Label>أو رابط الصورة</Label>
+                <Input
+                  value={formData.image_url}
+                  onChange={(e) => {
+                    setFormData({ ...formData, image_url: e.target.value });
+                    setImagePreview(e.target.value);
+                    setImageFile(null);
+                  }}
+                  placeholder="https://..."
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>اسم الوجهة (عربي)</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="مثال: دبي"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>اسم الوجهة (إنجليزي)</Label>
+                  <Input
+                    value={formData.name_en}
+                    onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
+                    placeholder="e.g., Dubai"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>الدولة (عربي)</Label>
+                  <Input
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    placeholder="مثال: الإمارات"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>الدولة (إنجليزي)</Label>
+                  <Input
+                    value={formData.country_en}
+                    onChange={(e) => setFormData({ ...formData, country_en: e.target.value })}
+                    placeholder="e.g., UAE"
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>رابط الوجهة</Label>
+                <Input
+                  value={formData.link_url}
+                  onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
+                  placeholder="/destinations"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                />
+                <Label>عرض الوجهة</Label>
+              </div>
+
+              <Button 
+                className="w-full" 
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending || isUploading || !formData.name || !formData.country || (!formData.image_url && !imageFile)}
+              >
+                {(saveMutation.isPending || isUploading) ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    جاري الحفظ...
+                  </>
+                ) : (
+                  editingDestination ? 'حفظ التغييرات' : 'إضافة الوجهة'
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className={isRTL ? "text-right" : ""}>الترتيب</TableHead>
+              <TableHead className={isRTL ? "text-right" : ""}>الصورة</TableHead>
+              <TableHead className={isRTL ? "text-right" : ""}>الوجهة</TableHead>
+              <TableHead className={isRTL ? "text-right" : ""}>الدولة</TableHead>
+              <TableHead className={isRTL ? "text-right" : ""}>الحالة</TableHead>
+              <TableHead className={isRTL ? "text-right" : ""}>الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {destinations?.map((dest, index) => (
+              <TableRow key={dest.id}>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => moveUp(dest, index)}
+                      disabled={index === 0}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <span className="w-6 text-center">{index + 1}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => moveDown(dest, index)}
+                      disabled={index === destinations.length - 1}
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <img 
+                    src={dest.image_url} 
+                    alt={dest.name}
+                    className="h-12 w-16 object-cover rounded-md"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                </TableCell>
+                <TableCell className="font-medium">
+                  <div>
+                    <div>{dest.name}</div>
+                    {dest.name_en && (
+                      <div className="text-xs text-muted-foreground" dir="ltr">{dest.name_en}</div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">{dest.country}</Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={dest.is_active}
+                      onCheckedChange={(checked) => 
+                        toggleActiveMutation.mutate({ id: dest.id, is_active: checked })
+                      }
+                    />
+                    {dest.is_active ? (
+                      <Eye className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(dest)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive"
+                      onClick={() => {
+                        if (confirm('هل أنت متأكد من حذف هذه الوجهة؟')) {
+                          deleteMutation.mutate(dest.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {(!destinations || destinations.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  لا توجد وجهات مضافة
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Texts/Stats Management Component
+function TextsManagement({ isRTL, category, title }: { isRTL: boolean; category: string; title: string }) {
+  const queryClient = useQueryClient();
+  const [editedSettings, setEditedSettings] = useState<Record<string, { value: string; value_en: string }>>({});
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['admin-hero-settings', category],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hero_settings')
+        .select('*')
+        .in('category', category === 'general' ? ['general', 'badge'] : ['stats'])
+        .order('display_order');
+      if (error) throw error;
+      return data as HeroSetting[];
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const updates = Object.entries(editedSettings).map(([id, values]) => 
+        supabase
+          .from('hero_settings')
+          .update({ value: values.value, value_en: values.value_en })
+          .eq('id', id)
+      );
+      await Promise.all(updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-hero-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['hero-settings'] });
+      toast.success('تم حفظ التغييرات بنجاح');
+      setEditedSettings({});
+    },
+    onError: (error) => {
+      toast.error('حدث خطأ: ' + error.message);
+    },
+  });
+
+  const handleChange = (setting: HeroSetting, field: 'value' | 'value_en', newValue: string) => {
+    setEditedSettings(prev => ({
+      ...prev,
+      [setting.id]: {
+        value: field === 'value' ? newValue : (prev[setting.id]?.value ?? setting.value),
+        value_en: field === 'value_en' ? newValue : (prev[setting.id]?.value_en ?? setting.value_en ?? ''),
+      }
+    }));
+  };
+
+  const getSettingLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      badge_text: 'نص الشارة',
+      main_title_line1: 'العنوان الرئيسي (السطر الأول)',
+      main_title_line2: 'العنوان الرئيسي (السطر الثاني)',
+      description: 'الوصف',
+      search_placeholder: 'نص حقل البحث',
+      search_button: 'نص زر البحث',
+      stat_success_rate: 'نسبة النجاح',
+      stat_success_label: 'تسمية نسبة النجاح',
+      stat_countries: 'عدد الدول',
+      stat_countries_label: 'تسمية الدول',
+      stat_support: 'الدعم',
+      card_visas_count: 'عدد التأشيرات المنجزة',
+      card_visas_label: 'تسمية التأشيرات',
+      card_processing_time: 'متوسط وقت المعالجة',
+      card_processing_label: 'تسمية المعالجة',
+    };
+    return labels[key] || key;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const hasChanges = Object.keys(editedSettings).length > 0;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2">
+            {category === 'general' ? <Type className="h-5 w-5" /> : <BarChart3 className="h-5 w-5" />}
+            {title}
+          </CardTitle>
+          <CardDescription>
+            {category === 'general' 
+              ? 'تعديل النصوص الظاهرة في قسم Hero' 
+              : 'تعديل الأرقام والإحصائيات'
+            }
+          </CardDescription>
+        </div>
+        {hasChanges && (
+          <Button 
+            onClick={() => updateMutation.mutate()}
+            disabled={updateMutation.isPending}
+            className="gap-2"
+          >
+            {updateMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            حفظ التغييرات
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {settings?.map((setting) => {
+            const currentValue = editedSettings[setting.id]?.value ?? setting.value;
+            const currentValueEn = editedSettings[setting.id]?.value_en ?? setting.value_en ?? '';
+            const isLongText = setting.key === 'description';
+
+            return (
+              <div key={setting.id} className="space-y-3 p-4 border rounded-lg bg-muted/20">
+                <Label className="text-base font-medium">{getSettingLabel(setting.key)}</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">عربي</Label>
+                    {isLongText ? (
+                      <Textarea
+                        value={currentValue}
+                        onChange={(e) => handleChange(setting, 'value', e.target.value)}
+                        className="min-h-[100px]"
+                      />
+                    ) : (
+                      <Input
+                        value={currentValue}
+                        onChange={(e) => handleChange(setting, 'value', e.target.value)}
+                      />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">English</Label>
+                    {isLongText ? (
+                      <Textarea
+                        value={currentValueEn}
+                        onChange={(e) => handleChange(setting, 'value_en', e.target.value)}
+                        className="min-h-[100px]"
+                        dir="ltr"
+                      />
+                    ) : (
+                      <Input
+                        value={currentValueEn}
+                        onChange={(e) => handleChange(setting, 'value_en', e.target.value)}
+                        dir="ltr"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

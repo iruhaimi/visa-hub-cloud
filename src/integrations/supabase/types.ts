@@ -315,6 +315,45 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_settings: {
+        Row: {
+          category: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          key: string
+          type: string
+          updated_at: string
+          value: string
+          value_en: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          key: string
+          type?: string
+          updated_at?: string
+          value: string
+          value_en?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          key?: string
+          type?: string
+          updated_at?: string
+          value?: string
+          value_en?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
