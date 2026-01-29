@@ -46,6 +46,7 @@ import OffersManagement from "@/pages/admin/OffersManagement";
 import RefundRequestsManagement from "@/pages/admin/RefundRequestsManagement";
 import HeroManagement from "@/pages/admin/HeroManagement";
 import LoginAttemptsManagement from "@/pages/admin/LoginAttemptsManagement";
+import UnlockRequestsManagement from "@/pages/admin/UnlockRequestsManagement";
 // Agent Pages
 import AgentDashboard from "@/pages/agent/AgentDashboard";
 import AgentApplicationsList from "@/pages/agent/AgentApplicationsList";
@@ -108,6 +109,7 @@ const App = () => (
                 <Route path="refunds" element={<RefundRequestsManagement />} />
                 <Route path="hero" element={<HeroManagement />} />
                 <Route path="login-attempts" element={<LoginAttemptsManagement />} />
+                <Route path="unlock-requests" element={<UnlockRequestsManagement />} />
               </Route>
 
               {/* Agent Routes */}

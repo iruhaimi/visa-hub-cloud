@@ -13,7 +13,8 @@ import {
   Gift,
   RotateCcw,
   Image,
-  ShieldAlert
+  ShieldAlert,
+  UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -66,6 +67,12 @@ export default function AdminLayout() {
       title: 'سجل محاولات الدخول',
       icon: ShieldAlert,
       href: '/admin/login-attempts',
+      show: isAdmin,
+    },
+    {
+      title: 'طلبات فك القفل',
+      icon: UserCheck,
+      href: '/admin/unlock-requests',
       show: isAdmin,
     },
     {

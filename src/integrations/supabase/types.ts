@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_unlock_requests: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          reason: string | null
+          requested_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          reason?: string | null
+          requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          reason?: string | null
+          requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       application_documents: {
         Row: {
           application_id: string
@@ -707,6 +749,36 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_recovery_codes: {
+        Row: {
+          code_hash: string
+          code_index: number
+          created_at: string | null
+          id: string
+          used: boolean | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          code_index: number
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          code_index?: number
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -851,6 +923,10 @@ export type Database = {
       can_access_application: {
         Args: { _app_id: string; _user_id: string }
         Returns: boolean
+      }
+      clear_failed_login_attempts: {
+        Args: { target_email: string }
+        Returns: undefined
       }
       get_failed_attempts_count: {
         Args: { check_email: string }
