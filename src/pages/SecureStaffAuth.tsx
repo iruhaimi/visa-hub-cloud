@@ -195,7 +195,14 @@ export default function SecureStaffAuth() {
         await supabase.auth.signOut();
         
         // Generate and send 2FA code
-        await generate2FACode(data.user.id, data.user.email!);
+        try {
+          await generate2FACode(data.user.id, data.user.email!);
+          toast.success('تم إرسال رمز التحقق إلى بريدك الإلكتروني');
+        } catch (sendError) {
+          console.error('Failed to send 2FA code:', sendError);
+          setError('حدث خطأ في إرسال رمز التحقق. يرجى المحاولة مرة أخرى.');
+          return;
+        }
         
         setShow2FA(true);
       }
