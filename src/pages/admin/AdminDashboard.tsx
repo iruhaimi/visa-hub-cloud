@@ -3,15 +3,23 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, 
   Clock, 
   CheckCircle, 
   XCircle,
   Users,
-  TrendingUp,
-  Loader2
+  Loader2,
+  BarChart3,
+  TrendingUp
 } from 'lucide-react';
+import ApplicationTrendsChart from '@/components/admin/charts/ApplicationTrendsChart';
+import StatusDistributionChart from '@/components/admin/charts/StatusDistributionChart';
+import CountryApplicationsChart from '@/components/admin/charts/CountryApplicationsChart';
+import RevenueStatsCard from '@/components/admin/charts/RevenueStatsCard';
+import RecentActivityFeed from '@/components/admin/charts/RecentActivityFeed';
+import PerformanceMetricsCard from '@/components/admin/charts/PerformanceMetricsCard';
 
 interface DashboardStats {
   totalApplications: number;
@@ -20,6 +28,9 @@ interface DashboardStats {
   rejectedApplications: number;
   totalUsers: number;
   recentApplications: any[];
+  allApplications: any[];
+  payments: any[];
+  statusHistory: any[];
 }
 
 export default function AdminDashboard() {
@@ -31,6 +42,9 @@ export default function AdminDashboard() {
     rejectedApplications: 0,
     totalUsers: 0,
     recentApplications: [],
+    allApplications: [],
+    payments: [],
+    statusHistory: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -40,10 +54,18 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      // Fetch applications count by status
+      // Fetch all applications with visa type and country info
       const { data: applications, error: appError } = await supabase
         .from('applications')
-        .select('id, status, created_at, visa_type_id');
+        .select(`
+          id, 
+          status, 
+          created_at, 
+          submitted_at,
+          approved_at,
+          visa_type:visa_types(name, country:countries(name))
+        `)
+        .order('created_at', { ascending: false });
 
       if (appError) throw appError;
 
@@ -63,17 +85,17 @@ export default function AdminDashboard() {
         totalUsers = count || 0;
       }
 
-      // Fetch recent applications with visa type info
-      const { data: recentApps } = await supabase
-        .from('applications')
-        .select(`
-          id,
-          status,
-          created_at,
-          visa_type:visa_types(name, country:countries(name))
-        `)
+      // Fetch payments for revenue stats
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('amount, status, paid_at, created_at');
+
+      // Fetch recent status changes
+      const { data: statusHistory } = await supabase
+        .from('application_status_history')
+        .select('id, application_id, old_status, new_status, created_at, notes')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(20);
 
       setStats({
         totalApplications,
@@ -81,7 +103,10 @@ export default function AdminDashboard() {
         approvedApplications,
         rejectedApplications,
         totalUsers,
-        recentApplications: recentApps || [],
+        recentApplications: applications?.slice(0, 5) || [],
+        allApplications: applications || [],
+        payments: payments || [],
+        statusHistory: statusHistory || [],
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -147,7 +172,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {statCards.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -165,42 +190,84 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Recent Applications */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>أحدث الطلبات</CardTitle>
-          <Link 
-            to={isAdmin ? '/admin/applications' : '/agent/applications'}
-            className="text-sm text-primary hover:underline"
-          >
-            عرض الكل
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {stats.recentApplications.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">لا توجد طلبات حالياً</p>
-          ) : (
-            <div className="space-y-3">
-              {stats.recentApplications.map((app) => (
-                <div 
-                  key={app.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
+      {/* Tabs for different views */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            نظرة عامة
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            التحليلات
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Recent Applications */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">أحدث الطلبات</CardTitle>
+                <Link 
+                  to={isAdmin ? '/admin/applications' : '/agent/applications'}
+                  className="text-sm text-primary hover:underline"
                 >
-                  <div>
-                    <p className="font-medium">
-                      {app.visa_type?.country?.name} - {app.visa_type?.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(app.created_at).toLocaleDateString('ar-SA')}
-                    </p>
+                  عرض الكل
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {stats.recentApplications.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">لا توجد طلبات حالياً</p>
+                ) : (
+                  <div className="space-y-3">
+                    {stats.recentApplications.map((app) => (
+                      <div 
+                        key={app.id}
+                        className="flex items-center justify-between rounded-lg border p-3"
+                      >
+                        <div>
+                          <p className="font-medium">
+                            {app.visa_type?.country?.name} - {app.visa_type?.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(app.created_at).toLocaleDateString('ar-SA')}
+                          </p>
+                        </div>
+                        <StatusBadge status={app.status} />
+                      </div>
+                    ))}
                   </div>
-                  <StatusBadge status={app.status} />
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <RecentActivityFeed activities={stats.statusHistory} />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Revenue Stats */}
+            <RevenueStatsCard payments={stats.payments} />
+            
+            {/* Performance Metrics */}
+            <PerformanceMetricsCard applications={stats.allApplications} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          {/* Application Trends */}
+          <ApplicationTrendsChart applications={stats.allApplications} days={30} />
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Status Distribution */}
+            <StatusDistributionChart applications={stats.allApplications} />
+            
+            {/* Country Applications */}
+            <CountryApplicationsChart applications={stats.allApplications} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
