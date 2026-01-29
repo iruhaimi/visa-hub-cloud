@@ -203,7 +203,7 @@ export default function ApplicationDetail() {
       setApplication(appData as ApplicationData);
       setAgentNotes(appData.agent_notes || '');
       setAdminNotes(appData.admin_notes || '');
-      setSelectedAgentId(appData.assigned_agent_id || '');
+      setSelectedAgentId(appData.assigned_agent_id || 'none');
 
       // Fetch documents
       const { data: docsData } = await supabase
@@ -235,18 +235,20 @@ export default function ApplicationDetail() {
 
     setUpdating(true);
     try {
+      const agentIdToAssign = selectedAgentId === 'none' ? null : selectedAgentId;
+      
       const { error } = await supabase
         .from('applications')
-        .update({ assigned_agent_id: selectedAgentId || null })
+        .update({ assigned_agent_id: agentIdToAssign })
         .eq('id', application.id);
 
       if (error) throw error;
 
       // Send notification to the newly assigned agent
-      if (selectedAgentId) {
-        const assignedAgent = agents.find(a => a.id === selectedAgentId);
+      if (agentIdToAssign) {
+        const assignedAgent = agents.find(a => a.id === agentIdToAssign);
         await supabase.from('notifications').insert({
-          user_id: selectedAgentId,
+          user_id: agentIdToAssign,
           title: 'طلب جديد تم تعيينه لك',
           message: `تم تعيين طلب تأشيرة ${application.visa_type?.country?.name} - ${application.visa_type?.name} لك للمتابعة.`,
           type: 'assignment',
@@ -254,7 +256,7 @@ export default function ApplicationDetail() {
         });
       }
 
-      toast.success(selectedAgentId ? 'تم تعيين الوكيل بنجاح' : 'تم إلغاء تعيين الوكيل');
+      toast.success(agentIdToAssign ? 'تم تعيين الوكيل بنجاح' : 'تم إلغاء تعيين الوكيل');
       setShowAgentDialog(false);
       fetchApplicationData();
     } catch (error) {
@@ -689,7 +691,7 @@ export default function ApplicationDetail() {
                     <SelectValue placeholder="اختر وكيل..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">بدون وكيل</SelectItem>
+                    <SelectItem value="none">بدون وكيل</SelectItem>
                     {agents.map((agent) => (
                       <SelectItem key={agent.id} value={agent.id}>
                         {agent.full_name}
