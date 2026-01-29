@@ -63,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "عطلات رحلاتكم <noreply@yourdomain.com>", // Update with your verified domain
+            from: "عطلات رحلاتكم <onboarding@resend.dev>", // Using Resend test domain - replace with your verified domain in production
             to: [email],
             subject: "رمز التحقق للدخول - عطلات رحلاتكم",
             html: `
