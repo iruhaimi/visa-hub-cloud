@@ -12,6 +12,27 @@ interface TwoFactorVerificationProps {
   onCancel: () => void;
 }
 
+// Helper function to mask email for security
+const maskEmail = (email: string): string => {
+  const [localPart, domain] = email.split('@');
+  if (!domain) return '***@***.***';
+  
+  const [domainName, extension] = domain.split('.');
+  
+  // Mask local part: show first char, mask middle, show last char if long enough
+  let maskedLocal = '';
+  if (localPart.length <= 2) {
+    maskedLocal = '*'.repeat(localPart.length);
+  } else {
+    maskedLocal = localPart[0] + '*'.repeat(Math.min(localPart.length - 2, 5)) + localPart[localPart.length - 1];
+  }
+  
+  // Mask domain: show first char only
+  const maskedDomain = domainName[0] + '*'.repeat(Math.min(domainName.length - 1, 4));
+  
+  return `${maskedLocal}@${maskedDomain}.${extension || '***'}`;
+};
+
 export default function TwoFactorVerification({
   email,
   onVerify,
@@ -127,10 +148,10 @@ export default function TwoFactorVerification({
           </CardTitle>
           <CardDescription className="text-slate-400 mt-2 flex items-center justify-center gap-2">
             <Mail className="h-4 w-4" />
-            تم إرسال رمز التحقق إلى
+            تم إرسال رمز التحقق إلى بريدك الإلكتروني
           </CardDescription>
-          <p className="text-sm text-primary mt-1" dir="ltr">
-            {email}
+          <p className="text-sm text-slate-500 mt-1" dir="ltr">
+            {maskEmail(email)}
           </p>
         </div>
       </CardHeader>

@@ -24,7 +24,7 @@ export default function SecureStaffAuth() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [isLockedOut, setIsLockedOut] = useState(false);
   const [lockoutTime, setLockoutTime] = useState<Date | null>(null);
-  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [showCaptcha, setShowCaptcha] = useState(true); // Always show CAPTCHA for security
   const [captchaVerified, setCaptchaVerified] = useState(false);
   
   // 2FA states
