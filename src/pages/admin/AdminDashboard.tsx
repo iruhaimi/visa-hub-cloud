@@ -20,6 +20,7 @@ import CountryApplicationsChart from '@/components/admin/charts/CountryApplicati
 import RevenueStatsCard from '@/components/admin/charts/RevenueStatsCard';
 import RecentActivityFeed from '@/components/admin/charts/RecentActivityFeed';
 import PerformanceMetricsCard from '@/components/admin/charts/PerformanceMetricsCard';
+import AgentPerformanceCard from '@/components/admin/charts/AgentPerformanceCard';
 
 interface DashboardStats {
   totalApplications: number;
@@ -253,6 +254,9 @@ export default function AdminDashboard() {
             {/* Performance Metrics */}
             <PerformanceMetricsCard applications={stats.allApplications} />
           </div>
+
+          {/* Agent Performance */}
+          {isAdmin && <AgentPerformanceCard />}
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
