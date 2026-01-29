@@ -96,12 +96,21 @@ export default function SecureStaffAuth() {
 
     if (error) throw error;
 
-    // In production, send email here
-    // For now, show code in console for testing
-    console.log(`2FA Code for ${userEmail}: ${code}`);
-    
-    // Show toast with code for testing (remove in production)
-    toast.info(`رمز التحقق للاختبار: ${code}`, { duration: 30000 });
+    // Send 2FA code via edge function (SMS or Email)
+    try {
+      const { error: sendError } = await supabase.functions.invoke('send-staff-2fa', {
+        body: { email: userEmail, code }
+      });
+      
+      if (sendError) {
+        console.error('Failed to send 2FA code:', sendError);
+        toast.error('حدث خطأ في إرسال رمز التحقق. يرجى المحاولة مرة أخرى.');
+        throw sendError;
+      }
+    } catch (err) {
+      console.error('Error sending 2FA code:', err);
+      throw err;
+    }
     
     return code;
   };
