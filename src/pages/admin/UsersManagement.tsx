@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -28,13 +28,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -60,13 +53,10 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
   UserCheck,
   Users,
-  UserCog
+  UserCog,
+  X
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
@@ -75,6 +65,9 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserEditDialog } from '@/components/admin/UserEditDialog';
 import { UserDetailsDialog } from '@/components/admin/UserDetailsDialog';
+import { StaffUsersTable } from '@/components/admin/StaffUsersTable';
+import { CustomersTable } from '@/components/admin/CustomersTable';
+import { useDebounce } from '@/hooks/useDebounce';
 import type { AppRole } from '@/types/database';
 
 interface UserWithRole {
@@ -108,8 +101,16 @@ export default function UsersManagement() {
   const { user } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Search with debounce
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  
+  // Date filter for users
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  
+  // Activity log
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
   
@@ -124,6 +125,7 @@ export default function UsersManagement() {
   
   // Activity log filters
   const [logSearchQuery, setLogSearchQuery] = useState('');
+  const debouncedLogSearchQuery = useDebounce(logSearchQuery, 300);
   const [logDateFrom, setLogDateFrom] = useState('');
   const [logDateTo, setLogDateTo] = useState('');
   
@@ -139,7 +141,6 @@ export default function UsersManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -147,14 +148,12 @@ export default function UsersManagement() {
 
       if (profilesError) throw profilesError;
 
-      // Fetch all roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      // Combine data
       const usersWithRoles = profiles?.map(profile => ({
         ...profile,
         roles: roles?.filter(r => r.user_id === profile.user_id).map(r => r.role) || [],
@@ -176,18 +175,16 @@ export default function UsersManagement() {
         .from('role_activity_log')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
 
-      // Get unique user IDs
       const userIds = new Set<string>();
       logs?.forEach(log => {
         userIds.add(log.target_user_id);
         userIds.add(log.performed_by);
       });
 
-      // Fetch user names
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name')
@@ -195,7 +192,6 @@ export default function UsersManagement() {
 
       const userNameMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
 
-      // Enhance logs with names
       const enhancedLogs: ActivityLogEntry[] = logs?.map(log => ({
         ...log,
         action: log.action as 'add_role' | 'remove_role',
@@ -240,7 +236,6 @@ export default function UsersManagement() {
 
       if (error) throw error;
 
-      // Log the activity
       await logActivity(selectedUser.user_id, 'add_role', newRole);
 
       toast.success('تم إضافة الصلاحية بنجاح');
@@ -273,7 +268,6 @@ export default function UsersManagement() {
 
       if (error) throw error;
 
-      // Log the activity
       await logActivity(userId, 'remove_role', role);
 
       toast.success('تم حذف الصلاحية بنجاح');
@@ -283,94 +277,6 @@ export default function UsersManagement() {
       console.error('Error removing role:', error);
       toast.error('حدث خطأ في حذف الصلاحية');
     }
-  };
-
-  const filteredUsers = users.filter(user => {
-    // Search filter
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = 
-        user.full_name?.toLowerCase().includes(searchLower) ||
-        user.phone?.includes(searchQuery) ||
-        user.nationality?.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
-    }
-    
-    // Role filter
-    if (roleFilter !== 'all') {
-      if (!user.roles.includes(roleFilter as AppRole)) return false;
-    }
-    
-    return true;
-  });
-
-  // Stats
-  const stats = {
-    total: users.length,
-    admins: users.filter(u => u.roles.includes('admin')).length,
-    agents: users.filter(u => u.roles.includes('agent')).length,
-    customers: users.filter(u => u.roles.includes('customer')).length,
-  };
-
-  const getRoleBadge = (role: AppRole) => {
-    const config: Record<AppRole, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      customer: { label: 'عميل', variant: 'secondary' },
-      agent: { label: 'وكيل', variant: 'default' },
-      admin: { label: 'مشرف', variant: 'destructive' },
-    };
-    return (
-      <Badge variant={config[role].variant} className="text-xs">
-        {config[role].label}
-      </Badge>
-    );
-  };
-
-  // Export users to Excel
-  const exportUsersToExcel = () => {
-    const exportData = filteredUsers.map(user => ({
-      'الاسم': user.full_name || 'غير محدد',
-      'رقم الجوال': user.phone || '-',
-      'الجنسية': user.nationality || '-',
-      'تاريخ التسجيل': format(new Date(user.created_at), 'dd/MM/yyyy', { locale: ar }),
-      'الصلاحيات': user.roles.map(r => ROLE_OPTIONS.find(o => o.value === r)?.label).join(', '),
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'المستخدمين');
-    
-    ws['!cols'] = [
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 20 },
-    ];
-    
-    XLSX.writeFile(wb, `المستخدمين_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
-    toast.success('تم تصدير قائمة المستخدمين بنجاح');
-  };
-
-  // Open dialogs
-  const openRoleDialog = (user: UserWithRole) => {
-    setSelectedUser(user);
-    setNewRole('');
-    setShowRoleDialog(true);
-  };
-
-  const openEditDialog = (user: UserWithRole) => {
-    setSelectedUser(user);
-    setShowEditDialog(true);
-  };
-
-  const openDetailsDialog = (user: UserWithRole) => {
-    setSelectedUser(user);
-    setShowDetailsDialog(true);
-  };
-
-  const openDeleteDialog = (user: UserWithRole) => {
-    setSelectedUser(user);
-    setShowDeleteDialog(true);
   };
 
   const handleDeleteAllRoles = async () => {
@@ -398,6 +304,138 @@ export default function UsersManagement() {
     }
   };
 
+  // Filter users with memoization
+  const { staffUsers, customerUsers, stats } = useMemo(() => {
+    const filterBySearchAndDate = (user: UserWithRole) => {
+      // Search filter
+      if (debouncedSearchQuery) {
+        const searchLower = debouncedSearchQuery.toLowerCase();
+        const matchesSearch = 
+          user.full_name?.toLowerCase().includes(searchLower) ||
+          user.phone?.includes(debouncedSearchQuery) ||
+          user.nationality?.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      
+      // Date from filter
+      if (dateFrom) {
+        const userDate = new Date(user.created_at);
+        const fromDate = new Date(dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        if (userDate < fromDate) return false;
+      }
+      
+      // Date to filter
+      if (dateTo) {
+        const userDate = new Date(user.created_at);
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        if (userDate > toDate) return false;
+      }
+      
+      return true;
+    };
+
+    // Staff = users with admin or agent role (may also have customer)
+    const staff = users.filter(u => {
+      const isStaff = u.roles.includes('admin') || u.roles.includes('agent');
+      return isStaff && filterBySearchAndDate(u);
+    });
+    
+    // Customers = users with ONLY customer role
+    const customers = users.filter(u => {
+      const isOnlyCustomer = u.roles.length === 1 && u.roles.includes('customer');
+      const hasNoRoles = u.roles.length === 0;
+      return (isOnlyCustomer || hasNoRoles) && filterBySearchAndDate(u);
+    });
+
+    return {
+      staffUsers: staff,
+      customerUsers: customers,
+      stats: {
+        total: users.length,
+        admins: users.filter(u => u.roles.includes('admin')).length,
+        agents: users.filter(u => u.roles.includes('agent')).length,
+        customers: users.filter(u => u.roles.includes('customer') && !u.roles.includes('admin') && !u.roles.includes('agent')).length,
+      }
+    };
+  }, [users, debouncedSearchQuery, dateFrom, dateTo]);
+
+  const getRoleBadge = (role: AppRole) => {
+    const config: Record<AppRole, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+      customer: { label: 'عميل', variant: 'secondary' },
+      agent: { label: 'وكيل', variant: 'default' },
+      admin: { label: 'مشرف', variant: 'destructive' },
+    };
+    return (
+      <Badge variant={config[role].variant} className="text-xs">
+        {config[role].label}
+      </Badge>
+    );
+  };
+
+  // Export users to Excel
+  const exportUsersToExcel = (type: 'staff' | 'customers' | 'all') => {
+    const usersToExport = type === 'staff' 
+      ? staffUsers 
+      : type === 'customers' 
+        ? customerUsers 
+        : [...staffUsers, ...customerUsers];
+    
+    const exportData = usersToExport.map(user => ({
+      'الاسم': user.full_name || 'غير محدد',
+      'رقم الجوال': user.phone || '-',
+      'الجنسية': user.nationality || '-',
+      'تاريخ التسجيل': format(new Date(user.created_at), 'dd/MM/yyyy', { locale: ar }),
+      'الصلاحيات': user.roles.map(r => ROLE_OPTIONS.find(o => o.value === r)?.label).join(', ') || 'عميل',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'المستخدمين');
+    
+    ws['!cols'] = [
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 20 },
+    ];
+    
+    const typeName = type === 'staff' ? 'الموظفين' : type === 'customers' ? 'العملاء' : 'المستخدمين';
+    XLSX.writeFile(wb, `${typeName}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success(`تم تصدير قائمة ${typeName} بنجاح`);
+  };
+
+  // Dialog handlers
+  const openRoleDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setNewRole('');
+    setShowRoleDialog(true);
+  };
+
+  const openEditDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setShowEditDialog(true);
+  };
+
+  const openDetailsDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setShowDetailsDialog(true);
+  };
+
+  const openDeleteDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setShowDeleteDialog(true);
+  };
+
+  const clearUserFilters = () => {
+    setSearchQuery('');
+    setDateFrom('');
+    setDateTo('');
+  };
+
+  // Activity log helpers
   const getActionLabel = (action: 'add_role' | 'remove_role') => {
     return action === 'add_role' ? 'إضافة صلاحية' : 'حذف صلاحية';
   };
@@ -411,33 +449,32 @@ export default function UsersManagement() {
   };
 
   // Filter activity log
-  const filteredActivityLog = activityLog.filter(log => {
-    // Search filter
-    if (logSearchQuery) {
-      const searchLower = logSearchQuery.toLowerCase();
-      const matchesTarget = log.target_user_name?.toLowerCase().includes(searchLower);
-      const matchesPerformer = log.performer_name?.toLowerCase().includes(searchLower);
-      if (!matchesTarget && !matchesPerformer) return false;
-    }
-    
-    // Date from filter
-    if (logDateFrom) {
-      const logDate = new Date(log.created_at);
-      const fromDate = new Date(logDateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      if (logDate < fromDate) return false;
-    }
-    
-    // Date to filter
-    if (logDateTo) {
-      const logDate = new Date(log.created_at);
-      const toDate = new Date(logDateTo);
-      toDate.setHours(23, 59, 59, 999);
-      if (logDate > toDate) return false;
-    }
-    
-    return true;
-  });
+  const filteredActivityLog = useMemo(() => {
+    return activityLog.filter(log => {
+      if (debouncedLogSearchQuery) {
+        const searchLower = debouncedLogSearchQuery.toLowerCase();
+        const matchesTarget = log.target_user_name?.toLowerCase().includes(searchLower);
+        const matchesPerformer = log.performer_name?.toLowerCase().includes(searchLower);
+        if (!matchesTarget && !matchesPerformer) return false;
+      }
+      
+      if (logDateFrom) {
+        const logDate = new Date(log.created_at);
+        const fromDate = new Date(logDateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        if (logDate < fromDate) return false;
+      }
+      
+      if (logDateTo) {
+        const logDate = new Date(log.created_at);
+        const toDate = new Date(logDateTo);
+        toDate.setHours(23, 59, 59, 999);
+        if (logDate > toDate) return false;
+      }
+      
+      return true;
+    });
+  }, [activityLog, debouncedLogSearchQuery, logDateFrom, logDateTo]);
 
   // Export activity log to Excel
   const exportActivityLogToExcel = () => {
@@ -453,7 +490,6 @@ export default function UsersManagement() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'سجل النشاطات');
     
-    // Set RTL and column widths
     ws['!cols'] = [
       { wch: 20 },
       { wch: 15 },
@@ -483,7 +519,9 @@ export default function UsersManagement() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [logSearchQuery, logDateFrom, logDateTo]);
+  }, [debouncedLogSearchQuery, logDateFrom, logDateTo]);
+
+  const hasFilters = searchQuery || dateFrom || dateTo;
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -497,9 +535,9 @@ export default function UsersManagement() {
           <p className="text-muted-foreground">إدارة شاملة للمستخدمين وصلاحياتهم</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={exportUsersToExcel} variant="outline" size="sm">
+          <Button onClick={() => exportUsersToExcel('all')} variant="outline" size="sm">
             <Download className="h-4 w-4 ml-2" />
-            تصدير Excel
+            تصدير الكل
           </Button>
           <Button onClick={() => { fetchUsers(); fetchActivityLog(); }} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 ml-2" />
@@ -564,11 +602,15 @@ export default function UsersManagement() {
         </Card>
       </div>
 
-      <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="users" className="gap-2">
-            <UserIcon className="h-4 w-4" />
-            المستخدمين
+      <Tabs defaultValue="staff" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+          <TabsTrigger value="staff" className="gap-2">
+            <UserCog className="h-4 w-4" />
+            الموظفين ({staffUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="customers" className="gap-2">
+            <UserCheck className="h-4 w-4" />
+            العملاء ({customerUsers.length})
           </TabsTrigger>
           <TabsTrigger value="activity" className="gap-2">
             <History className="h-4 w-4" />
@@ -576,148 +618,118 @@ export default function UsersManagement() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users" className="space-y-4 mt-4">
-          {/* Filters */}
+        {/* Shared Filters for Users */}
+        <div className="mt-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="بحث بالاسم، رقم الجوال، أو الجنسية..."
+                    placeholder="بحث فوري بالاسم، رقم الجوال، أو الجنسية..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pr-10"
                   />
                 </div>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="فلتر بالصلاحية" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">جميع الصلاحيات</SelectItem>
-                    <SelectItem value="admin">المشرفين</SelectItem>
-                    <SelectItem value="agent">الوكلاء</SelectItem>
-                    <SelectItem value="customer">العملاء</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="date"
+                    placeholder="من تاريخ"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">إلى</span>
+                  <Input
+                    type="date"
+                    placeholder="إلى تاريخ"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+                {hasFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearUserFilters}>
+                    <X className="h-4 w-4 ml-1" />
+                    مسح
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Users Table */}
+        {/* Staff Tab */}
+        <TabsContent value="staff" className="space-y-4 mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>المستخدمين ({filteredUsers.length})</span>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <UserCog className="h-5 w-5" />
+                الموظفين (المشرفين والوكلاء)
               </CardTitle>
+              <Button variant="outline" size="sm" onClick={() => exportUsersToExcel('staff')}>
+                <Download className="h-4 w-4 ml-2" />
+                تصدير
+              </Button>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : filteredUsers.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  لا يوجد مستخدمين مطابقين للبحث
-                </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-right">المستخدم</TableHead>
-                        <TableHead className="text-right">رقم الجوال</TableHead>
-                        <TableHead className="text-right">الجنسية</TableHead>
-                        <TableHead className="text-right">تاريخ التسجيل</TableHead>
-                        <TableHead className="text-right">الصلاحيات</TableHead>
-                        <TableHead className="text-right w-[100px]">إجراءات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredUsers.map((userItem) => (
-                        <TableRow key={userItem.id} className="group">
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                                <UserIcon className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-medium">{userItem.full_name || 'غير محدد'}</p>
-                                <p className="text-xs text-muted-foreground">{userItem.user_id.slice(0, 8)}...</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell dir="ltr" className="text-right">{userItem.phone || '-'}</TableCell>
-                          <TableCell>{userItem.nationality || '-'}</TableCell>
-                          <TableCell>
-                            {format(new Date(userItem.created_at), 'dd MMM yyyy', { locale: ar })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {userItem.roles.length > 0 ? (
-                                userItem.roles.map((role) => (
-                                  <button
-                                    key={role}
-                                    onClick={() => handleRemoveRole(userItem.user_id, role)}
-                                    className="transition-transform hover:scale-105"
-                                    title="اضغط لحذف الصلاحية"
-                                  >
-                                    {getRoleBadge(role)}
-                                  </button>
-                                ))
-                              ) : (
-                                <span className="text-xs text-muted-foreground">لا توجد</span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => openDetailsDialog(userItem)}>
-                                  <Eye className="h-4 w-4 ml-2" />
-                                  عرض التفاصيل
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openEditDialog(userItem)}>
-                                  <Pencil className="h-4 w-4 ml-2" />
-                                  تعديل البيانات
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openRoleDialog(userItem)}>
-                                  <Shield className="h-4 w-4 ml-2" />
-                                  إضافة صلاحية
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => openDeleteDialog(userItem)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 ml-2" />
-                                  إلغاء الصلاحيات
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <StaffUsersTable
+                  users={staffUsers}
+                  onViewDetails={openDetailsDialog}
+                  onEdit={openEditDialog}
+                  onAddRole={openRoleDialog}
+                  onDeleteRoles={openDeleteDialog}
+                  onRemoveRole={handleRemoveRole}
+                />
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Customers Tab */}
+        <TabsContent value="customers" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                العملاء
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={() => exportUsersToExcel('customers')}>
+                <Download className="h-4 w-4 ml-2" />
+                تصدير
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <CustomersTable
+                  users={customerUsers}
+                  onViewDetails={openDetailsDialog}
+                  onEdit={openEditDialog}
+                  onAddRole={openRoleDialog}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Activity Log Tab */}
         <TabsContent value="activity" className="space-y-4 mt-4">
-          {/* Filters Card */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row gap-4">
-                {/* Search */}
                 <div className="relative flex-1">
                   <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -727,8 +739,6 @@ export default function UsersManagement() {
                     className="pr-10"
                   />
                 </div>
-                
-                {/* Date From */}
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <Input
@@ -739,8 +749,6 @@ export default function UsersManagement() {
                     className="w-40"
                   />
                 </div>
-                
-                {/* Date To */}
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">إلى</span>
                   <Input
@@ -751,8 +759,6 @@ export default function UsersManagement() {
                     className="w-40"
                   />
                 </div>
-                
-                {/* Clear Filters */}
                 {(logSearchQuery || logDateFrom || logDateTo) && (
                   <Button variant="ghost" size="sm" onClick={clearLogFilters}>
                     <Filter className="h-4 w-4 ml-1" />
@@ -924,12 +930,13 @@ export default function UsersManagement() {
               </Select>
             </div>
             
-            {/* Current roles */}
             {selectedUser && selectedUser.roles.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-muted-foreground">الصلاحيات الحالية</Label>
                 <div className="flex flex-wrap gap-2">
-                  {selectedUser.roles.map(role => getRoleBadge(role))}
+                  {selectedUser.roles.map(role => (
+                    <span key={role}>{getRoleBadge(role)}</span>
+                  ))}
                 </div>
               </div>
             )}
@@ -965,8 +972,7 @@ export default function UsersManagement() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               إلغاء جميع صلاحيات المستخدم
             </AlertDialogTitle>
             <AlertDialogDescription>
