@@ -256,26 +256,43 @@ export default function UsersManagement() {
     }
   };
 
-  const handleRemoveRole = async (userId: string, role: AppRole) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الصلاحية؟')) return;
+  const [roleToRemove, setRoleToRemove] = useState<{ userId: string; role: AppRole } | null>(null);
+  const [showRemoveRoleDialog, setShowRemoveRoleDialog] = useState(false);
+  const [removingRole, setRemovingRole] = useState(false);
 
+  const handleRemoveRole = (userId: string, role: AppRole) => {
+    setRoleToRemove({ userId, role });
+    setShowRemoveRoleDialog(true);
+  };
+
+  const confirmRemoveRole = async () => {
+    if (!roleToRemove) return;
+
+    setRemovingRole(true);
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('user_roles')
         .delete()
-        .eq('user_id', userId)
-        .eq('role', role);
+        .eq('user_id', roleToRemove.userId)
+        .eq('role', roleToRemove.role);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
-      await logActivity(userId, 'remove_role', role);
+      await logActivity(roleToRemove.userId, 'remove_role', roleToRemove.role);
 
       toast.success('تم حذف الصلاحية بنجاح');
+      setShowRemoveRoleDialog(false);
+      setRoleToRemove(null);
       fetchUsers();
       fetchActivityLog();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing role:', error);
-      toast.error('حدث خطأ في حذف الصلاحية');
+      toast.error(`حدث خطأ في حذف الصلاحية: ${error.message || 'خطأ غير معروف'}`);
+    } finally {
+      setRemovingRole(false);
     }
   };
 
@@ -989,6 +1006,32 @@ export default function UsersManagement() {
             >
               {updating && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
               تأكيد الإلغاء
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Single Role Confirmation Dialog */}
+      <AlertDialog open={showRemoveRoleDialog} onOpenChange={setShowRemoveRoleDialog}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Minus className="h-5 w-5 text-destructive" />
+              حذف الصلاحية
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف صلاحية <strong>{ROLE_OPTIONS.find(r => r.value === roleToRemove?.role)?.label}</strong> من هذا المستخدم؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={() => setRoleToRemove(null)}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveRole}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={removingRole}
+            >
+              {removingRole && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+              تأكيد الحذف
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
