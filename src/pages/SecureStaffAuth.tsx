@@ -1,0 +1,461 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { Eye, EyeOff, Shield, Loader2, Lock, Mail, AlertTriangle } from 'lucide-react';
+import { filterArabicChars } from '@/lib/inputFilters';
+import logo from '@/assets/logo.jpeg';
+import SimpleCaptcha from '@/components/auth/SimpleCaptcha';
+import TwoFactorVerification from '@/components/auth/TwoFactorVerification';
+
+export default function SecureStaffAuth() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Security states
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutTime, setLockoutTime] = useState<Date | null>(null);
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  
+  // 2FA states
+  const [show2FA, setShow2FA] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [pendingSession, setPendingSession] = useState<any>(null);
+
+  // Check lockout status on email change
+  useEffect(() => {
+    const checkLockout = async () => {
+      if (!email) return;
+      
+      try {
+        const { data, error } = await supabase.rpc('is_email_locked_out', {
+          check_email: email.trim().toLowerCase()
+        });
+        
+        if (!error && data) {
+          setIsLockedOut(true);
+          setLockoutTime(new Date(Date.now() + 15 * 60 * 1000));
+        } else {
+          setIsLockedOut(false);
+          setLockoutTime(null);
+        }
+
+        // Check failed attempts for CAPTCHA
+        const { data: countData } = await supabase.rpc('get_failed_attempts_count', {
+          check_email: email.trim().toLowerCase()
+        });
+        
+        if (countData && countData >= 3) {
+          setShowCaptcha(true);
+          setFailedAttempts(countData);
+        }
+      } catch (err) {
+        console.error('Error checking lockout:', err);
+      }
+    };
+
+    const debounce = setTimeout(checkLockout, 500);
+    return () => clearTimeout(debounce);
+  }, [email]);
+
+  const logLoginAttempt = async (success: boolean, reason?: string) => {
+    try {
+      await supabase.from('staff_login_attempts').insert({
+        email: email.trim().toLowerCase(),
+        success,
+        failure_reason: reason || null,
+        user_agent: navigator.userAgent,
+      });
+    } catch (err) {
+      console.error('Error logging attempt:', err);
+    }
+  };
+
+  const generate2FACode = async (userId: string, userEmail: string) => {
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save code to database
+    const { error } = await supabase.from('staff_2fa_codes').insert({
+      user_id: userId,
+      email: userEmail,
+      code,
+      expires_at: expiresAt.toISOString(),
+    });
+
+    if (error) throw error;
+
+    // In production, send email here
+    // For now, show code in console for testing
+    console.log(`2FA Code for ${userEmail}: ${code}`);
+    
+    // Show toast with code for testing (remove in production)
+    toast.info(`رمز التحقق للاختبار: ${code}`, { duration: 30000 });
+    
+    return code;
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Check lockout
+    if (isLockedOut) {
+      setError('الحساب مقفل مؤقتاً. يرجى المحاولة بعد 15 دقيقة.');
+      return;
+    }
+
+    // Check CAPTCHA if required
+    if (showCaptcha && !captchaVerified) {
+      setError('يرجى حل اختبار التحقق الأمني أولاً');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError) {
+        await logLoginAttempt(false, signInError.message);
+        
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        
+        if (newAttempts >= 3) {
+          setShowCaptcha(true);
+          setCaptchaVerified(false);
+        }
+        
+        if (newAttempts >= 5) {
+          setIsLockedOut(true);
+          setLockoutTime(new Date(Date.now() + 15 * 60 * 1000));
+          setError('تم قفل الحساب مؤقتاً بسبب كثرة المحاولات الفاشلة. يرجى المحاولة بعد 15 دقيقة.');
+        } else if (signInError.message.includes('Invalid login credentials')) {
+          setError(`بيانات الدخول غير صحيحة (محاولة ${newAttempts}/5)`);
+        } else {
+          setError('حدث خطأ في تسجيل الدخول');
+        }
+        return;
+      }
+
+      if (data.user) {
+        // Check if user has admin or agent role
+        const { data: roles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+
+        if (rolesError) {
+          await logLoginAttempt(false, 'Failed to fetch roles');
+          setError('حدث خطأ في التحقق من الصلاحيات');
+          await supabase.auth.signOut();
+          return;
+        }
+
+        const userRoles = roles?.map(r => r.role) || [];
+        const isAdmin = userRoles.includes('admin');
+        const isAgent = userRoles.includes('agent');
+
+        if (!isAdmin && !isAgent) {
+          await logLoginAttempt(false, 'Not staff user');
+          setError('ليس لديك صلاحية الوصول لهذه اللوحة');
+          await supabase.auth.signOut();
+          return;
+        }
+
+        // Initiate 2FA
+        setPendingUserId(data.user.id);
+        setPendingSession({ user: data.user, roles: userRoles, isAdmin, isAgent });
+        
+        // Sign out temporarily until 2FA is verified
+        await supabase.auth.signOut();
+        
+        // Generate and send 2FA code
+        await generate2FACode(data.user.id, data.user.email!);
+        
+        setShow2FA(true);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      await logLoginAttempt(false, 'Unexpected error');
+      setError('حدث خطأ غير متوقع');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verify2FA = async (code: string): Promise<boolean> => {
+    if (!pendingUserId || !pendingSession) return false;
+
+    try {
+      // Verify code
+      const { data: codeData, error: codeError } = await supabase
+        .from('staff_2fa_codes')
+        .select('*')
+        .eq('user_id', pendingUserId)
+        .eq('code', code)
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (codeError || !codeData) {
+        return false;
+      }
+
+      // Mark code as used
+      await supabase
+        .from('staff_2fa_codes')
+        .update({ used: true })
+        .eq('id', codeData.id);
+
+      // Re-authenticate
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInError) {
+        return false;
+      }
+
+      // Log successful attempt
+      await logLoginAttempt(true);
+
+      toast.success('تم تسجيل الدخول بنجاح');
+      
+      if (pendingSession.isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/agent');
+      }
+
+      return true;
+    } catch (err) {
+      console.error('2FA verification error:', err);
+      return false;
+    }
+  };
+
+  const resend2FA = async () => {
+    if (!pendingUserId) return;
+    
+    // Sign in temporarily to get user email
+    const { data } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    
+    if (data.user) {
+      await generate2FACode(data.user.id, data.user.email!);
+      await supabase.auth.signOut();
+    }
+  };
+
+  const cancel2FA = () => {
+    setShow2FA(false);
+    setPendingUserId(null);
+    setPendingSession(null);
+  };
+
+  // Show 2FA verification screen
+  if (show2FA) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }} />
+        </div>
+        <div className="w-full max-w-md relative z-10">
+          <TwoFactorVerification
+            email={email}
+            onVerify={verify2FA}
+            onResend={resend2FA}
+            onCancel={cancel2FA}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }} />
+      </div>
+
+      <Card className="w-full max-w-md relative z-10 border-slate-700 bg-slate-800/90 backdrop-blur-sm shadow-2xl">
+        <CardHeader className="text-center space-y-4 pb-2">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
+              <img
+                src={logo}
+                alt="عطلات رحلاتكم"
+                className="h-20 w-20 rounded-full object-cover relative z-10 border-2 border-slate-600"
+              />
+            </div>
+          </div>
+          
+          {/* Shield icon */}
+          <div className="flex justify-center">
+            <div className="p-3 rounded-full bg-primary/10 border border-primary/20">
+              <Shield className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+
+          <div>
+            <CardTitle className="text-2xl font-bold text-white">
+              بوابة الموظفين
+            </CardTitle>
+            <CardDescription className="text-slate-400 mt-2">
+              تسجيل الدخول للمشرفين والوكلاء فقط
+            </CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-4">
+          <form onSubmit={handleLogin} className="space-y-5" dir="rtl">
+            {/* Lockout Warning */}
+            {isLockedOut && (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  الحساب مقفل مؤقتاً. يرجى المحاولة بعد 15 دقيقة.
+                </span>
+              </div>
+            )}
+
+            {error && !isLockedOut && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-300">البريد الإلكتروني</Label>
+              <div className="relative">
+                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(filterArabicChars(e.target.value))}
+                  onInput={(e) => {
+                    const input = e.target as HTMLInputElement;
+                    input.value = filterArabicChars(input.value);
+                  }}
+                  placeholder="admin@example.com"
+                  className="pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-primary"
+                  dir="ltr"
+                  required
+                  disabled={loading || isLockedOut}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-slate-300">كلمة المرور</Label>
+              <div className="relative">
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(filterArabicChars(e.target.value))}
+                  onInput={(e) => {
+                    const input = e.target as HTMLInputElement;
+                    input.value = filterArabicChars(input.value);
+                  }}
+                  placeholder="••••••••"
+                  className="pr-10 pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-primary"
+                  dir="ltr"
+                  required
+                  disabled={loading || isLockedOut}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* CAPTCHA */}
+            {showCaptcha && (
+              <SimpleCaptcha onVerified={setCaptchaVerified} />
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-5"
+              disabled={loading || isLockedOut || (showCaptcha && !captchaVerified)}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  جاري التحقق...
+                </>
+              ) : (
+                <>
+                  <Shield className="h-4 w-4 ml-2" />
+                  تسجيل الدخول
+                </>
+              )}
+            </Button>
+
+            {/* Forgot Password Link */}
+            <div className="text-center">
+              <a
+                href="/auth?reset=true"
+                className="text-sm text-slate-400 hover:text-primary transition-colors"
+              >
+                نسيت كلمة المرور؟
+              </a>
+            </div>
+          </form>
+
+          {/* Security notice */}
+          <div className="mt-6 pt-4 border-t border-slate-700">
+            <p className="text-xs text-slate-500 text-center">
+              🔒 هذه البوابة مخصصة للموظفين المعتمدين فقط. جميع محاولات الدخول مسجلة ومراقبة.
+            </p>
+          </div>
+
+          {/* Back to main site link */}
+          <div className="mt-4 text-center">
+            <a
+              href="/"
+              className="text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              العودة للموقع الرئيسي ←
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

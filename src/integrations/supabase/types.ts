@@ -647,6 +647,66 @@ export type Database = {
           },
         ]
       }
+      staff_2fa_codes: {
+        Row: {
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      staff_login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -792,6 +852,10 @@ export type Database = {
         Args: { _app_id: string; _user_id: string }
         Returns: boolean
       }
+      get_failed_attempts_count: {
+        Args: { check_email: string }
+        Returns: number
+      }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -811,6 +875,7 @@ export type Database = {
         Returns: boolean
       }
       is_customer: { Args: { _user_id: string }; Returns: boolean }
+      is_email_locked_out: { Args: { check_email: string }; Returns: boolean }
     }
     Enums: {
       app_role: "customer" | "agent" | "admin"

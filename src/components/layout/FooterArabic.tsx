@@ -157,13 +157,14 @@ export default function FooterArabic() {
           <p className="text-xs text-muted-foreground">
             هذا الموقع يقدم خدمات المساعدة في إصدار التأشيرات ولا يمثل أي سفارة أو جهة حكومية رسمية.
           </p>
-          {/* Hidden Staff Portal Link */}
+          {/* Hidden Staff Portal Link - Obscured URL */}
           <Link 
-            to="/staff" 
-            className="mt-2 inline-block text-[10px] text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors"
-            title="بوابة الموظفين"
+            to="/portal-x7k9m2" 
+            className="mt-2 inline-block text-[8px] text-muted-foreground/20 hover:text-muted-foreground/40 transition-colors select-none"
+            title=""
+            aria-hidden="true"
           >
-            •
+            ⁕
           </Link>
         </div>
       </div>
