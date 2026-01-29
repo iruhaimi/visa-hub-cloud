@@ -30,8 +30,10 @@ import {
   Download,
   Loader2,
   AlertCircle,
-  Save
+  Save,
+  FileDown
 } from 'lucide-react';
+import { generateApplicationPDF } from '@/lib/generateApplicationPDF';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -374,6 +376,15 @@ export default function AgentApplicationDetail() {
         </div>
         <div className="flex items-center gap-3">
           {getStatusBadge(application.status)}
+          {application.status === 'approved' && (
+            <Button 
+              variant="outline" 
+              onClick={() => generateApplicationPDF(application as any)}
+            >
+              <FileDown className="h-4 w-4 ml-2" />
+              تحميل PDF
+            </Button>
+          )}
           <Button onClick={() => setShowStatusDialog(true)}>
             تغيير الحالة
           </Button>
