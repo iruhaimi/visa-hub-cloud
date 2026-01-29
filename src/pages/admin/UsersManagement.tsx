@@ -37,7 +37,9 @@ import {
   Minus,
   Download,
   Calendar,
-  Filter
+  Filter,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
@@ -90,6 +92,10 @@ export default function UsersManagement() {
   const [logSearchQuery, setLogSearchQuery] = useState('');
   const [logDateFrom, setLogDateFrom] = useState('');
   const [logDateTo, setLogDateTo] = useState('');
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchUsers();
@@ -339,7 +345,20 @@ export default function UsersManagement() {
     setLogSearchQuery('');
     setLogDateFrom('');
     setLogDateTo('');
+    setCurrentPage(1);
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredActivityLog.length / itemsPerPage);
+  const paginatedActivityLog = filteredActivityLog.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [logSearchQuery, logDateFrom, logDateTo]);
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -548,7 +567,7 @@ export default function UsersManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredActivityLog.map((log) => (
+                      {paginatedActivityLog.map((log) => (
                         <TableRow key={log.id}>
                           <TableCell className="text-muted-foreground">
                             {format(new Date(log.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })}
@@ -574,6 +593,60 @@ export default function UsersManagement() {
                   </Table>
                 </div>
               )}
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    عرض {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredActivityLog.length)} من {filteredActivityLog.length}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      السابق
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            className="w-9 h-9"
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      التالي
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -593,11 +666,17 @@ export default function UsersManagement() {
                   <SelectValue placeholder="اختر الصلاحية" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ROLE_OPTIONS.filter(r => !selectedUser?.roles.includes(r.value)).map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  {ROLE_OPTIONS.filter(r => !selectedUser?.roles.includes(r.value)).length > 0 ? (
+                    ROLE_OPTIONS.filter(r => !selectedUser?.roles.includes(r.value)).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="py-2 px-3 text-sm text-muted-foreground">
+                      لا توجد صلاحيات متاحة للإضافة
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
