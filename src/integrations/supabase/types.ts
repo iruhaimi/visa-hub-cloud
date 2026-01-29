@@ -555,6 +555,33 @@ export type Database = {
           },
         ]
       }
+      role_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          performed_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          performed_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          performed_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       special_offers: {
         Row: {
           badge: string | null
