@@ -8,42 +8,35 @@ interface AdvancedCaptchaProps {
   onVerified: (verified: boolean) => void;
 }
 
-type ChallengeType = 'math' | 'text' | 'pattern';
+// Only use secure challenge types - removed pattern type
+type ChallengeType = 'math' | 'text';
 
 export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
-  const [challengeType, setChallengeType] = useState<ChallengeType>('math');
+  const [challengeType, setChallengeType] = useState<ChallengeType>('text');
   const [num1, setNum1] = useState(0);
   const [num2, setNum2] = useState(0);
-  const [operator, setOperator] = useState<'+' | '-' | '×'>('+');
+  const [num3, setNum3] = useState(0);
+  const [operator1, setOperator1] = useState<'+' | '-' | '×'>('+');
+  const [operator2, setOperator2] = useState<'+' | '-' | '×'>('+');
   const [textChallenge, setTextChallenge] = useState('');
-  const [patternChallenge, setPatternChallenge] = useState<string[]>([]);
   const [userAnswer, setUserAnswer] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [showError, setShowError] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Generate distorted text for canvas
+  // Generate distorted text with mix of uppercase, lowercase, and numbers
   const generateDistortedText = useCallback(() => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    // Mix of uppercase, lowercase and numbers (excluding similar-looking characters)
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     let text = '';
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
       text += chars[Math.floor(Math.random() * chars.length)];
     }
     return text;
   }, []);
 
-  // Generate pattern challenge (select matching shapes)
-  const generatePatternChallenge = useCallback(() => {
-    const shapes = ['●', '■', '▲', '◆', '★', '♦', '♣', '♠'];
-    const pattern = [];
-    for (let i = 0; i < 4; i++) {
-      pattern.push(shapes[Math.floor(Math.random() * shapes.length)]);
-    }
-    return pattern;
-  }, []);
-
-  // Draw captcha text on canvas with distortion
+  // Draw captcha text on canvas with heavy distortion
   const drawCaptcha = useCallback((text: string) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -51,89 +44,125 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
+    // Clear canvas with dark background
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Add noise lines
-    for (let i = 0; i < 5; i++) {
-      ctx.strokeStyle = `rgba(${Math.random() * 100 + 100}, ${Math.random() * 100 + 100}, ${Math.random() * 100 + 100}, 0.5)`;
-      ctx.lineWidth = 1;
+    // Add more aggressive noise lines (crossing through text)
+    for (let i = 0; i < 8; i++) {
+      ctx.strokeStyle = `rgba(${Math.random() * 150 + 100}, ${Math.random() * 150 + 100}, ${Math.random() * 150 + 100}, 0.7)`;
+      ctx.lineWidth = Math.random() * 2 + 1;
       ctx.beginPath();
       ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-      ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+      ctx.bezierCurveTo(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        Math.random() * canvas.width,
+        Math.random() * canvas.height
+      );
       ctx.stroke();
     }
 
     // Add noise dots
-    for (let i = 0; i < 50; i++) {
-      ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.3)`;
+    for (let i = 0; i < 80; i++) {
+      ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.4)`;
       ctx.beginPath();
-      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1, 0, Math.PI * 2);
+      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 2 + 1, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Draw text with distortion
-    const fontSize = 28;
-    ctx.font = `bold ${fontSize}px monospace`;
+    // Draw text with heavy distortion
+    const baseSize = 26;
     ctx.textBaseline = 'middle';
 
     text.split('').forEach((char, i) => {
-      const x = 20 + i * 35;
-      const y = canvas.height / 2 + (Math.random() * 10 - 5);
-      const rotation = (Math.random() * 30 - 15) * Math.PI / 180;
+      const fontSize = baseSize + (Math.random() * 8 - 4);
+      ctx.font = `bold ${fontSize}px "Courier New", monospace`;
+      
+      const x = 18 + i * 38;
+      const y = canvas.height / 2 + (Math.random() * 16 - 8);
+      const rotation = (Math.random() * 40 - 20) * Math.PI / 180;
 
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rotation);
+      
+      // Apply slight skew
+      ctx.transform(1, Math.random() * 0.3 - 0.15, Math.random() * 0.3 - 0.15, 1, 0, 0);
 
-      // Random color
-      const colors = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#a855f7'];
+      // Random colors with good contrast
+      const colors = ['#3b82f6', '#22c55e', '#eab308', '#f97316', '#a855f7', '#ec4899'];
       ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+      
+      // Add slight shadow/outline for depth
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
       
       ctx.fillText(char, 0, 0);
       ctx.restore();
     });
+
+    // Add more overlay noise after text
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeStyle = `rgba(${Math.random() * 200 + 50}, ${Math.random() * 200 + 50}, ${Math.random() * 200 + 50}, 0.3)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, Math.random() * canvas.height);
+      ctx.lineTo(canvas.width, Math.random() * canvas.height);
+      ctx.stroke();
+    }
   }, []);
 
   const generateChallenge = useCallback(() => {
-    // Randomly select challenge type
-    const types: ChallengeType[] = ['math', 'text', 'pattern'];
+    // Randomly select between math and text (both are secure)
+    const types: ChallengeType[] = ['math', 'text'];
     const type = types[Math.floor(Math.random() * types.length)];
     setChallengeType(type);
 
     if (type === 'math') {
+      // Generate more complex math problems
       const operators: ('+' | '-' | '×')[] = ['+', '-', '×'];
-      const op = operators[Math.floor(Math.random() * operators.length)];
-      let n1 = Math.floor(Math.random() * 10) + 1;
-      let n2 = Math.floor(Math.random() * 10) + 1;
-
-      if (op === '-' && n2 > n1) {
-        [n1, n2] = [n2, n1];
+      const op1 = operators[Math.floor(Math.random() * operators.length)];
+      const op2 = operators[Math.floor(Math.random() * operators.length)];
+      
+      let n1, n2, n3;
+      
+      // Different difficulty based on operators
+      if (op1 === '×' || op2 === '×') {
+        n1 = Math.floor(Math.random() * 6) + 2; // 2-7
+        n2 = Math.floor(Math.random() * 5) + 1; // 1-5
+        n3 = Math.floor(Math.random() * 5) + 1; // 1-5
+      } else {
+        n1 = Math.floor(Math.random() * 15) + 5; // 5-19
+        n2 = Math.floor(Math.random() * 10) + 1; // 1-10
+        n3 = Math.floor(Math.random() * 8) + 1; // 1-8
       }
-
-      if (op === '×') {
-        n1 = Math.floor(Math.random() * 5) + 1;
-        n2 = Math.floor(Math.random() * 5) + 1;
+      
+      // Ensure subtraction doesn't go negative
+      if (op1 === '-' && n2 > n1) {
+        [n1, n2] = [n2, n1];
       }
 
       setNum1(n1);
       setNum2(n2);
-      setOperator(op);
-    } else if (type === 'text') {
+      setNum3(n3);
+      setOperator1(op1);
+      setOperator2(op2);
+    } else {
       const text = generateDistortedText();
       setTextChallenge(text);
       setTimeout(() => drawCaptcha(text), 50);
-    } else {
-      const pattern = generatePatternChallenge();
-      setPatternChallenge(pattern);
     }
 
     setUserAnswer('');
     setIsVerified(false);
     setShowError(false);
     onVerified(false);
-  }, [onVerified, generateDistortedText, generatePatternChallenge, drawCaptcha]);
+  }, [onVerified, generateDistortedText, drawCaptcha]);
 
   useEffect(() => {
     generateChallenge();
@@ -147,24 +176,39 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
 
   const getCorrectAnswer = (): string => {
     if (challengeType === 'math') {
-      switch (operator) {
-        case '+': return String(num1 + num2);
-        case '-': return String(num1 - num2);
-        case '×': return String(num1 * num2);
-        default: return '0';
+      // Calculate step by step: (n1 op1 n2) op2 n3
+      let result1: number;
+      switch (operator1) {
+        case '+': result1 = num1 + num2; break;
+        case '-': result1 = num1 - num2; break;
+        case '×': result1 = num1 * num2; break;
+        default: result1 = 0;
       }
-    } else if (challengeType === 'text') {
-      return textChallenge;
+      
+      let finalResult: number;
+      switch (operator2) {
+        case '+': finalResult = result1 + num3; break;
+        case '-': finalResult = result1 - num3; break;
+        case '×': finalResult = result1 * num3; break;
+        default: finalResult = 0;
+      }
+      
+      return String(finalResult);
     } else {
-      return patternChallenge.join('');
+      return textChallenge;
     }
   };
 
   const handleVerify = () => {
     const correct = getCorrectAnswer();
-    const userInput = userAnswer.trim().toUpperCase();
+    const userInput = userAnswer.trim();
     
-    if (userInput === correct.toUpperCase()) {
+    // Case-sensitive for text, exact match for math
+    const isCorrect = challengeType === 'text' 
+      ? userInput === correct 
+      : userInput === correct;
+    
+    if (isCorrect) {
       setIsVerified(true);
       setShowError(false);
       onVerified(true);
@@ -194,12 +238,17 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
     switch (challengeType) {
       case 'math':
         return (
-          <div className="flex items-center justify-center gap-2 py-4 px-4 rounded-lg bg-slate-800 text-white text-xl font-mono">
-            <span className="text-2xl">{num1}</span>
-            <span className="text-primary text-2xl">{operator}</span>
-            <span className="text-2xl">{num2}</span>
-            <span className="text-slate-400">=</span>
-            <span className="text-slate-400">?</span>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center justify-center gap-2 py-4 px-4 rounded-lg bg-slate-800 text-white text-lg font-mono">
+              <span className="text-xl">({num1}</span>
+              <span className="text-primary text-xl">{operator1}</span>
+              <span className="text-xl">{num2})</span>
+              <span className="text-primary text-xl">{operator2}</span>
+              <span className="text-xl">{num3}</span>
+              <span className="text-slate-400">=</span>
+              <span className="text-slate-400">?</span>
+            </div>
+            <p className="text-xs text-slate-500">احسب من اليسار لليمين</p>
           </div>
         );
       case 'text':
@@ -207,22 +256,11 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
           <div className="flex flex-col items-center gap-2">
             <canvas
               ref={canvasRef}
-              width={200}
-              height={60}
+              width={250}
+              height={70}
               className="rounded-lg border border-slate-600"
             />
-            <p className="text-xs text-slate-500">أدخل الحروف والأرقام الظاهرة</p>
-          </div>
-        );
-      case 'pattern':
-        return (
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex gap-3 py-4 px-6 rounded-lg bg-slate-800 text-3xl">
-              {patternChallenge.map((shape, i) => (
-                <span key={i} className="text-primary">{shape}</span>
-              ))}
-            </div>
-            <p className="text-xs text-slate-500">أدخل الرموز بالترتيب (انسخها)</p>
+            <p className="text-xs text-slate-500">أدخل الحروف والأرقام كما تظهر (حساس لحالة الأحرف)</p>
           </div>
         );
     }
@@ -286,7 +324,7 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
           {isVerified ? (
             <>
               <ShieldCheck className="h-4 w-4 ml-1" />
-              تم التحقق
+              تم ✓
             </>
           ) : (
             'تحقق'
