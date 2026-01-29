@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Shield, Loader2, Lock, Mail, AlertTriangle } from 'lucide-react';
 import { filterArabicChars } from '@/lib/inputFilters';
 import logo from '@/assets/logo.jpeg';
-import SimpleCaptcha from '@/components/auth/SimpleCaptcha';
+import AdvancedCaptcha from '@/components/auth/AdvancedCaptcha';
 import TwoFactorVerification from '@/components/auth/TwoFactorVerification';
 
 export default function SecureStaffAuth() {
@@ -422,7 +422,7 @@ export default function SecureStaffAuth() {
 
             {/* CAPTCHA */}
             {showCaptcha && (
-              <SimpleCaptcha onVerified={setCaptchaVerified} />
+              <AdvancedCaptcha onVerified={setCaptchaVerified} />
             )}
 
             <Button
