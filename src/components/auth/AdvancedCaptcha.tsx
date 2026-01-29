@@ -2,14 +2,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RefreshCw, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { RefreshCw, ShieldCheck, ShieldAlert, Lock, Clock } from 'lucide-react';
 
 interface AdvancedCaptchaProps {
   onVerified: (verified: boolean) => void;
 }
 
-// Only use secure challenge types - removed pattern type
 type ChallengeType = 'math' | 'text';
+
+const LOCKOUT_KEY = 'captcha_lockout';
+const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes in ms
+const MAX_ATTEMPTS = 3;
 
 export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
   const [challengeType, setChallengeType] = useState<ChallengeType>('text');
@@ -23,11 +26,39 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
   const [isVerified, setIsVerified] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [showError, setShowError] = useState(false);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Check lockout status on mount and periodically
+  useEffect(() => {
+    const checkLockout = () => {
+      const lockoutData = localStorage.getItem(LOCKOUT_KEY);
+      if (lockoutData) {
+        const lockoutTime = parseInt(lockoutData, 10);
+        const now = Date.now();
+        const remaining = lockoutTime - now;
+        
+        if (remaining > 0) {
+          setIsLockedOut(true);
+          setLockoutRemaining(Math.ceil(remaining / 1000));
+          onVerified(false);
+        } else {
+          localStorage.removeItem(LOCKOUT_KEY);
+          setIsLockedOut(false);
+          setLockoutRemaining(0);
+          setAttempts(0);
+        }
+      }
+    };
+
+    checkLockout();
+    const interval = setInterval(checkLockout, 1000);
+    return () => clearInterval(interval);
+  }, [onVerified]);
 
   // Generate distorted text with mix of uppercase, lowercase, and numbers
   const generateDistortedText = useCallback(() => {
-    // Mix of uppercase, lowercase and numbers (excluding similar-looking characters)
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     let text = '';
     for (let i = 0; i < 6; i++) {
@@ -44,11 +75,10 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas with dark background
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Add more aggressive noise lines (crossing through text)
+    // Add aggressive noise lines
     for (let i = 0; i < 8; i++) {
       ctx.strokeStyle = `rgba(${Math.random() * 150 + 100}, ${Math.random() * 150 + 100}, ${Math.random() * 150 + 100}, 0.7)`;
       ctx.lineWidth = Math.random() * 2 + 1;
@@ -88,15 +118,11 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rotation);
-      
-      // Apply slight skew
       ctx.transform(1, Math.random() * 0.3 - 0.15, Math.random() * 0.3 - 0.15, 1, 0, 0);
 
-      // Random colors with good contrast
       const colors = ['#3b82f6', '#22c55e', '#eab308', '#f97316', '#a855f7', '#ec4899'];
       ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
       
-      // Add slight shadow/outline for depth
       ctx.shadowColor = 'rgba(0,0,0,0.5)';
       ctx.shadowBlur = 2;
       ctx.shadowOffsetX = 1;
@@ -106,7 +132,7 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
       ctx.restore();
     });
 
-    // Add more overlay noise after text
+    // Add overlay noise
     for (let i = 0; i < 4; i++) {
       ctx.strokeStyle = `rgba(${Math.random() * 200 + 50}, ${Math.random() * 200 + 50}, ${Math.random() * 200 + 50}, 0.3)`;
       ctx.lineWidth = 1;
@@ -118,31 +144,29 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
   }, []);
 
   const generateChallenge = useCallback(() => {
-    // Randomly select between math and text (both are secure)
+    if (isLockedOut) return;
+
     const types: ChallengeType[] = ['math', 'text'];
     const type = types[Math.floor(Math.random() * types.length)];
     setChallengeType(type);
 
     if (type === 'math') {
-      // Generate more complex math problems
       const operators: ('+' | '-' | '×')[] = ['+', '-', '×'];
       const op1 = operators[Math.floor(Math.random() * operators.length)];
       const op2 = operators[Math.floor(Math.random() * operators.length)];
       
       let n1, n2, n3;
       
-      // Different difficulty based on operators
       if (op1 === '×' || op2 === '×') {
-        n1 = Math.floor(Math.random() * 6) + 2; // 2-7
-        n2 = Math.floor(Math.random() * 5) + 1; // 1-5
-        n3 = Math.floor(Math.random() * 5) + 1; // 1-5
+        n1 = Math.floor(Math.random() * 6) + 2;
+        n2 = Math.floor(Math.random() * 5) + 1;
+        n3 = Math.floor(Math.random() * 5) + 1;
       } else {
-        n1 = Math.floor(Math.random() * 15) + 5; // 5-19
-        n2 = Math.floor(Math.random() * 10) + 1; // 1-10
-        n3 = Math.floor(Math.random() * 8) + 1; // 1-8
+        n1 = Math.floor(Math.random() * 15) + 5;
+        n2 = Math.floor(Math.random() * 10) + 1;
+        n3 = Math.floor(Math.random() * 8) + 1;
       }
       
-      // Ensure subtraction doesn't go negative
       if (op1 === '-' && n2 > n1) {
         [n1, n2] = [n2, n1];
       }
@@ -162,21 +186,22 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
     setIsVerified(false);
     setShowError(false);
     onVerified(false);
-  }, [onVerified, generateDistortedText, drawCaptcha]);
+  }, [isLockedOut, onVerified, generateDistortedText, drawCaptcha]);
 
   useEffect(() => {
-    generateChallenge();
-  }, [generateChallenge]);
+    if (!isLockedOut) {
+      generateChallenge();
+    }
+  }, [isLockedOut]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (challengeType === 'text' && textChallenge) {
+    if (challengeType === 'text' && textChallenge && !isLockedOut) {
       drawCaptcha(textChallenge);
     }
-  }, [challengeType, textChallenge, drawCaptcha]);
+  }, [challengeType, textChallenge, drawCaptcha, isLockedOut]);
 
   const getCorrectAnswer = (): string => {
     if (challengeType === 'math') {
-      // Calculate step by step: (n1 op1 n2) op2 n3
       let result1: number;
       switch (operator1) {
         case '+': result1 = num1 + num2; break;
@@ -199,11 +224,19 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
     }
   };
 
+  const triggerLockout = () => {
+    const lockoutUntil = Date.now() + LOCKOUT_DURATION;
+    localStorage.setItem(LOCKOUT_KEY, String(lockoutUntil));
+    setIsLockedOut(true);
+    setLockoutRemaining(Math.ceil(LOCKOUT_DURATION / 1000));
+  };
+
   const handleVerify = () => {
+    if (isLockedOut) return;
+
     const correct = getCorrectAnswer();
     const userInput = userAnswer.trim();
     
-    // Case-sensitive for text, exact match for math
     const isCorrect = challengeType === 'text' 
       ? userInput === correct 
       : userInput === correct;
@@ -211,28 +244,64 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
     if (isCorrect) {
       setIsVerified(true);
       setShowError(false);
+      setAttempts(0);
       onVerified(true);
     } else {
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
       setShowError(true);
-      setAttempts(prev => prev + 1);
       setIsVerified(false);
       onVerified(false);
       
-      // After 3 failed attempts, generate new challenge
-      if (attempts >= 2) {
+      if (newAttempts >= MAX_ATTEMPTS) {
+        triggerLockout();
+      } else {
+        // Generate new challenge after failed attempt
         setTimeout(() => {
-          setAttempts(0);
           generateChallenge();
-        }, 1000);
+        }, 500);
       }
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && userAnswer && !isVerified) {
+    if (e.key === 'Enter' && userAnswer && !isVerified && !isLockedOut) {
       handleVerify();
     }
   };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Show lockout screen
+  if (isLockedOut) {
+    return (
+      <div className="p-4 rounded-lg bg-red-900/30 border border-red-500/50 space-y-3">
+        <Label className="text-red-400 text-sm flex items-center gap-2">
+          <Lock className="h-4 w-4" />
+          🔒 تم قفل التحقق الأمني مؤقتاً
+        </Label>
+        
+        <div className="flex flex-col items-center gap-3 py-4">
+          <div className="p-4 rounded-full bg-red-500/20 border border-red-500/30">
+            <Clock className="h-8 w-8 text-red-400 animate-pulse" />
+          </div>
+          <p className="text-slate-300 text-center">
+            تم تجاوز الحد الأقصى للمحاولات ({MAX_ATTEMPTS} محاولات)
+          </p>
+          <p className="text-2xl font-mono text-red-400">
+            {formatTime(lockoutRemaining)}
+          </p>
+          <p className="text-xs text-slate-500 text-center">
+            يرجى الانتظار حتى انتهاء فترة القفل
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const renderChallenge = () => {
     switch (challengeType) {
@@ -268,13 +337,20 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
 
   return (
     <div className="p-4 rounded-lg bg-slate-700/50 border border-slate-600 space-y-3">
-      <Label className="text-slate-300 text-sm flex items-center gap-2">
-        {isVerified ? (
-          <ShieldCheck className="h-4 w-4 text-green-500" />
-        ) : (
-          <ShieldAlert className="h-4 w-4 text-amber-500" />
+      <Label className="text-slate-300 text-sm flex items-center gap-2 justify-between">
+        <span className="flex items-center gap-2">
+          {isVerified ? (
+            <ShieldCheck className="h-4 w-4 text-green-500" />
+          ) : (
+            <ShieldAlert className="h-4 w-4 text-amber-500" />
+          )}
+          🔐 التحقق الأمني - أثبت أنك إنسان
+        </span>
+        {attempts > 0 && !isVerified && (
+          <span className="text-xs text-amber-400">
+            ({MAX_ATTEMPTS - attempts} محاولات متبقية)
+          </span>
         )}
-        🔐 التحقق الأمني - أثبت أنك إنسان
       </Label>
       
       <div className="flex items-center gap-3">
@@ -289,6 +365,7 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
           onClick={generateChallenge}
           className="text-slate-400 hover:text-white"
           title="تحديث السؤال"
+          disabled={isVerified}
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -296,7 +373,7 @@ export default function AdvancedCaptcha({ onVerified }: AdvancedCaptchaProps) {
 
       {showError && (
         <p className="text-xs text-red-400 text-center animate-pulse">
-          ❌ إجابة خاطئة. حاول مرة أخرى ({3 - attempts} محاولات متبقية)
+          ❌ إجابة خاطئة - سيتم تغيير السؤال تلقائياً
         </p>
       )}
 
