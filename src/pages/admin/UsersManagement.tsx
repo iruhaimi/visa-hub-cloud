@@ -34,8 +34,12 @@ import {
   RefreshCw,
   History,
   Plus,
-  Minus
+  Minus,
+  Download,
+  Calendar,
+  Filter
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -81,6 +85,11 @@ export default function UsersManagement() {
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [updating, setUpdating] = useState(false);
+  
+  // Activity log filters
+  const [logSearchQuery, setLogSearchQuery] = useState('');
+  const [logDateFrom, setLogDateFrom] = useState('');
+  const [logDateTo, setLogDateTo] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -270,6 +279,68 @@ export default function UsersManagement() {
     );
   };
 
+  // Filter activity log
+  const filteredActivityLog = activityLog.filter(log => {
+    // Search filter
+    if (logSearchQuery) {
+      const searchLower = logSearchQuery.toLowerCase();
+      const matchesTarget = log.target_user_name?.toLowerCase().includes(searchLower);
+      const matchesPerformer = log.performer_name?.toLowerCase().includes(searchLower);
+      if (!matchesTarget && !matchesPerformer) return false;
+    }
+    
+    // Date from filter
+    if (logDateFrom) {
+      const logDate = new Date(log.created_at);
+      const fromDate = new Date(logDateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      if (logDate < fromDate) return false;
+    }
+    
+    // Date to filter
+    if (logDateTo) {
+      const logDate = new Date(log.created_at);
+      const toDate = new Date(logDateTo);
+      toDate.setHours(23, 59, 59, 999);
+      if (logDate > toDate) return false;
+    }
+    
+    return true;
+  });
+
+  // Export activity log to Excel
+  const exportActivityLogToExcel = () => {
+    const exportData = filteredActivityLog.map(log => ({
+      'التاريخ والوقت': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: ar }),
+      'الإجراء': getActionLabel(log.action),
+      'المستخدم المستهدف': log.target_user_name || 'غير معروف',
+      'الصلاحية': ROLE_OPTIONS.find(r => r.value === log.role)?.label || log.role,
+      'بواسطة': log.performer_name || 'غير معروف',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'سجل النشاطات');
+    
+    // Set RTL and column widths
+    ws['!cols'] = [
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 25 },
+      { wch: 12 },
+      { wch: 25 },
+    ];
+    
+    XLSX.writeFile(wb, `سجل_النشاطات_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success('تم تصدير سجل النشاطات بنجاح');
+  };
+
+  const clearLogFilters = () => {
+    setLogSearchQuery('');
+    setLogDateFrom('');
+    setLogDateTo('');
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
@@ -388,22 +459,81 @@ export default function UsersManagement() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="activity" className="mt-4">
+        <TabsContent value="activity" className="space-y-4 mt-4">
+          {/* Filters Card */}
           <Card>
-            <CardHeader>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Search */}
+                <div className="relative flex-1">
+                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="بحث بالاسم..."
+                    value={logSearchQuery}
+                    onChange={(e) => setLogSearchQuery(e.target.value)}
+                    className="pr-10"
+                  />
+                </div>
+                
+                {/* Date From */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="date"
+                    placeholder="من تاريخ"
+                    value={logDateFrom}
+                    onChange={(e) => setLogDateFrom(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+                
+                {/* Date To */}
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">إلى</span>
+                  <Input
+                    type="date"
+                    placeholder="إلى تاريخ"
+                    value={logDateTo}
+                    onChange={(e) => setLogDateTo(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+                
+                {/* Clear Filters */}
+                {(logSearchQuery || logDateFrom || logDateTo) && (
+                  <Button variant="ghost" size="sm" onClick={clearLogFilters}>
+                    <Filter className="h-4 w-4 ml-1" />
+                    مسح الفلاتر
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <History className="h-5 w-5" />
-                سجل تغييرات الصلاحيات
+                سجل تغييرات الصلاحيات ({filteredActivityLog.length})
               </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={exportActivityLogToExcel}
+                disabled={filteredActivityLog.length === 0}
+              >
+                <Download className="h-4 w-4 ml-2" />
+                تصدير Excel
+              </Button>
             </CardHeader>
             <CardContent>
               {loadingLog ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : activityLog.length === 0 ? (
+              ) : filteredActivityLog.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  لا توجد نشاطات مسجلة بعد
+                  {activityLog.length === 0 ? 'لا توجد نشاطات مسجلة بعد' : 'لا توجد نتائج مطابقة للبحث'}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -418,7 +548,7 @@ export default function UsersManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {activityLog.map((log) => (
+                      {filteredActivityLog.map((log) => (
                         <TableRow key={log.id}>
                           <TableCell className="text-muted-foreground">
                             {format(new Date(log.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })}
