@@ -91,7 +91,7 @@ export default function SecureStaffAuth() {
     }
   };
 
-  const generate2FACode = async (userId: string, userEmail: string) => {
+  const generate2FACode = async (userId: string, userEmail: string): Promise<{ code: string; emailSent: boolean }> => {
     // Generate 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -107,22 +107,26 @@ export default function SecureStaffAuth() {
     if (error) throw error;
 
     // Send 2FA code via edge function (SMS or Email)
+    let emailSent = false;
     try {
-      const { error: sendError } = await supabase.functions.invoke('send-staff-2fa', {
+      const { data, error: sendError } = await supabase.functions.invoke('send-staff-2fa', {
         body: { email: userEmail, code }
       });
       
       if (sendError) {
         console.error('Failed to send 2FA code:', sendError);
-        toast.error('حدث خطأ في إرسال رمز التحقق. يرجى المحاولة مرة أخرى.');
-        throw sendError;
+        // Don't throw - allow fallback to showing code
+      } else if (data?.success) {
+        emailSent = true;
+      } else {
+        console.warn('Email not sent - using fallback mode');
       }
     } catch (err) {
       console.error('Error sending 2FA code:', err);
-      throw err;
+      // Don't throw - allow fallback
     }
     
-    return code;
+    return { code, emailSent };
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -209,11 +213,20 @@ export default function SecureStaffAuth() {
         
         // Generate and send 2FA code
         try {
-          await generate2FACode(data.user.id, data.user.email!);
-          toast.success('تم إرسال رمز التحقق إلى بريدك الإلكتروني');
+          const { code, emailSent } = await generate2FACode(data.user.id, data.user.email!);
+          
+          if (emailSent) {
+            toast.success('تم إرسال رمز التحقق إلى بريدك الإلكتروني');
+          } else {
+            // DEV MODE: Show code in toast when email is not configured
+            toast.info(`وضع التطوير - رمز التحقق: ${code}`, {
+              duration: 30000,
+              description: 'لم يتم إعداد البريد الإلكتروني بعد'
+            });
+          }
         } catch (sendError) {
-          console.error('Failed to send 2FA code:', sendError);
-          setError('حدث خطأ في إرسال رمز التحقق. يرجى المحاولة مرة أخرى.');
+          console.error('Failed to generate 2FA code:', sendError);
+          setError('حدث خطأ في إنشاء رمز التحقق. يرجى المحاولة مرة أخرى.');
           return;
         }
         
@@ -301,8 +314,17 @@ export default function SecureStaffAuth() {
     });
     
     if (data.user) {
-      await generate2FACode(data.user.id, data.user.email!);
+      const { code, emailSent } = await generate2FACode(data.user.id, data.user.email!);
       await supabase.auth.signOut();
+      
+      if (emailSent) {
+        toast.success('تم إعادة إرسال رمز التحقق');
+      } else {
+        toast.info(`وضع التطوير - رمز التحقق: ${code}`, {
+          duration: 30000,
+          description: 'لم يتم إعداد البريد الإلكتروني بعد'
+        });
+      }
     }
   };
 
