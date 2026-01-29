@@ -193,6 +193,16 @@ export default function StaffAuth() {
                 </>
               )}
             </Button>
+
+            {/* Forgot Password Link */}
+            <div className="text-center">
+              <a
+                href="/auth?reset=true"
+                className="text-sm text-slate-400 hover:text-primary transition-colors"
+              >
+                نسيت كلمة المرور؟
+              </a>
+            </div>
           </form>
 
           {/* Security notice */}
