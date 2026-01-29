@@ -33,7 +33,7 @@ import Profile from "@/pages/Profile";
 import MyApplications from "@/pages/MyApplications";
 import SpecialOffers from "@/pages/SpecialOffers";
 import ResetPassword from "@/pages/ResetPassword";
-import StaffAuth from "@/pages/StaffAuth";
+import SecureStaffAuth from "@/pages/SecureStaffAuth";
 import NotFound from "@/pages/NotFound";
 
 // Admin Pages
@@ -87,7 +87,7 @@ const App = () => (
 
               {/* Auth Routes */}
               <Route path="/auth" element={<Auth />} />
-              <Route path="/staff" element={<StaffAuth />} />
+              <Route path="/portal-x7k9m2" element={<SecureStaffAuth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Admin Routes */}
