@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   Gift,
   RotateCcw,
-  Image
+  Image,
+  ShieldAlert
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -59,6 +60,12 @@ export default function AdminLayout() {
       title: 'إدارة Hero',
       icon: Image,
       href: '/admin/hero',
+      show: isAdmin,
+    },
+    {
+      title: 'سجل محاولات الدخول',
+      icon: ShieldAlert,
+      href: '/admin/login-attempts',
       show: isAdmin,
     },
     {
