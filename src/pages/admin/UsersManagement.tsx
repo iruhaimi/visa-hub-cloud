@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -24,8 +25,27 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { 
   Search,
   Shield,
@@ -39,13 +59,22 @@ import {
   Calendar,
   Filter,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Trash2,
+  UserCheck,
+  Users,
+  UserCog
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserEditDialog } from '@/components/admin/UserEditDialog';
+import { UserDetailsDialog } from '@/components/admin/UserDetailsDialog';
 import type { AppRole } from '@/types/database';
 
 interface UserWithRole {
@@ -69,10 +98,10 @@ interface ActivityLogEntry {
   performer_name?: string;
 }
 
-const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
-  { value: 'customer', label: 'عميل' },
-  { value: 'agent', label: 'وكيل' },
-  { value: 'admin', label: 'مشرف' },
+const ROLE_OPTIONS: { value: AppRole; label: string; description: string }[] = [
+  { value: 'customer', label: 'عميل', description: 'صلاحيات التقديم على التأشيرات' },
+  { value: 'agent', label: 'وكيل', description: 'مراجعة الطلبات المُعيّنة' },
+  { value: 'admin', label: 'مشرف', description: 'صلاحيات كاملة على النظام' },
 ];
 
 export default function UsersManagement() {
@@ -80,11 +109,16 @@ export default function UsersManagement() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(false);
   
-  // Role dialog
+  // Dialogs
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [updating, setUpdating] = useState(false);
   
@@ -210,6 +244,7 @@ export default function UsersManagement() {
       await logActivity(selectedUser.user_id, 'add_role', newRole);
 
       toast.success('تم إضافة الصلاحية بنجاح');
+      setShowRoleDialog(false);
       setSelectedUser(null);
       setNewRole('');
       fetchUsers();
@@ -251,26 +286,116 @@ export default function UsersManagement() {
   };
 
   const filteredUsers = users.filter(user => {
-    if (!searchQuery) return true;
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      user.full_name?.toLowerCase().includes(searchLower) ||
-      user.phone?.includes(searchQuery) ||
-      user.nationality?.toLowerCase().includes(searchLower)
-    );
+    // Search filter
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = 
+        user.full_name?.toLowerCase().includes(searchLower) ||
+        user.phone?.includes(searchQuery) ||
+        user.nationality?.toLowerCase().includes(searchLower);
+      if (!matchesSearch) return false;
+    }
+    
+    // Role filter
+    if (roleFilter !== 'all') {
+      if (!user.roles.includes(roleFilter as AppRole)) return false;
+    }
+    
+    return true;
   });
 
+  // Stats
+  const stats = {
+    total: users.length,
+    admins: users.filter(u => u.roles.includes('admin')).length,
+    agents: users.filter(u => u.roles.includes('agent')).length,
+    customers: users.filter(u => u.roles.includes('customer')).length,
+  };
+
   const getRoleBadge = (role: AppRole) => {
-    const config: Record<AppRole, { label: string; className: string }> = {
-      customer: { label: 'عميل', className: 'bg-muted text-muted-foreground' },
-      agent: { label: 'وكيل', className: 'bg-primary/10 text-primary' },
-      admin: { label: 'مشرف', className: 'bg-destructive/10 text-destructive' },
+    const config: Record<AppRole, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+      customer: { label: 'عميل', variant: 'secondary' },
+      agent: { label: 'وكيل', variant: 'default' },
+      admin: { label: 'مشرف', variant: 'destructive' },
     };
     return (
-      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${config[role].className}`}>
+      <Badge variant={config[role].variant} className="text-xs">
         {config[role].label}
-      </span>
+      </Badge>
     );
+  };
+
+  // Export users to Excel
+  const exportUsersToExcel = () => {
+    const exportData = filteredUsers.map(user => ({
+      'الاسم': user.full_name || 'غير محدد',
+      'رقم الجوال': user.phone || '-',
+      'الجنسية': user.nationality || '-',
+      'تاريخ التسجيل': format(new Date(user.created_at), 'dd/MM/yyyy', { locale: ar }),
+      'الصلاحيات': user.roles.map(r => ROLE_OPTIONS.find(o => o.value === r)?.label).join(', '),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'المستخدمين');
+    
+    ws['!cols'] = [
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 20 },
+    ];
+    
+    XLSX.writeFile(wb, `المستخدمين_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success('تم تصدير قائمة المستخدمين بنجاح');
+  };
+
+  // Open dialogs
+  const openRoleDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setNewRole('');
+    setShowRoleDialog(true);
+  };
+
+  const openEditDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setShowEditDialog(true);
+  };
+
+  const openDetailsDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setShowDetailsDialog(true);
+  };
+
+  const openDeleteDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteAllRoles = async () => {
+    if (!selectedUser) return;
+    
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', selectedUser.user_id);
+
+      if (error) throw error;
+
+      toast.success('تم إلغاء جميع صلاحيات المستخدم');
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
+      fetchUsers();
+      fetchActivityLog();
+    } catch (error) {
+      console.error('Error deleting roles:', error);
+      toast.error('حدث خطأ في إلغاء الصلاحيات');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getActionLabel = (action: 'add_role' | 'remove_role') => {
@@ -362,15 +487,81 @@ export default function UsersManagement() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">إدارة المستخدمين</h2>
-          <p className="text-muted-foreground">عرض وإدارة صلاحيات المستخدمين</p>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            إدارة المستخدمين
+          </h2>
+          <p className="text-muted-foreground">إدارة شاملة للمستخدمين وصلاحياتهم</p>
         </div>
-        <Button onClick={() => { fetchUsers(); fetchActivityLog(); }} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 ml-2" />
-          تحديث
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={exportUsersToExcel} variant="outline" size="sm">
+            <Download className="h-4 w-4 ml-2" />
+            تصدير Excel
+          </Button>
+          <Button onClick={() => { fetchUsers(); fetchActivityLog(); }} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 ml-2" />
+            تحديث
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">إجمالي المستخدمين</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.admins}</p>
+                <p className="text-xs text-muted-foreground">المشرفين</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <UserCog className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.agents}</p>
+                <p className="text-xs text-muted-foreground">الوكلاء</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                <UserCheck className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.customers}</p>
+                <p className="text-xs text-muted-foreground">العملاء</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="users" className="w-full">
@@ -386,17 +577,30 @@ export default function UsersManagement() {
         </TabsList>
 
         <TabsContent value="users" className="space-y-4 mt-4">
-          {/* Search */}
+          {/* Filters */}
           <Card>
             <CardContent className="pt-6">
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="بحث بالاسم، رقم الجوال، أو الجنسية..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10"
-                />
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="بحث بالاسم، رقم الجوال، أو الجنسية..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pr-10"
+                  />
+                </div>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-full md:w-48">
+                    <SelectValue placeholder="فلتر بالصلاحية" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع الصلاحيات</SelectItem>
+                    <SelectItem value="admin">المشرفين</SelectItem>
+                    <SelectItem value="agent">الوكلاء</SelectItem>
+                    <SelectItem value="customer">العملاء</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -404,7 +608,9 @@ export default function UsersManagement() {
           {/* Users Table */}
           <Card>
             <CardHeader>
-              <CardTitle>المستخدمين ({filteredUsers.length})</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>المستخدمين ({filteredUsers.length})</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -425,48 +631,76 @@ export default function UsersManagement() {
                         <TableHead className="text-right">الجنسية</TableHead>
                         <TableHead className="text-right">تاريخ التسجيل</TableHead>
                         <TableHead className="text-right">الصلاحيات</TableHead>
-                        <TableHead className="text-right">إجراءات</TableHead>
+                        <TableHead className="text-right w-[100px]">إجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredUsers.map((user) => (
-                        <TableRow key={user.id}>
+                      {filteredUsers.map((userItem) => (
+                        <TableRow key={userItem.id} className="group">
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                                <UserIcon className="h-5 w-5 text-muted-foreground" />
+                              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                                <UserIcon className="h-5 w-5 text-primary" />
                               </div>
-                              <span className="font-medium">{user.full_name || 'غير محدد'}</span>
+                              <div>
+                                <p className="font-medium">{userItem.full_name || 'غير محدد'}</p>
+                                <p className="text-xs text-muted-foreground">{userItem.user_id.slice(0, 8)}...</p>
+                              </div>
                             </div>
                           </TableCell>
-                          <TableCell>{user.phone || '-'}</TableCell>
-                          <TableCell>{user.nationality || '-'}</TableCell>
+                          <TableCell dir="ltr" className="text-right">{userItem.phone || '-'}</TableCell>
+                          <TableCell>{userItem.nationality || '-'}</TableCell>
                           <TableCell>
-                            {format(new Date(user.created_at), 'dd MMM yyyy', { locale: ar })}
+                            {format(new Date(userItem.created_at), 'dd MMM yyyy', { locale: ar })}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {user.roles.map((role) => (
-                                <button
-                                  key={role}
-                                  onClick={() => handleRemoveRole(user.user_id, role)}
-                                  className="group relative"
-                                  title="اضغط للحذف"
-                                >
-                                  {getRoleBadge(role)}
-                                </button>
-                              ))}
+                              {userItem.roles.length > 0 ? (
+                                userItem.roles.map((role) => (
+                                  <button
+                                    key={role}
+                                    onClick={() => handleRemoveRole(userItem.user_id, role)}
+                                    className="transition-transform hover:scale-105"
+                                    title="اضغط لحذف الصلاحية"
+                                  >
+                                    {getRoleBadge(role)}
+                                  </button>
+                                ))
+                              ) : (
+                                <span className="text-xs text-muted-foreground">لا توجد</span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedUser(user)}
-                            >
-                              <Shield className="h-4 w-4 ml-1" />
-                              إضافة صلاحية
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => openDetailsDialog(userItem)}>
+                                  <Eye className="h-4 w-4 ml-2" />
+                                  عرض التفاصيل
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openEditDialog(userItem)}>
+                                  <Pencil className="h-4 w-4 ml-2" />
+                                  تعديل البيانات
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openRoleDialog(userItem)}>
+                                  <Shield className="h-4 w-4 ml-2" />
+                                  إضافة صلاحية
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => openDeleteDialog(userItem)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 ml-2" />
+                                  إلغاء الصلاحيات
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -653,14 +887,20 @@ export default function UsersManagement() {
       </Tabs>
 
       {/* Add Role Dialog */}
-      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
         <DialogContent dir="rtl">
           <DialogHeader>
-            <DialogTitle>إضافة صلاحية لـ {selectedUser?.full_name}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              إضافة صلاحية لـ {selectedUser?.full_name || 'المستخدم'}
+            </DialogTitle>
+            <DialogDescription>
+              اختر الصلاحية التي تريد منحها لهذا المستخدم
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">الصلاحية</label>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>الصلاحية</Label>
               <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر الصلاحية" />
@@ -669,7 +909,10 @@ export default function UsersManagement() {
                   {ROLE_OPTIONS.filter(r => !selectedUser?.roles.includes(r.value)).length > 0 ? (
                     ROLE_OPTIONS.filter(r => !selectedUser?.roles.includes(r.value)).map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        <div className="flex flex-col">
+                          <span>{option.label}</span>
+                          <span className="text-xs text-muted-foreground">{option.description}</span>
+                        </div>
                       </SelectItem>
                     ))
                   ) : (
@@ -680,18 +923,70 @@ export default function UsersManagement() {
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Current roles */}
+            {selectedUser && selectedUser.roles.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">الصلاحيات الحالية</Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedUser.roles.map(role => getRoleBadge(role))}
+                </div>
+              </div>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedUser(null)}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
               إلغاء
             </Button>
             <Button onClick={handleAddRole} disabled={!newRole || updating}>
               {updating && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-              إضافة
+              إضافة الصلاحية
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <UserEditDialog
+        user={selectedUser}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSuccess={fetchUsers}
+      />
+
+      {/* Details Dialog */}
+      <UserDetailsDialog
+        user={selectedUser}
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              إلغاء جميع صلاحيات المستخدم
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من إلغاء جميع صلاحيات المستخدم <strong>{selectedUser?.full_name}</strong>؟
+              <br />
+              سيفقد المستخدم جميع صلاحياته في النظام.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllRoles}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {updating && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+              تأكيد الإلغاء
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
