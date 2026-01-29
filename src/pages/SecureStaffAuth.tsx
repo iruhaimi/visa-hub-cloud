@@ -6,11 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Shield, Loader2, Lock, Mail, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Shield, Loader2, Lock, Mail, AlertTriangle, Key } from 'lucide-react';
 import { filterArabicChars } from '@/lib/inputFilters';
 import logo from '@/assets/logo.jpeg';
 import AdvancedCaptcha from '@/components/auth/AdvancedCaptcha';
 import TwoFactorVerification from '@/components/auth/TwoFactorVerification';
+import RecoveryCodesDisplay from '@/components/auth/RecoveryCodesDisplay';
+import RecoveryCodeVerification from '@/components/auth/RecoveryCodeVerification';
+import UnlockRequestForm from '@/components/auth/UnlockRequestForm';
+import { generateRecoveryCodes, hashRecoveryCode, verifyRecoveryCode } from '@/lib/recoveryCodeUtils';
 
 export default function SecureStaffAuth() {
   const navigate = useNavigate();
@@ -31,6 +35,12 @@ export default function SecureStaffAuth() {
   const [show2FA, setShow2FA] = useState(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [pendingSession, setPendingSession] = useState<any>(null);
+  
+  // Recovery codes states
+  const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
+  const [showRecoveryVerification, setShowRecoveryVerification] = useState(false);
+  const [showUnlockRequest, setShowUnlockRequest] = useState(false);
 
   // Check lockout status on email change
   useEffect(() => {
@@ -187,9 +197,12 @@ export default function SecureStaffAuth() {
           return;
         }
 
+        // Check if user has recovery codes (first time login check)
+        const hasRecoveryCodes = await checkRecoveryCodes(data.user.id);
+
         // Initiate 2FA
         setPendingUserId(data.user.id);
-        setPendingSession({ user: data.user, roles: userRoles, isAdmin, isAgent });
+        setPendingSession({ user: data.user, roles: userRoles, isAdmin, isAgent, needsRecoveryCodes: !hasRecoveryCodes });
         
         // Sign out temporarily until 2FA is verified
         await supabase.auth.signOut();
@@ -254,6 +267,15 @@ export default function SecureStaffAuth() {
       // Log successful attempt
       await logLoginAttempt(true);
 
+      // Check if this is first login (needs recovery codes)
+      if (pendingSession.needsRecoveryCodes) {
+        const codes = await generateAndSaveRecoveryCodes(pendingUserId);
+        setGeneratedCodes(codes);
+        setShowRecoveryCodes(true);
+        setShow2FA(false);
+        return true;
+      }
+
       toast.success('تم تسجيل الدخول بنجاح');
       
       if (pendingSession.isAdmin) {
@@ -290,15 +312,186 @@ export default function SecureStaffAuth() {
     setPendingSession(null);
   };
 
+  // Generate and save recovery codes for user
+  const generateAndSaveRecoveryCodes = async (userId: string) => {
+    const codes = generateRecoveryCodes(8);
+    
+    // Hash and save codes
+    for (let i = 0; i < codes.length; i++) {
+      const hash = await hashRecoveryCode(codes[i]);
+      await supabase.from('staff_recovery_codes').insert({
+        user_id: userId,
+        code_hash: hash,
+        code_index: i,
+      });
+    }
+    
+    return codes;
+  };
+
+  // Check if user has recovery codes
+  const checkRecoveryCodes = async (userId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from('staff_recovery_codes')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('used', false)
+      .limit(1);
+    
+    return !!data && data.length > 0;
+  };
+
+  // Verify recovery code
+  const verifyRecoveryCodeHandler = async (code: string): Promise<boolean> => {
+    if (!pendingUserId || !pendingSession) return false;
+
+    try {
+      // Get all unused codes for user
+      const { data: codes } = await supabase
+        .from('staff_recovery_codes')
+        .select('*')
+        .eq('user_id', pendingUserId)
+        .eq('used', false);
+
+      if (!codes || codes.length === 0) return false;
+
+      // Check each code
+      for (const codeRecord of codes) {
+        const isValid = await verifyRecoveryCode(code, codeRecord.code_hash);
+        if (isValid) {
+          // Mark as used
+          await supabase
+            .from('staff_recovery_codes')
+            .update({ used: true, used_at: new Date().toISOString() })
+            .eq('id', codeRecord.id);
+
+          // Clear failed login attempts
+          await supabase.rpc('clear_failed_login_attempts', { target_email: email.trim().toLowerCase() });
+
+          // Re-authenticate
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+
+          if (signInError) return false;
+
+          await logLoginAttempt(true);
+          toast.success('تم تسجيل الدخول بنجاح');
+
+          if (pendingSession.isAdmin) {
+            navigate('/admin');
+          } else {
+            navigate('/agent');
+          }
+
+          return true;
+        }
+      }
+
+      return false;
+    } catch (err) {
+      console.error('Recovery code verification error:', err);
+      return false;
+    }
+  };
+
+  // Handle unlock request
+  const handleUnlockRequest = () => {
+    setShowRecoveryVerification(false);
+    setShowUnlockRequest(true);
+  };
+
+  const cancelRecoveryVerification = () => {
+    setShowRecoveryVerification(false);
+    setShow2FA(true);
+  };
+
+  const cancelUnlockRequest = () => {
+    setShowUnlockRequest(false);
+    setShow2FA(true);
+  };
+
+  const handleUnlockSuccess = () => {
+    setShowUnlockRequest(false);
+    setShow2FA(false);
+    setPendingUserId(null);
+    setPendingSession(null);
+  };
+
+  const handleRecoveryCodesComplete = async () => {
+    setShowRecoveryCodes(false);
+    toast.success('تم تسجيل الدخول بنجاح');
+    if (pendingSession?.isAdmin) {
+      navigate('/admin');
+    } else {
+      navigate('/agent');
+    }
+  };
+
+  // Background pattern component
+  const BackgroundPattern = () => (
+    <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      }} />
+    </div>
+  );
+
+  // Show recovery codes display
+  if (showRecoveryCodes && generatedCodes.length > 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+        <BackgroundPattern />
+        <div className="w-full max-w-lg relative z-10">
+          <RecoveryCodesDisplay
+            codes={generatedCodes}
+            onComplete={handleRecoveryCodesComplete}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Show recovery code verification
+  if (showRecoveryVerification && pendingUserId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+        <BackgroundPattern />
+        <div className="w-full max-w-md relative z-10">
+          <RecoveryCodeVerification
+            email={email}
+            onVerify={verifyRecoveryCodeHandler}
+            onCancel={cancelRecoveryVerification}
+            onRequestUnlock={handleUnlockRequest}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Show unlock request form
+  if (showUnlockRequest && pendingUserId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+        <BackgroundPattern />
+        <div className="w-full max-w-md relative z-10">
+          <UnlockRequestForm
+            email={email}
+            userId={pendingUserId}
+            onSuccess={handleUnlockSuccess}
+            onCancel={cancelUnlockRequest}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // Show 2FA verification screen
   if (show2FA) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
-        </div>
+        <BackgroundPattern />
         <div className="w-full max-w-md relative z-10">
           <TwoFactorVerification
             email={email}
@@ -306,6 +499,20 @@ export default function SecureStaffAuth() {
             onResend={resend2FA}
             onCancel={cancel2FA}
           />
+          {/* Recovery code option */}
+          <div className="mt-4 text-center">
+            <Button
+              variant="ghost"
+              className="text-slate-400 hover:text-white"
+              onClick={() => {
+                setShow2FA(false);
+                setShowRecoveryVerification(true);
+              }}
+            >
+              <Key className="h-4 w-4 ml-2" />
+              استخدام رمز الاسترداد
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -313,12 +520,7 @@ export default function SecureStaffAuth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
-      </div>
+      <BackgroundPattern />
 
       <Card className="w-full max-w-md relative z-10 border-slate-700 bg-slate-800/90 backdrop-blur-sm shadow-2xl">
         <CardHeader className="text-center space-y-4 pb-2">
