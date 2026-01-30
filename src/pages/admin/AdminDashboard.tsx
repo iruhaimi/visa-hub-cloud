@@ -21,6 +21,7 @@ import RevenueStatsCard from '@/components/admin/charts/RevenueStatsCard';
 import RecentActivityFeed from '@/components/admin/charts/RecentActivityFeed';
 import PerformanceMetricsCard from '@/components/admin/charts/PerformanceMetricsCard';
 import AgentPerformanceCard from '@/components/admin/charts/AgentPerformanceCard';
+import AgentNotesPerformance from '@/components/admin/charts/AgentNotesPerformance';
 
 interface DashboardStats {
   totalApplications: number;
@@ -256,7 +257,12 @@ export default function AdminDashboard() {
           </div>
 
           {/* Agent Performance */}
-          {isAdmin && <AgentPerformanceCard />}
+          {isAdmin && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <AgentPerformanceCard />
+              <AgentNotesPerformance />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">

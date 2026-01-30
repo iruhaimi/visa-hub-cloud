@@ -197,6 +197,19 @@ export function NotesHistory({ applicationId }: NotesHistoryProps) {
                         </span>
                       </div>
                       <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                      
+                      {/* Reply button for admins on agent notes */}
+                      {isAdmin && note.note_type === 'agent' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2 text-xs"
+                          onClick={() => setNewNote(`رداً على ملاحظة ${note.author_name}: `)}
+                        >
+                          <MessageSquarePlus className="h-3 w-3 ml-1" />
+                          رد على الملاحظة
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
