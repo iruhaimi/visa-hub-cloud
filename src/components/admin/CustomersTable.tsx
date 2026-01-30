@@ -35,6 +35,7 @@ interface CustomersTableProps {
   onViewDetails: (user: UserWithRole) => void;
   onEdit: (user: UserWithRole) => void;
   onAddRole: (user: UserWithRole) => void;
+  isAdmin: boolean;
 }
 
 export function CustomersTable({
@@ -42,6 +43,7 @@ export function CustomersTable({
   onViewDetails,
   onEdit,
   onAddRole,
+  isAdmin,
 }: CustomersTableProps) {
   if (users.length === 0) {
     return (
@@ -94,15 +96,19 @@ export function CustomersTable({
                       <Eye className="h-4 w-4 ml-2" />
                       عرض التفاصيل
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(userItem)}>
-                      <Pencil className="h-4 w-4 ml-2" />
-                      تعديل البيانات
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onAddRole(userItem)}>
-                      <UserCog className="h-4 w-4 ml-2" />
-                      ترقية لموظف
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuItem onClick={() => onEdit(userItem)}>
+                          <Pencil className="h-4 w-4 ml-2" />
+                          تعديل البيانات
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onAddRole(userItem)}>
+                          <UserCog className="h-4 w-4 ml-2" />
+                          ترقية لموظف
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

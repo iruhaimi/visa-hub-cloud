@@ -37,6 +37,7 @@ interface StaffUsersTableProps {
   onAddRole: (user: UserWithRole) => void;
   onDeleteRoles: (user: UserWithRole) => void;
   onRemoveRole: (userId: string, role: AppRole) => void;
+  isAdmin: boolean;
 }
 
 const getRoleBadge = (role: AppRole) => {
@@ -59,6 +60,7 @@ export function StaffUsersTable({
   onAddRole,
   onDeleteRoles,
   onRemoveRole,
+  isAdmin,
 }: StaffUsersTableProps) {
   if (users.length === 0) {
     return (
@@ -104,14 +106,18 @@ export function StaffUsersTable({
                 <div className="flex flex-wrap gap-1">
                   {userItem.roles.length > 0 ? (
                     userItem.roles.map((role) => (
-                      <button
-                        key={role}
-                        onClick={() => onRemoveRole(userItem.user_id, role)}
-                        className="transition-transform hover:scale-105"
-                        title="اضغط لحذف الصلاحية"
-                      >
-                        {getRoleBadge(role)}
-                      </button>
+                      isAdmin ? (
+                        <button
+                          key={role}
+                          onClick={() => onRemoveRole(userItem.user_id, role)}
+                          className="transition-transform hover:scale-105"
+                          title="اضغط لحذف الصلاحية"
+                        >
+                          {getRoleBadge(role)}
+                        </button>
+                      ) : (
+                        <span key={role}>{getRoleBadge(role)}</span>
+                      )
                     ))
                   ) : (
                     <span className="text-xs text-muted-foreground">لا توجد</span>
@@ -130,22 +136,26 @@ export function StaffUsersTable({
                       <Eye className="h-4 w-4 ml-2" />
                       عرض التفاصيل
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(userItem)}>
-                      <Pencil className="h-4 w-4 ml-2" />
-                      تعديل البيانات
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onAddRole(userItem)}>
-                      <Shield className="h-4 w-4 ml-2" />
-                      إضافة صلاحية
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => onDeleteRoles(userItem)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 ml-2" />
-                      إلغاء الصلاحيات
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuItem onClick={() => onEdit(userItem)}>
+                          <Pencil className="h-4 w-4 ml-2" />
+                          تعديل البيانات
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onAddRole(userItem)}>
+                          <Shield className="h-4 w-4 ml-2" />
+                          إضافة صلاحية
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => onDeleteRoles(userItem)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 ml-2" />
+                          إلغاء الصلاحيات
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
