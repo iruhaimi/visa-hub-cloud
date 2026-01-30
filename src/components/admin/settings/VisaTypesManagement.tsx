@@ -321,6 +321,71 @@ function SortableVisaRow({
   );
 }
 
+// Sortable Country Group Component for reordering countries
+function SortableCountryGroup({
+  country,
+  visaCount,
+  activeCount,
+}: {
+  country: Country;
+  visaCount: number;
+  activeCount: number;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: country.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "border rounded-lg overflow-hidden",
+        isDragging && "bg-primary/5 shadow-lg z-50"
+      )}
+    >
+      <div className="flex items-center justify-between p-4 bg-background">
+        <div className="flex items-center gap-3">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded flex-shrink-0"
+          >
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </button>
+          {country.flag_url && (
+            <img src={country.flag_url} alt="" className="h-6 w-9 rounded shadow-sm" />
+          )}
+          <div>
+            <h3 className="font-semibold text-lg">{country.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {visaCount} نوع تأشيرة • {activeCount} نشطة
+            </p>
+          </div>
+        </div>
+        <Badge variant={activeCount === visaCount ? "default" : "secondary"} className="gap-1">
+          {activeCount === visaCount ? (
+            <CheckCircle2 className="h-3 w-3" />
+          ) : (
+            <span>{activeCount}/{visaCount}</span>
+          )}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
 export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: VisaTypesManagementProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [editingVisa, setEditingVisa] = useState<VisaType | null>(null);
@@ -334,6 +399,8 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
   const [inlinePrice, setInlinePrice] = useState('');
   const [reorderCountryId, setReorderCountryId] = useState<string | null>(null);
   const [reorderedVisas, setReorderedVisas] = useState<VisaType[]>([]);
+  const [isCountryReorderMode, setIsCountryReorderMode] = useState(false);
+  const [reorderedCountryGroups, setReorderedCountryGroups] = useState<{ country: Country; visas: VisaType[] }[]>([]);
   const queryClient = useQueryClient();
 
   const sensors = useSensors(
@@ -581,6 +648,58 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
     setReorderedVisas([]);
   };
 
+  // ترتيب الدول
+  const reorderCountriesMutation = useMutation({
+    mutationFn: async (newOrder: { id: string; display_order: number }[]) => {
+      for (const item of newOrder) {
+        const { error } = await supabase
+          .from('countries')
+          .update({ display_order: item.display_order })
+          .eq('id', item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-countries'] });
+      toast.success('تم حفظ ترتيب الدول');
+      setIsCountryReorderMode(false);
+      setReorderedCountryGroups([]);
+    },
+    onError: (error) => {
+      toast.error('خطأ: ' + error.message);
+    },
+  });
+
+  const startCountryReorder = (groups: { country: Country; visas: VisaType[] }[]) => {
+    const sorted = [...groups].sort((a, b) => (a.country.display_order || 0) - (b.country.display_order || 0));
+    setReorderedCountryGroups(sorted);
+    setIsCountryReorderMode(true);
+  };
+
+  const handleCountryDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setReorderedCountryGroups((items) => {
+        const oldIndex = items.findIndex((i) => i.country.id === active.id);
+        const newIndex = items.findIndex((i) => i.country.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const saveCountryOrder = () => {
+    const newOrder = reorderedCountryGroups.map((g, index) => ({
+      id: g.country.id,
+      display_order: index + 1,
+    }));
+    reorderCountriesMutation.mutate(newOrder);
+  };
+
+  const cancelCountryReorder = () => {
+    setIsCountryReorderMode(false);
+    setReorderedCountryGroups([]);
+  };
+
   // فلترة أنواع التأشيرات
   const filteredVisaTypes = useMemo(() => {
     return visaTypes.filter(visa => {
@@ -615,8 +734,13 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
       }
     });
 
-    // ترتيب حسب اسم الدولة
-    return Object.values(groups).sort((a, b) => a.country.name.localeCompare(b.country.name, 'ar'));
+    // ترتيب حسب display_order ثم اسم الدولة
+    return Object.values(groups).sort((a, b) => {
+      const orderA = a.country.display_order || 999;
+      const orderB = b.country.display_order || 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.country.name.localeCompare(b.country.name, 'ar');
+    });
   }, [filteredVisaTypes, countries]);
 
   // إحصائيات
@@ -782,7 +906,81 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
         </CardHeader>
 
         <CardContent className="p-4">
+          {/* زر ترتيب الدول */}
+          {groupedByCountry.length > 1 && (
+            <div className="flex items-center justify-between p-3 mb-4 bg-muted/30 rounded-lg border">
+              {isCountryReorderMode ? (
+                <div className="flex items-center gap-2 w-full justify-between">
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <GripVertical className="h-4 w-4" />
+                    اسحب الدول لتغيير ترتيب ظهورها
+                  </span>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      onClick={saveCountryOrder}
+                      disabled={reorderCountriesMutation.isPending}
+                      className="gap-1"
+                    >
+                      {reorderCountriesMutation.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-3 w-3" />
+                      )}
+                      حفظ الترتيب
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={cancelCountryReorder}
+                      className="gap-1"
+                    >
+                      <XCircle className="h-3 w-3" />
+                      إلغاء
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => startCountryReorder(groupedByCountry)}
+                  className="gap-2"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  تغيير ترتيب الدول
+                </Button>
+              )}
+            </div>
+          )}
+
           {groupedByCountry.length > 0 ? (
+            isCountryReorderMode ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleCountryDragEnd}
+              >
+                <SortableContext
+                  items={reorderedCountryGroups.map(g => g.country.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {reorderedCountryGroups.map(({ country, visas }) => {
+                      const activeCount = visas.filter(v => v.is_active).length;
+                      return (
+                        <SortableCountryGroup
+                          key={country.id}
+                          country={country}
+                          visaCount={visas.length}
+                          activeCount={activeCount}
+                        />
+                      );
+                    })}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            ) : (
             <div className="space-y-3">
               {groupedByCountry.map(({ country, visas }) => {
                 const isExpanded = expandedCountries.includes(country.id);
@@ -944,6 +1142,7 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                 );
               })}
             </div>
+            )
           ) : (
             <div className="text-center py-16">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
