@@ -81,6 +81,7 @@ interface UserWithRole {
   nationality: string | null;
   created_at: string;
   roles: AppRole[];
+  email?: string;
 }
 
 interface ActivityLogEntry {
@@ -159,12 +160,23 @@ export default function UsersManagement() {
 
       if (rolesError) throw rolesError;
 
-      const usersWithRoles = profiles?.map(profile => ({
-        ...profile,
-        roles: roles?.filter(r => r.user_id === profile.user_id).map(r => r.role) || [],
-      })) || [];
+      // Fetch emails for all users (admin only function)
+      const usersWithRolesAndEmails = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          // Get email using the secure database function
+          const { data: email } = await supabase.rpc('get_user_email', {
+            target_user_id: profile.user_id
+          });
 
-      setUsers(usersWithRoles);
+          return {
+            ...profile,
+            roles: roles?.filter(r => r.user_id === profile.user_id).map(r => r.role) || [],
+            email: email || undefined,
+          };
+        })
+      );
+
+      setUsers(usersWithRolesAndEmails);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('حدث خطأ في تحميل المستخدمين');
