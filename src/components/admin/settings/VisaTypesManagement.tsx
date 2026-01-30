@@ -829,183 +829,115 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                       </CollapsibleTrigger>
                       
                       <CollapsibleContent>
-                        <div className="divide-y">
-                          {visas.map((visa) => (
-                            <div 
-                              key={visa.id} 
-                              className={cn(
-                                "p-4 flex items-center justify-between gap-4 group transition-colors",
-                                !visa.is_active && "bg-muted/30"
-                              )}
-                            >
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className={cn(
-                                    "font-medium",
-                                    !visa.is_active && "text-muted-foreground"
-                                  )}>
-                                    {visa.name}
-                                  </h4>
-                                  <Badge 
-                                    variant={visa.entry_type === 'multiple' ? 'default' : 'secondary'} 
-                                    className="text-xs"
-                                  >
-                                    {visa.entry_type === 'single' ? 'دخول واحد' : 'دخول متعدد'}
-                                  </Badge>
-                                  {!visa.is_active && (
-                                    <Badge variant="outline" className="text-xs text-muted-foreground">
-                                      <EyeOff className="h-3 w-3 ml-1" />
-                                      غير نشط
-                                    </Badge>
+                        {/* زر تغيير الترتيب */}
+                        <div className="flex items-center justify-between p-3 bg-muted/30 border-b">
+                          {reorderCountryId === country.id ? (
+                            <div className="flex items-center gap-2 w-full justify-between">
+                              <span className="text-sm text-muted-foreground flex items-center gap-2">
+                                <GripVertical className="h-4 w-4" />
+                                اسحب العناصر لتغيير الترتيب
+                              </span>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  onClick={saveVisaOrder}
+                                  disabled={reorderVisasMutation.isPending}
+                                  className="gap-1"
+                                >
+                                  {reorderVisasMutation.isPending ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 className="h-3 w-3" />
                                   )}
-                                </div>
-                                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3.5 w-3.5" />
-                                    {visa.processing_days} أيام
-                                  </span>
-                                  {visa.validity_days && (
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="h-3.5 w-3.5" />
-                                      صلاحية {visa.validity_days} يوم
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* السعر - قابل للتعديل inline */}
-                              <div className="flex items-center gap-2">
-                                {inlineEditingId === visa.id ? (
-                                  <div className="flex items-center gap-1">
-                                    <Input
-                                      type="number"
-                                      value={inlinePrice}
-                                      onChange={(e) => setInlinePrice(e.target.value)}
-                                      className="w-24 h-8 text-sm"
-                                      autoFocus
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') saveInlinePrice(visa.id);
-                                        if (e.key === 'Escape') setInlineEditingId(null);
-                                      }}
-                                    />
-                                    <Button 
-                                      size="icon" 
-                                      className="h-8 w-8"
-                                      onClick={() => saveInlinePrice(visa.id)}
-                                      disabled={updatePriceMutation.isPending}
-                                    >
-                                      {updatePriceMutation.isPending ? (
-                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                      ) : (
-                                        <Save className="h-3 w-3" />
-                                      )}
-                                    </Button>
-                                    <Button 
-                                      size="icon" 
-                                      variant="ghost"
-                                      className="h-8 w-8"
-                                      onClick={() => setInlineEditingId(null)}
-                                    >
-                                      <XCircle className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        onClick={() => startInlineEdit(visa)}
-                                        className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer"
-                                      >
-                                        <SARSymbol className="h-3.5 w-3.5 text-primary" />
-                                        <span className="font-bold text-primary text-lg">
-                                          {visa.price.toLocaleString()}
-                                        </span>
-                                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mr-1" />
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>انقر للتعديل السريع</TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </div>
-
-                              {/* الإجراءات */}
-                              <div className="flex items-center gap-1">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant={visa.is_active ? "ghost" : "outline"}
-                                      size="icon"
-                                      className={cn(
-                                        "h-8 w-8",
-                                        visa.is_active 
-                                          ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" 
-                                          : "text-gray-500 hover:text-gray-600 hover:bg-gray-50"
-                                      )}
-                                      onClick={() => toggleActiveMutation.mutate({ 
-                                        id: visa.id, 
-                                        is_active: !visa.is_active 
-                                      })}
-                                    >
-                                      {visa.is_active ? (
-                                        <Eye className="h-4 w-4" />
-                                      ) : (
-                                        <EyeOff className="h-4 w-4" />
-                                      )}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {visa.is_active ? 'إلغاء التفعيل' : 'تفعيل'}
-                                  </TooltipContent>
-                                </Tooltip>
-
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon"
-                                      className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
-                                      onClick={() => duplicateVisa(visa)}
-                                    >
-                                      <Copy className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>نسخ لإنشاء جديد</TooltipContent>
-                                </Tooltip>
-                                
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon"
-                                      className="h-8 w-8 hover:bg-amber-50 hover:text-amber-600"
-                                      onClick={() => openEdit(visa)}
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>تعديل كامل</TooltipContent>
-                                </Tooltip>
-                                
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                                      onClick={() => {
-                                        setVisaToDelete(visa);
-                                        setDeleteDialogOpen(true);
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>حذف</TooltipContent>
-                                </Tooltip>
+                                  حفظ الترتيب
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={cancelVisaReorder}
+                                  className="gap-1"
+                                >
+                                  <XCircle className="h-3 w-3" />
+                                  إلغاء
+                                </Button>
                               </div>
                             </div>
-                          ))}
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => startReorderVisas(country.id, visas)}
+                              className="gap-2"
+                            >
+                              <ArrowUpDown className="h-4 w-4" />
+                              تغيير ترتيب التأشيرات
+                            </Button>
+                          )}
                         </div>
+
+                        {/* عرض التأشيرات */}
+                        {reorderCountryId === country.id ? (
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleVisaDragEnd}
+                          >
+                            <SortableContext
+                              items={reorderedVisas.map(v => v.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="divide-y">
+                                {reorderedVisas.map((visa) => (
+                                  <SortableVisaRow
+                                    key={visa.id}
+                                    visa={visa}
+                                    isReorderMode={true}
+                                    onEdit={openEdit}
+                                    onDelete={(v) => {
+                                      setVisaToDelete(v);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                    onDuplicate={duplicateVisa}
+                                    onToggleActive={(id, is_active) => toggleActiveMutation.mutate({ id, is_active })}
+                                    onInlineEditStart={startInlineEdit}
+                                    inlineEditingId={inlineEditingId}
+                                    inlinePrice={inlinePrice}
+                                    setInlinePrice={setInlinePrice}
+                                    onInlineSave={saveInlinePrice}
+                                    onInlineCancel={() => setInlineEditingId(null)}
+                                    updatePricePending={updatePriceMutation.isPending}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        ) : (
+                          <div className="divide-y">
+                            {visas
+                              .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                              .map((visa) => (
+                              <SortableVisaRow
+                                key={visa.id}
+                                visa={visa}
+                                isReorderMode={false}
+                                onEdit={openEdit}
+                                onDelete={(v) => {
+                                  setVisaToDelete(v);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                onDuplicate={duplicateVisa}
+                                onToggleActive={(id, is_active) => toggleActiveMutation.mutate({ id, is_active })}
+                                onInlineEditStart={startInlineEdit}
+                                inlineEditingId={inlineEditingId}
+                                inlinePrice={inlinePrice}
+                                setInlinePrice={setInlinePrice}
+                                onInlineSave={saveInlinePrice}
+                                onInlineCancel={() => setInlineEditingId(null)}
+                                updatePricePending={updatePriceMutation.isPending}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </CollapsibleContent>
                     </div>
                   </Collapsible>
