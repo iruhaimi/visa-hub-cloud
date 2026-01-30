@@ -370,6 +370,13 @@ export default function UsersManagement() {
       return (isOnlyCustomer || hasNoRoles) && filterBySearchAndDate(u);
     });
 
+    // Count customers same way as list: only customer role OR no roles, and NOT admin/agent
+    const customersCount = users.filter(u => {
+      const isOnlyCustomer = u.roles.length === 1 && u.roles.includes('customer');
+      const hasNoRoles = u.roles.length === 0;
+      return isOnlyCustomer || hasNoRoles;
+    }).length;
+
     return {
       staffUsers: staff,
       customerUsers: customers,
@@ -377,7 +384,7 @@ export default function UsersManagement() {
         total: users.length,
         admins: users.filter(u => u.roles.includes('admin')).length,
         agents: users.filter(u => u.roles.includes('agent')).length,
-        customers: users.filter(u => u.roles.includes('customer') && !u.roles.includes('admin') && !u.roles.includes('agent')).length,
+        customers: customersCount,
       }
     };
   }, [users, debouncedSearchQuery, dateFrom, dateTo]);
