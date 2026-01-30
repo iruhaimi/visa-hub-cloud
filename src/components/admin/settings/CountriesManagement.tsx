@@ -5,16 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +31,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from '@/components/ui/tooltip';
 import {
   AlertDialog,
@@ -62,10 +55,31 @@ import {
   MapPin,
   Flag,
   Eye,
-  EyeOff
+  EyeOff,
+  GripVertical,
+  ArrowUpDown,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // قائمة الدول العالمية مع أكوادها
 const WORLD_COUNTRIES = [
@@ -171,12 +185,147 @@ export interface Country {
   code: string;
   flag_url: string | null;
   is_active: boolean;
+  display_order?: number;
 }
 
 interface CountriesManagementProps {
   countries: Country[];
   isLoading: boolean;
   isRTL: boolean;
+}
+
+// Sortable Country Row Component
+function SortableCountryRow({ 
+  country, 
+  isReorderMode,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}: { 
+  country: Country; 
+  isReorderMode: boolean;
+  onEdit: (country: Country) => void;
+  onDelete: (country: Country) => void;
+  onToggleActive: (id: string, is_active: boolean) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: country.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-4 p-4 bg-background border-b last:border-b-0 group transition-colors",
+        isDragging && "bg-primary/5 shadow-lg z-50",
+        !country.is_active && "bg-muted/30"
+      )}
+    >
+      {isReorderMode && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </button>
+      )}
+
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {country.flag_url ? (
+          <img 
+            src={country.flag_url} 
+            alt="" 
+            className="h-6 w-9 object-cover rounded shadow-sm border flex-shrink-0"
+          />
+        ) : (
+          <div className="h-6 w-9 bg-muted rounded flex items-center justify-center flex-shrink-0">
+            <Flag className="h-3 w-3 text-muted-foreground" />
+          </div>
+        )}
+        <span className="font-medium truncate">{country.name}</span>
+      </div>
+
+      <Badge variant="secondary" className="font-mono flex-shrink-0">
+        {country.code}
+      </Badge>
+
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {country.is_active ? (
+          <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1">
+            <Eye className="h-3 w-3" />
+            نشطة
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="gap-1">
+            <EyeOff className="h-3 w-3" />
+            مخفية
+          </Badge>
+        )}
+      </div>
+
+      {!isReorderMode && (
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={country.is_active ? "ghost" : "outline"}
+                size="icon"
+                className={cn(
+                  "h-8 w-8",
+                  country.is_active 
+                    ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" 
+                    : "text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                )}
+                onClick={() => onToggleActive(country.id, !country.is_active)}
+              >
+                {country.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{country.is_active ? 'إخفاء' : 'تفعيل'}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600"
+                onClick={() => onEdit(country)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>تعديل</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                onClick={() => onDelete(country)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>حذف</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function CountriesManagement({ countries, isLoading, isRTL }: CountriesManagementProps) {
@@ -187,7 +336,16 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [countryToDelete, setCountryToDelete] = useState<Country | null>(null);
   const [useCustomCountry, setUseCustomCountry] = useState(false);
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [orderedCountries, setOrderedCountries] = useState<Country[]>([]);
   const queryClient = useQueryClient();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const [formData, setFormData] = useState({
     name: '',
@@ -210,7 +368,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
       flag_url: country.flag_url || '',
       is_active: country.is_active,
     });
-    setUseCustomCountry(true); // للسماح بتعديل الاسم
+    setUseCustomCountry(true);
     setIsOpen(true);
   };
 
@@ -238,6 +396,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
           .eq('id', editingCountry.id);
         if (error) throw error;
       } else {
+        const maxOrder = Math.max(...countries.map(c => c.display_order || 0), 0);
         const { error } = await supabase
           .from('countries')
           .insert({
@@ -245,6 +404,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
             code: formData.code.toUpperCase(),
             flag_url: formData.flag_url || null,
             is_active: formData.is_active,
+            display_order: maxOrder + 1,
           });
         if (error) throw error;
       }
@@ -290,18 +450,70 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
     },
   });
 
-  // فلترة الدول المتاحة (غير المضافة مسبقاً)
+  const reorderMutation = useMutation({
+    mutationFn: async (newOrder: { id: string; display_order: number }[]) => {
+      for (const item of newOrder) {
+        const { error } = await supabase
+          .from('countries')
+          .update({ display_order: item.display_order })
+          .eq('id', item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-countries'] });
+      toast.success('تم حفظ الترتيب الجديد');
+      setIsReorderMode(false);
+    },
+    onError: (error) => {
+      toast.error('خطأ في حفظ الترتيب: ' + error.message);
+    },
+  });
+
+  const startReorderMode = () => {
+    const sorted = [...countries].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    setOrderedCountries(sorted);
+    setIsReorderMode(true);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setOrderedCountries((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const saveNewOrder = () => {
+    const newOrder = orderedCountries.map((c, index) => ({
+      id: c.id,
+      display_order: index + 1,
+    }));
+    reorderMutation.mutate(newOrder);
+  };
+
+  const cancelReorderMode = () => {
+    setIsReorderMode(false);
+    setOrderedCountries([]);
+  };
+
   const availableCountries = WORLD_COUNTRIES.filter(
     wc => !countries.some(c => c.code.toUpperCase() === wc.code.toUpperCase())
   );
 
-  // فلترة حسب البحث
+  const sortedCountries = [...countries].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
   const filteredCountries = searchQuery
-    ? countries.filter(c => 
+    ? sortedCountries.filter(c => 
         c.name.includes(searchQuery) || 
         c.code.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : countries;
+    : sortedCountries;
+
+  const displayCountries = isReorderMode ? orderedCountries : filteredCountries;
 
   if (isLoading) {
     return (
@@ -312,7 +524,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
   }
 
   return (
-    <>
+    <TooltipProvider delayDuration={0}>
       <Card className="border-0 shadow-lg">
         <CardHeader className="bg-gradient-to-l from-primary/5 to-transparent border-b">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -327,145 +539,126 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
                 </CardDescription>
               </div>
             </div>
-            <Button 
-              onClick={() => setIsOpen(true)} 
-              className="gap-2 shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              إضافة دولة
-            </Button>
+            <div className="flex items-center gap-2">
+              {!isReorderMode ? (
+                <>
+                  <Button 
+                    variant="outline"
+                    onClick={startReorderMode}
+                    className="gap-2"
+                    disabled={countries.length < 2}
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                    تغيير الترتيب
+                  </Button>
+                  <Button 
+                    onClick={() => setIsOpen(true)} 
+                    className="gap-2 shadow-sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    إضافة دولة
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline"
+                    onClick={cancelReorderMode}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button 
+                    onClick={saveNewOrder}
+                    disabled={reorderMutation.isPending}
+                    className="gap-2"
+                  >
+                    {reorderMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4" />
+                    )}
+                    حفظ الترتيب
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* شريط البحث */}
-          <div className="relative mt-4">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ابحث عن دولة..."
-              className="pr-10 bg-background"
-            />
-          </div>
+          {isReorderMode && (
+            <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center gap-2">
+              <GripVertical className="h-5 w-5 text-amber-600" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                اسحب وأفلت الدول لتغيير ترتيبها، ثم اضغط "حفظ الترتيب"
+              </p>
+            </div>
+          )}
+
+          {!isReorderMode && (
+            <div className="relative mt-4">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ابحث عن دولة..."
+                className="pr-10 bg-background"
+              />
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className={cn("font-semibold", isRTL && "text-right")}>
-                    الدولة
-                  </TableHead>
-                  <TableHead className={cn("font-semibold", isRTL && "text-right")}>
-                    الرمز
-                  </TableHead>
-                  <TableHead className={cn("font-semibold text-center", isRTL && "text-right")}>
-                    الحالة
-                  </TableHead>
-                  <TableHead className={cn("font-semibold text-center", isRTL && "text-right")}>
-                    الإجراءات
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCountries.map((country) => (
-                  <TableRow key={country.id} className="group">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {country.flag_url ? (
-                          <img 
-                            src={country.flag_url} 
-                            alt="" 
-                            className="h-6 w-9 object-cover rounded shadow-sm border"
-                          />
-                        ) : (
-                          <div className="h-6 w-9 bg-muted rounded flex items-center justify-center">
-                            <Flag className="h-3 w-3 text-muted-foreground" />
-                          </div>
-                        )}
-                        <span className="font-medium">{country.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-mono">
-                        {country.code}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Switch
-                          checked={country.is_active}
-                          onCheckedChange={(checked) => 
-                            toggleActiveMutation.mutate({ id: country.id, is_active: checked })
-                          }
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {country.is_active ? (
-                            <span className="text-emerald-600 flex items-center gap-1">
-                              <Eye className="h-3 w-3" /> نشطة
-                            </span>
-                          ) : (
-                            <span className="text-amber-600 flex items-center gap-1">
-                              <EyeOff className="h-3 w-3" /> مخفية
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => openEdit(country)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>تعديل</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => {
-                                setCountryToDelete(country);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>حذف</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredCountries.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                        <MapPin className="h-10 w-10 opacity-50" />
-                        <p>{searchQuery ? 'لا توجد نتائج للبحث' : 'لا توجد دول مضافة'}</p>
-                        {!searchQuery && (
-                          <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
-                            <Plus className="h-4 w-4 ml-1" />
-                            أضف أول دولة
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {isReorderMode ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={orderedCountries.map(c => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="divide-y">
+                  {orderedCountries.map((country) => (
+                    <SortableCountryRow
+                      key={country.id}
+                      country={country}
+                      isReorderMode={true}
+                      onEdit={openEdit}
+                      onDelete={(c) => { setCountryToDelete(c); setDeleteDialogOpen(true); }}
+                      onToggleActive={(id, is_active) => toggleActiveMutation.mutate({ id, is_active })}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <div className="divide-y">
+              {displayCountries.map((country) => (
+                <SortableCountryRow
+                  key={country.id}
+                  country={country}
+                  isReorderMode={false}
+                  onEdit={openEdit}
+                  onDelete={(c) => { setCountryToDelete(c); setDeleteDialogOpen(true); }}
+                  onToggleActive={(id, is_active) => toggleActiveMutation.mutate({ id, is_active })}
+                />
+              ))}
+              {displayCountries.length === 0 && (
+                <div className="text-center py-12">
+                  <MapPin className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">
+                    {searchQuery ? 'لا توجد نتائج للبحث' : 'لا توجد دول مضافة'}
+                  </p>
+                  {!searchQuery && (
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => setIsOpen(true)}>
+                      <Plus className="h-4 w-4 ml-1" />
+                      أضف أول دولة
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -488,7 +681,6 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
           <div className="space-y-4 py-4">
             {!editingCountry && (
               <>
-                {/* اختيار من القائمة */}
                 <div className="space-y-2">
                   <Label>اختر من القائمة</Label>
                   <Popover open={countryPickerOpen} onOpenChange={setCountryPickerOpen}>
@@ -551,25 +743,21 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
                   <div className="flex-1 h-px bg-border" />
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="custom-country"
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox
                     checked={useCustomCountry}
                     onCheckedChange={(checked) => {
-                      setUseCustomCountry(checked);
+                      setUseCustomCountry(checked === true);
                       if (checked) {
                         setFormData({ ...formData, name: '', code: '', flag_url: '' });
                       }
                     }}
                   />
-                  <Label htmlFor="custom-country" className="cursor-pointer">
-                    إضافة دولة مخصصة غير موجودة في القائمة
-                  </Label>
-                </div>
+                  <span>إضافة دولة مخصصة غير موجودة في القائمة</span>
+                </label>
               </>
             )}
 
-            {/* حقول الإدخال اليدوي */}
             {(useCustomCountry || editingCountry) && (
               <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
                 <div className="space-y-2">
@@ -619,19 +807,22 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
               </div>
             )}
 
-            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-              <Switch
-                id="is-active"
+            <label className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg cursor-pointer">
+              <Checkbox
                 checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked === true })}
+                className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
               />
-              <Label htmlFor="is-active" className="cursor-pointer flex-1">
-                <span className="font-medium">الدولة نشطة</span>
+              <div className="flex-1">
+                <span className="font-medium flex items-center gap-2">
+                  {formData.is_active ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                  الدولة نشطة
+                </span>
                 <p className="text-xs text-muted-foreground">
                   ستظهر للعملاء في قائمة الوجهات
                 </p>
-              </Label>
-            </div>
+              </div>
+            </label>
 
             <Button 
               className="w-full" 
@@ -677,6 +868,6 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </TooltipProvider>
   );
 }
