@@ -34,6 +34,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { generateApplicationPDF } from '@/lib/generateApplicationPDF';
+import { NotesHistory } from '@/components/admin/NotesHistory';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -493,24 +494,8 @@ export default function AgentApplicationDetail() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Agent Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>ملاحظات الوكيل</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                placeholder="أضف ملاحظاتك هنا..."
-                value={agentNotes}
-                onChange={(e) => setAgentNotes(e.target.value)}
-                rows={5}
-              />
-              <Button onClick={handleSaveNotes} disabled={updating} className="w-full">
-                <Save className="h-4 w-4 ml-2" />
-                حفظ الملاحظات
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Notes History - New System */}
+          <NotesHistory applicationId={application.id} />
 
           {/* Status History */}
           <Card>

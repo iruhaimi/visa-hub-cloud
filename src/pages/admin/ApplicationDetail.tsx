@@ -35,6 +35,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { generateApplicationPDF } from '@/lib/generateApplicationPDF';
+import { NotesHistory } from '@/components/admin/NotesHistory';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -557,38 +558,8 @@ export default function ApplicationDetail() {
             </CardContent>
           </Card>
 
-          {/* Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>ملاحظات الفريق</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">ملاحظات الوكيل</label>
-                <Textarea
-                  value={agentNotes}
-                  onChange={(e) => setAgentNotes(e.target.value)}
-                  placeholder="أضف ملاحظاتك هنا..."
-                  rows={3}
-                />
-              </div>
-              {isAdmin && (
-                <div>
-                  <label className="text-sm font-medium mb-1 block">ملاحظات المشرف</label>
-                  <Textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="ملاحظات للمشرفين فقط..."
-                    rows={3}
-                  />
-                </div>
-              )}
-              <Button onClick={handleSaveNotes} disabled={updating} className="w-full">
-                {updating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Save className="h-4 w-4 ml-2" />}
-                حفظ الملاحظات
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Notes History - New System */}
+          <NotesHistory applicationId={application.id} />
 
           {/* Status History */}
           <Card>
