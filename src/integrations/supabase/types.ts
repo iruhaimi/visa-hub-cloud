@@ -253,6 +253,7 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          display_order: number | null
           flag_url: string | null
           id: string
           is_active: boolean | null
@@ -262,6 +263,7 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string
+          display_order?: number | null
           flag_url?: string | null
           id?: string
           is_active?: boolean | null
@@ -271,6 +273,7 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string
+          display_order?: number | null
           flag_url?: string | null
           id?: string
           is_active?: boolean | null
@@ -806,6 +809,7 @@ export type Database = {
           country_id: string
           created_at: string
           description: string | null
+          display_order: number | null
           entry_type: string | null
           fee_type: string | null
           government_fees: number | null
@@ -827,6 +831,7 @@ export type Database = {
           country_id: string
           created_at?: string
           description?: string | null
+          display_order?: number | null
           entry_type?: string | null
           fee_type?: string | null
           government_fees?: number | null
@@ -848,6 +853,7 @@ export type Database = {
           country_id?: string
           created_at?: string
           description?: string | null
+          display_order?: number | null
           entry_type?: string | null
           fee_type?: string | null
           government_fees?: number | null

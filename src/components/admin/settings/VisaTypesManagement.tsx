@@ -71,12 +71,31 @@ import {
   Globe,
   TrendingUp,
   Layers,
-  Save
+  Save,
+  GripVertical,
+  ArrowUpDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import SARSymbol from '@/components/ui/SARSymbol';
 import type { Country } from './CountriesManagement';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface VisaType {
   id: string;
@@ -97,6 +116,7 @@ interface VisaType {
   price_notes_en: string | null;
   fee_type: string | null;
   country?: Country;
+  display_order?: number;
 }
 
 interface VisaTypesManagementProps {
@@ -104,6 +124,201 @@ interface VisaTypesManagementProps {
   countries: Country[];
   isLoading: boolean;
   isRTL: boolean;
+}
+
+// Sortable Visa Row Component
+function SortableVisaRow({
+  visa,
+  isReorderMode,
+  onEdit,
+  onDelete,
+  onDuplicate,
+  onToggleActive,
+  onInlineEditStart,
+  inlineEditingId,
+  inlinePrice,
+  setInlinePrice,
+  onInlineSave,
+  onInlineCancel,
+  updatePricePending,
+}: {
+  visa: VisaType;
+  isReorderMode: boolean;
+  onEdit: (visa: VisaType) => void;
+  onDelete: (visa: VisaType) => void;
+  onDuplicate: (visa: VisaType) => void;
+  onToggleActive: (id: string, is_active: boolean) => void;
+  onInlineEditStart: (visa: VisaType) => void;
+  inlineEditingId: string | null;
+  inlinePrice: string;
+  setInlinePrice: (value: string) => void;
+  onInlineSave: (id: string) => void;
+  onInlineCancel: () => void;
+  updatePricePending: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: visa.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "p-4 flex items-center justify-between gap-4 group transition-colors border-b last:border-b-0",
+        isDragging && "bg-primary/5 shadow-lg z-50",
+        !visa.is_active && "bg-muted/30"
+      )}
+    >
+      {isReorderMode && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded flex-shrink-0"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </button>
+      )}
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className={cn("font-medium", !visa.is_active && "text-muted-foreground")}>
+            {visa.name}
+          </h4>
+          <Badge variant={visa.entry_type === 'multiple' ? 'default' : 'secondary'} className="text-xs">
+            {visa.entry_type === 'single' ? 'دخول واحد' : 'دخول متعدد'}
+          </Badge>
+          {!visa.is_active && (
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              <EyeOff className="h-3 w-3 ml-1" />
+              غير نشط
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            {visa.processing_days} أيام
+          </span>
+          {visa.validity_days && (
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5" />
+              صلاحية {visa.validity_days} يوم
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* السعر */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {inlineEditingId === visa.id ? (
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              value={inlinePrice}
+              onChange={(e) => setInlinePrice(e.target.value)}
+              className="w-24 h-8 text-sm"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onInlineSave(visa.id);
+                if (e.key === 'Escape') onInlineCancel();
+              }}
+            />
+            <Button 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => onInlineSave(visa.id)}
+              disabled={updatePricePending}
+            >
+              {updatePricePending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+            </Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onInlineCancel}>
+              <XCircle className="h-3 w-3" />
+            </Button>
+          </div>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => !isReorderMode && onInlineEditStart(visa)}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary/5 transition-colors",
+                  !isReorderMode && "hover:bg-primary/10 cursor-pointer"
+                )}
+                disabled={isReorderMode}
+              >
+                <SARSymbol className="h-3.5 w-3.5 text-primary" />
+                <span className="font-bold text-primary text-lg">{visa.price.toLocaleString()}</span>
+                {!isReorderMode && (
+                  <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mr-1" />
+                )}
+              </button>
+            </TooltipTrigger>
+            {!isReorderMode && <TooltipContent>انقر للتعديل السريع</TooltipContent>}
+          </Tooltip>
+        )}
+      </div>
+
+      {/* الإجراءات */}
+      {!isReorderMode && (
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={visa.is_active ? "ghost" : "outline"}
+                size="icon"
+                className={cn(
+                  "h-8 w-8",
+                  visa.is_active 
+                    ? "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" 
+                    : "text-gray-500 hover:text-gray-600 hover:bg-gray-50"
+                )}
+                onClick={() => onToggleActive(visa.id, !visa.is_active)}
+              >
+                {visa.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{visa.is_active ? 'إلغاء التفعيل' : 'تفعيل'}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600" onClick={() => onDuplicate(visa)}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>نسخ لإنشاء جديد</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-amber-50 hover:text-amber-600" onClick={() => onEdit(visa)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>تعديل كامل</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50 hover:text-red-600" onClick={() => onDelete(visa)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>حذف</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: VisaTypesManagementProps) {
@@ -117,7 +332,16 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
   const [expandedCountries, setExpandedCountries] = useState<string[]>([]);
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
   const [inlinePrice, setInlinePrice] = useState('');
+  const [reorderCountryId, setReorderCountryId] = useState<string | null>(null);
+  const [reorderedVisas, setReorderedVisas] = useState<VisaType[]>([]);
   const queryClient = useQueryClient();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const [formData, setFormData] = useState({
     country_id: '',
@@ -305,6 +529,57 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
       toast.error('خطأ: ' + error.message);
     },
   });
+
+  const reorderVisasMutation = useMutation({
+    mutationFn: async (newOrder: { id: string; display_order: number }[]) => {
+      for (const item of newOrder) {
+        const { error } = await supabase
+          .from('visa_types')
+          .update({ display_order: item.display_order })
+          .eq('id', item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-visa-types'] });
+      toast.success('تم حفظ ترتيب التأشيرات');
+      setReorderCountryId(null);
+      setReorderedVisas([]);
+    },
+    onError: (error) => {
+      toast.error('خطأ: ' + error.message);
+    },
+  });
+
+  const startReorderVisas = (countryId: string, visas: VisaType[]) => {
+    const sorted = [...visas].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    setReorderedVisas(sorted);
+    setReorderCountryId(countryId);
+  };
+
+  const handleVisaDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setReorderedVisas((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const saveVisaOrder = () => {
+    const newOrder = reorderedVisas.map((v, index) => ({
+      id: v.id,
+      display_order: index + 1,
+    }));
+    reorderVisasMutation.mutate(newOrder);
+  };
+
+  const cancelVisaReorder = () => {
+    setReorderCountryId(null);
+    setReorderedVisas([]);
+  };
 
   // فلترة أنواع التأشيرات
   const filteredVisaTypes = useMemo(() => {
