@@ -41,7 +41,7 @@ import {
   XCircle,
   Download,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { exportToExcel } from '@/lib/exportToExcel';
 
 interface LoginAttempt {
   id: string;
@@ -165,20 +165,29 @@ export default function LoginAttemptsManagement() {
   const todayAttempts = attempts.filter(a => new Date(a.created_at).toDateString() === today).length;
 
   // Export to Excel
-  const exportToExcel = () => {
-    const exportData = filteredAttempts.map(a => ({
-      'البريد الإلكتروني': a.email,
-      'الحالة': a.success ? 'ناجح' : 'فاشل',
-      'سبب الفشل': a.failure_reason || '-',
-      'عنوان IP': a.ip_address || '-',
-      'المتصفح': a.user_agent?.substring(0, 50) || '-',
-      'التاريخ': format(new Date(a.created_at), 'yyyy/MM/dd HH:mm:ss'),
+  const handleExportToExcel = async () => {
+    const data = filteredAttempts.map(a => ({
+      email: a.email,
+      status: a.success ? 'ناجح' : 'فاشل',
+      failure_reason: a.failure_reason || '-',
+      ip_address: a.ip_address || '-',
+      user_agent: a.user_agent?.substring(0, 50) || '-',
+      created_at: format(new Date(a.created_at), 'yyyy/MM/dd HH:mm:ss'),
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'محاولات الدخول');
-    XLSX.writeFile(wb, `login-attempts-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    await exportToExcel({
+      sheetName: 'محاولات الدخول',
+      fileName: `login-attempts-${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
+      columns: [
+        { header: 'البريد الإلكتروني', key: 'email', width: 30 },
+        { header: 'الحالة', key: 'status', width: 10 },
+        { header: 'سبب الفشل', key: 'failure_reason', width: 25 },
+        { header: 'عنوان IP', key: 'ip_address', width: 15 },
+        { header: 'المتصفح', key: 'user_agent', width: 50 },
+        { header: 'التاريخ', key: 'created_at', width: 20 },
+      ],
+      data,
+    });
     toast.success('تم تصدير البيانات بنجاح');
   };
 
@@ -200,7 +209,7 @@ export default function LoginAttemptsManagement() {
             <RefreshCw className="h-4 w-4 ml-2" />
             تحديث
           </Button>
-          <Button variant="outline" size="sm" onClick={exportToExcel}>
+          <Button variant="outline" size="sm" onClick={handleExportToExcel}>
             <Download className="h-4 w-4 ml-2" />
             تصدير Excel
           </Button>

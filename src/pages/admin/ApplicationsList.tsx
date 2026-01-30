@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import * as XLSX from 'xlsx';
+import { exportToExcel } from '@/lib/exportToExcel';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'جميع الحالات' },
@@ -157,36 +157,33 @@ export default function ApplicationsList() {
     );
   };
 
-  const exportToExcel = () => {
-    const exportData = filteredApplications.map(app => ({
-      'رقم الطلب': app.id,
-      'اسم مقدم الطلب': app.profile?.full_name || 'غير محدد',
-      'رقم الجوال': app.profile?.phone || '-',
-      'الوجهة': app.visa_type?.country?.name || '-',
-      'نوع التأشيرة': app.visa_type?.name || '-',
-      'تاريخ الإنشاء': format(new Date(app.created_at), 'yyyy-MM-dd'),
-      'تاريخ السفر': app.travel_date ? format(new Date(app.travel_date), 'yyyy-MM-dd') : '-',
-      'الحالة': getStatusLabel(app.status),
+  const handleExportToExcel = async () => {
+    const data = filteredApplications.map(app => ({
+      id: app.id,
+      full_name: app.profile?.full_name || 'غير محدد',
+      phone: app.profile?.phone || '-',
+      country: app.visa_type?.country?.name || '-',
+      visa_type: app.visa_type?.name || '-',
+      created_at: format(new Date(app.created_at), 'yyyy-MM-dd'),
+      travel_date: app.travel_date ? format(new Date(app.travel_date), 'yyyy-MM-dd') : '-',
+      status: getStatusLabel(app.status),
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'الطلبات');
-    
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 40 }, // رقم الطلب
-      { wch: 25 }, // اسم مقدم الطلب
-      { wch: 15 }, // رقم الجوال
-      { wch: 15 }, // الوجهة
-      { wch: 20 }, // نوع التأشيرة
-      { wch: 12 }, // تاريخ الإنشاء
-      { wch: 12 }, // تاريخ السفر
-      { wch: 15 }, // الحالة
-    ];
-
-    const fileName = `applications_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    await exportToExcel({
+      sheetName: 'الطلبات',
+      fileName: `applications_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.xlsx`,
+      columns: [
+        { header: 'رقم الطلب', key: 'id', width: 40 },
+        { header: 'اسم مقدم الطلب', key: 'full_name', width: 25 },
+        { header: 'رقم الجوال', key: 'phone', width: 15 },
+        { header: 'الوجهة', key: 'country', width: 15 },
+        { header: 'نوع التأشيرة', key: 'visa_type', width: 20 },
+        { header: 'تاريخ الإنشاء', key: 'created_at', width: 12 },
+        { header: 'تاريخ السفر', key: 'travel_date', width: 12 },
+        { header: 'الحالة', key: 'status', width: 15 },
+      ],
+      data,
+    });
   };
 
   return (
@@ -197,7 +194,7 @@ export default function ApplicationsList() {
           <p className="text-muted-foreground">عرض وإدارة جميع طلبات التأشيرات</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={exportToExcel} variant="outline" size="sm">
+          <Button onClick={handleExportToExcel} variant="outline" size="sm">
             <Download className="h-4 w-4 ml-2" />
             تصدير Excel
           </Button>
