@@ -98,7 +98,7 @@ const ROLE_OPTIONS: { value: AppRole; label: string; description: string }[] = [
 ];
 
 export default function UsersManagement() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -706,6 +706,7 @@ export default function UsersManagement() {
                   onAddRole={openRoleDialog}
                   onDeleteRoles={openDeleteDialog}
                   onRemoveRole={handleRemoveRole}
+                  isAdmin={isAdmin}
                 />
               )}
             </CardContent>
@@ -736,6 +737,7 @@ export default function UsersManagement() {
                   onViewDetails={openDetailsDialog}
                   onEdit={openEditDialog}
                   onAddRole={openRoleDialog}
+                  isAdmin={isAdmin}
                 />
               )}
             </CardContent>
