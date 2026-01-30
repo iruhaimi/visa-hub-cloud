@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { User as UserIcon, Shield, MoreHorizontal, Eye, Pencil, Trash2, UserX } from 'lucide-react';
+import { User as UserIcon, Shield, MoreHorizontal, UserCog, Trash2, UserX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,8 +32,7 @@ interface UserWithRole {
 
 interface StaffUsersTableProps {
   users: UserWithRole[];
-  onViewDetails: (user: UserWithRole) => void;
-  onEdit: (user: UserWithRole) => void;
+  onViewProfile: (user: UserWithRole) => void;
   onAddRole: (user: UserWithRole) => void;
   onDeleteRoles: (user: UserWithRole) => void;
   onRemoveRole: (userId: string, role: AppRole) => void;
@@ -56,8 +55,7 @@ const getRoleBadge = (role: AppRole) => {
 
 export function StaffUsersTable({
   users,
-  onViewDetails,
-  onEdit,
+  onViewProfile,
   onAddRole,
   onDeleteRoles,
   onRemoveRole,
@@ -90,11 +88,20 @@ export function StaffUsersTable({
             <TableRow key={userItem.id} className="group">
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                  <button 
+                    onClick={() => onViewProfile(userItem)}
+                    className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center hover:from-primary/30 hover:to-primary/20 transition-colors cursor-pointer"
+                    title="عرض الملف الشخصي"
+                  >
                     <UserIcon className="h-5 w-5 text-primary" />
-                  </div>
+                  </button>
                   <div>
-                    <p className="font-medium">{userItem.full_name || 'غير محدد'}</p>
+                    <button 
+                      onClick={() => onViewProfile(userItem)}
+                      className="font-medium hover:text-primary transition-colors cursor-pointer text-right"
+                    >
+                      {userItem.full_name || 'غير محدد'}
+                    </button>
                     <p className="text-xs text-muted-foreground">{userItem.user_id.slice(0, 8)}...</p>
                   </div>
                 </div>
@@ -134,16 +141,12 @@ export function StaffUsersTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => onViewDetails(userItem)}>
-                      <Eye className="h-4 w-4 ml-2" />
-                      عرض التفاصيل
+                    <DropdownMenuItem onClick={() => onViewProfile(userItem)}>
+                      <UserCog className="h-4 w-4 ml-2" />
+                      عرض وتعديل الملف
                     </DropdownMenuItem>
                     {isAdmin && (
                       <>
-                        <DropdownMenuItem onClick={() => onEdit(userItem)}>
-                          <Pencil className="h-4 w-4 ml-2" />
-                          تعديل البيانات
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onAddRole(userItem)}>
                           <Shield className="h-4 w-4 ml-2" />
                           إضافة صلاحية

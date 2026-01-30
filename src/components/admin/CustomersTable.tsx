@@ -1,7 +1,6 @@
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { User as UserIcon, MoreHorizontal, Eye, Pencil, Shield, UserCog } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { User as UserIcon, MoreHorizontal, Shield, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -32,16 +31,14 @@ interface UserWithRole {
 
 interface CustomersTableProps {
   users: UserWithRole[];
-  onViewDetails: (user: UserWithRole) => void;
-  onEdit: (user: UserWithRole) => void;
+  onViewProfile: (user: UserWithRole) => void;
   onAddRole: (user: UserWithRole) => void;
   isAdmin: boolean;
 }
 
 export function CustomersTable({
   users,
-  onViewDetails,
-  onEdit,
+  onViewProfile,
   onAddRole,
   isAdmin,
 }: CustomersTableProps) {
@@ -70,11 +67,20 @@ export function CustomersTable({
             <TableRow key={userItem.id} className="group">
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                  <button 
+                    onClick={() => onViewProfile(userItem)}
+                    className="h-10 w-10 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors cursor-pointer"
+                    title="عرض الملف الشخصي"
+                  >
                     <UserIcon className="h-5 w-5 text-muted-foreground" />
-                  </div>
+                  </button>
                   <div>
-                    <p className="font-medium">{userItem.full_name || 'غير محدد'}</p>
+                    <button 
+                      onClick={() => onViewProfile(userItem)}
+                      className="font-medium hover:text-primary transition-colors cursor-pointer text-right"
+                    >
+                      {userItem.full_name || 'غير محدد'}
+                    </button>
                     <p className="text-xs text-muted-foreground">{userItem.user_id.slice(0, 8)}...</p>
                   </div>
                 </div>
@@ -92,19 +98,15 @@ export function CustomersTable({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => onViewDetails(userItem)}>
-                      <Eye className="h-4 w-4 ml-2" />
-                      عرض التفاصيل
+                    <DropdownMenuItem onClick={() => onViewProfile(userItem)}>
+                      <UserCog className="h-4 w-4 ml-2" />
+                      عرض وتعديل الملف
                     </DropdownMenuItem>
                     {isAdmin && (
                       <>
-                        <DropdownMenuItem onClick={() => onEdit(userItem)}>
-                          <Pencil className="h-4 w-4 ml-2" />
-                          تعديل البيانات
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onAddRole(userItem)}>
-                          <UserCog className="h-4 w-4 ml-2" />
+                          <Shield className="h-4 w-4 ml-2" />
                           ترقية لموظف
                         </DropdownMenuItem>
                       </>
