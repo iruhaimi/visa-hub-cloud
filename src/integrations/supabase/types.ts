@@ -119,6 +119,44 @@ export type Database = {
           },
         ]
       }
+      application_notes: {
+        Row: {
+          application_id: string
+          author_id: string
+          author_name: string | null
+          content: string
+          created_at: string
+          id: string
+          note_type: Database["public"]["Enums"]["note_type"]
+        }
+        Insert: {
+          application_id: string
+          author_id: string
+          author_name?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          note_type: Database["public"]["Enums"]["note_type"]
+        }
+        Update: {
+          application_id?: string
+          author_id?: string
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          note_type?: Database["public"]["Enums"]["note_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_notes_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_status_history: {
         Row: {
           application_id: string
@@ -973,6 +1011,7 @@ export type Database = {
         | "rejected"
         | "cancelled"
       document_status: "pending" | "verified" | "rejected"
+      note_type: "agent" | "admin" | "system"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       wallet_transaction_type:
         | "deposit"
@@ -1120,6 +1159,7 @@ export const Constants = {
         "cancelled",
       ],
       document_status: ["pending", "verified", "rejected"],
+      note_type: ["agent", "admin", "system"],
       payment_status: ["pending", "completed", "failed", "refunded"],
       wallet_transaction_type: [
         "deposit",
