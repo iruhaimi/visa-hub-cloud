@@ -56,6 +56,8 @@ import {
   UserCheck,
   Users,
   UserCog,
+  UserPlus,
+  Trash2,
   X
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -67,6 +69,7 @@ import { UserEditDialog } from '@/components/admin/UserEditDialog';
 import { UserDetailsDialog } from '@/components/admin/UserDetailsDialog';
 import { StaffUsersTable } from '@/components/admin/StaffUsersTable';
 import { CustomersTable } from '@/components/admin/CustomersTable';
+import { CreateStaffDialog } from '@/components/admin/CreateStaffDialog';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AppRole } from '@/types/database';
 
@@ -84,7 +87,7 @@ interface ActivityLogEntry {
   id: string;
   target_user_id: string;
   performed_by: string;
-  action: 'add_role' | 'remove_role';
+  action: 'add_role' | 'remove_role' | 'create_staff' | 'delete_staff';
   role: AppRole;
   created_at: string;
   target_user_name?: string;
@@ -122,6 +125,7 @@ export default function UsersManagement() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [updating, setUpdating] = useState(false);
+  const [showCreateStaffDialog, setShowCreateStaffDialog] = useState(false);
   
   // Activity log filters
   const [logSearchQuery, setLogSearchQuery] = useState('');
@@ -453,16 +457,29 @@ export default function UsersManagement() {
   };
 
   // Activity log helpers
-  const getActionLabel = (action: 'add_role' | 'remove_role') => {
-    return action === 'add_role' ? 'إضافة صلاحية' : 'حذف صلاحية';
+  const getActionLabel = (action: 'add_role' | 'remove_role' | 'create_staff' | 'delete_staff') => {
+    const labels: Record<string, string> = {
+      'add_role': 'إضافة صلاحية',
+      'remove_role': 'حذف صلاحية',
+      'create_staff': 'إنشاء موظف',
+      'delete_staff': 'حذف موظف',
+    };
+    return labels[action] || action;
   };
 
-  const getActionIcon = (action: 'add_role' | 'remove_role') => {
-    return action === 'add_role' ? (
-      <Plus className="h-4 w-4 text-primary" />
-    ) : (
-      <Minus className="h-4 w-4 text-destructive" />
-    );
+  const getActionIcon = (action: 'add_role' | 'remove_role' | 'create_staff' | 'delete_staff') => {
+    switch (action) {
+      case 'add_role':
+        return <Plus className="h-4 w-4 text-primary" />;
+      case 'remove_role':
+        return <Minus className="h-4 w-4 text-destructive" />;
+      case 'create_staff':
+        return <UserPlus className="h-4 w-4 text-primary" />;
+      case 'delete_staff':
+        return <Trash2 className="h-4 w-4 text-destructive" />;
+      default:
+        return <Plus className="h-4 w-4" />;
+    }
   };
 
   // Filter activity log
@@ -688,10 +705,18 @@ export default function UsersManagement() {
                 <UserCog className="h-5 w-5" />
                 الموظفين (المشرفين والوكلاء)
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => exportUsersToExcel('staff')}>
-                <Download className="h-4 w-4 ml-2" />
-                تصدير
-              </Button>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <Button size="sm" onClick={() => setShowCreateStaffDialog(true)}>
+                    <UserPlus className="h-4 w-4 ml-2" />
+                    إنشاء موظف
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => exportUsersToExcel('staff')}>
+                  <Download className="h-4 w-4 ml-2" />
+                  تصدير
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -1038,6 +1063,16 @@ export default function UsersManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Staff Dialog */}
+      <CreateStaffDialog
+        open={showCreateStaffDialog}
+        onOpenChange={setShowCreateStaffDialog}
+        onSuccess={() => {
+          fetchUsers();
+          fetchActivityLog();
+        }}
+      />
     </div>
   );
 }
