@@ -13,19 +13,21 @@ import {
   User, 
   Phone, 
   Globe, 
-  Calendar, 
   Shield, 
   FileText,
   Loader2,
   Pencil,
   Check,
-  X
+  X,
+  Mail,
+  Copy
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types/database';
+import { filterArabicChars, filterNonNumeric } from '@/lib/inputFilters';
 
 interface UserData {
   id: string;
@@ -35,6 +37,7 @@ interface UserData {
   nationality: string | null;
   created_at: string;
   roles: AppRole[];
+  email?: string;
 }
 
 interface UserProfileDialogProps {
@@ -136,6 +139,13 @@ export function UserProfileDialog({
     setIsEditing(false);
   };
 
+  const copyEmail = () => {
+    if (user?.email) {
+      navigator.clipboard.writeText(user.email);
+      toast.success('تم نسخ البريد الإلكتروني');
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -183,6 +193,34 @@ export function UserProfileDialog({
                   placeholder="أدخل الاسم الكامل"
                 />
               </div>
+
+              {/* Email (Read-only) */}
+              {user.email && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    البريد الإلكتروني
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={user.email}
+                      readOnly
+                      dir="ltr"
+                      className="text-left bg-muted/50"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={copyEmail}
+                      title="نسخ البريد"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
                   <Phone className="h-4 w-4 text-muted-foreground" />
@@ -191,10 +229,11 @@ export function UserProfileDialog({
                 <Input
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: filterNonNumeric(e.target.value) }))}
                   placeholder="أدخل رقم الجوال"
                   dir="ltr"
                   className="text-left"
+                  inputMode="tel"
                 />
               </div>
               <div className="space-y-2">
@@ -229,6 +268,28 @@ export function UserProfileDialog({
           ) : (
             // View Mode
             <>
+              {/* Email - Full Width */}
+              {user.email && (
+                <div className="space-y-1 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                      <Mail className="h-3.5 w-3.5" />
+                      البريد الإلكتروني
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={copyEmail}
+                      title="نسخ البريد"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <p className="font-medium text-sm" dir="ltr">{user.email}</p>
+                </div>
+              )}
+
               {/* Basic Info Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 p-3 bg-muted/30 rounded-lg">
