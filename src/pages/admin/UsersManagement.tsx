@@ -65,8 +65,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserEditDialog } from '@/components/admin/UserEditDialog';
-import { UserDetailsDialog } from '@/components/admin/UserDetailsDialog';
+import { UserProfileDialog } from '@/components/admin/UserProfileDialog';
 import { StaffUsersTable } from '@/components/admin/StaffUsersTable';
 import { CustomersTable } from '@/components/admin/CustomersTable';
 import { CreateStaffDialog } from '@/components/admin/CreateStaffDialog';
@@ -121,8 +120,7 @@ export default function UsersManagement() {
   // Dialogs
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [updating, setUpdating] = useState(false);
@@ -445,14 +443,9 @@ export default function UsersManagement() {
     setShowRoleDialog(true);
   };
 
-  const openEditDialog = (user: UserWithRole) => {
+  const openProfileDialog = (user: UserWithRole) => {
     setSelectedUser(user);
-    setShowEditDialog(true);
-  };
-
-  const openDetailsDialog = (user: UserWithRole) => {
-    setSelectedUser(user);
-    setShowDetailsDialog(true);
+    setShowProfileDialog(true);
   };
 
   const openDeleteDialog = (user: UserWithRole) => {
@@ -736,8 +729,7 @@ export default function UsersManagement() {
               ) : (
                 <StaffUsersTable
                   users={staffUsers}
-                  onViewDetails={openDetailsDialog}
-                  onEdit={openEditDialog}
+                  onViewProfile={openProfileDialog}
                   onAddRole={openRoleDialog}
                   onDeleteRoles={openDeleteDialog}
                   onRemoveRole={handleRemoveRole}
@@ -773,8 +765,7 @@ export default function UsersManagement() {
               ) : (
                 <CustomersTable
                   users={customerUsers}
-                  onViewDetails={openDetailsDialog}
-                  onEdit={openEditDialog}
+                  onViewProfile={openProfileDialog}
                   onAddRole={openRoleDialog}
                   isAdmin={isAdmin}
                 />
@@ -1011,19 +1002,13 @@ export default function UsersManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <UserEditDialog
+      {/* User Profile Dialog (View + Edit combined) */}
+      <UserProfileDialog
         user={selectedUser}
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
+        open={showProfileDialog}
+        onOpenChange={setShowProfileDialog}
         onSuccess={fetchUsers}
-      />
-
-      {/* Details Dialog */}
-      <UserDetailsDialog
-        user={selectedUser}
-        open={showDetailsDialog}
-        onOpenChange={setShowDetailsDialog}
+        canEdit={isAdmin}
       />
 
       {/* Delete Confirmation Dialog */}
