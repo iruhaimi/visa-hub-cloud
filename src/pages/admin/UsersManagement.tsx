@@ -70,6 +70,7 @@ import { UserDetailsDialog } from '@/components/admin/UserDetailsDialog';
 import { StaffUsersTable } from '@/components/admin/StaffUsersTable';
 import { CustomersTable } from '@/components/admin/CustomersTable';
 import { CreateStaffDialog } from '@/components/admin/CreateStaffDialog';
+import { DeleteStaffDialog } from '@/components/admin/DeleteStaffDialog';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AppRole } from '@/types/database';
 
@@ -126,6 +127,8 @@ export default function UsersManagement() {
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [updating, setUpdating] = useState(false);
   const [showCreateStaffDialog, setShowCreateStaffDialog] = useState(false);
+  const [showDeleteStaffDialog, setShowDeleteStaffDialog] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<UserWithRole | null>(null);
   
   // Activity log filters
   const [logSearchQuery, setLogSearchQuery] = useState('');
@@ -738,6 +741,10 @@ export default function UsersManagement() {
                   onAddRole={openRoleDialog}
                   onDeleteRoles={openDeleteDialog}
                   onRemoveRole={handleRemoveRole}
+                  onDeleteStaff={(user) => {
+                    setStaffToDelete(user);
+                    setShowDeleteStaffDialog(true);
+                  }}
                   isAdmin={isAdmin}
                 />
               )}
@@ -1075,6 +1082,17 @@ export default function UsersManagement() {
       <CreateStaffDialog
         open={showCreateStaffDialog}
         onOpenChange={setShowCreateStaffDialog}
+        onSuccess={() => {
+          fetchUsers();
+          fetchActivityLog();
+        }}
+      />
+
+      {/* Delete Staff Dialog */}
+      <DeleteStaffDialog
+        user={staffToDelete}
+        open={showDeleteStaffDialog}
+        onOpenChange={setShowDeleteStaffDialog}
         onSuccess={() => {
           fetchUsers();
           fetchActivityLog();

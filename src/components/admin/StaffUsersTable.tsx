@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { User as UserIcon, Shield, MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
+import { User as UserIcon, Shield, MoreHorizontal, Eye, Pencil, Trash2, UserX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +37,7 @@ interface StaffUsersTableProps {
   onAddRole: (user: UserWithRole) => void;
   onDeleteRoles: (user: UserWithRole) => void;
   onRemoveRole: (userId: string, role: AppRole) => void;
+  onDeleteStaff: (user: UserWithRole) => void;
   isAdmin: boolean;
 }
 
@@ -60,6 +61,7 @@ export function StaffUsersTable({
   onAddRole,
   onDeleteRoles,
   onRemoveRole,
+  onDeleteStaff,
   isAdmin,
 }: StaffUsersTableProps) {
   if (users.length === 0) {
@@ -149,10 +151,17 @@ export function StaffUsersTable({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           onClick={() => onDeleteRoles(userItem)}
-                          className="text-destructive focus:text-destructive"
+                          className="text-orange-600 focus:text-orange-600"
                         >
                           <Trash2 className="h-4 w-4 ml-2" />
                           إلغاء الصلاحيات
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => onDeleteStaff(userItem)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <UserX className="h-4 w-4 ml-2" />
+                          حذف الحساب نهائياً
                         </DropdownMenuItem>
                       </>
                     )}
