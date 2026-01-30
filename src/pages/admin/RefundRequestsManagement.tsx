@@ -44,7 +44,7 @@ import {
   RefreshCw,
   Download
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { exportToExcel } from '@/lib/exportToExcel';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -161,7 +161,7 @@ export default function RefundRequestsManagement() {
   };
 
   // Export to Excel
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!filteredRequests || filteredRequests.length === 0) {
       toast({
         title: 'لا توجد بيانات',
@@ -171,39 +171,36 @@ export default function RefundRequestsManagement() {
       return;
     }
 
-    const exportData = filteredRequests.map((req) => ({
-      'رقم الطلب': req.application_number,
-      'البريد الإلكتروني': req.email,
-      'رقم الهاتف': req.phone || 'غير متوفر',
-      'سبب الاسترداد': req.reason,
-      'تفاصيل إضافية': req.additional_details || '-',
-      'الحالة': statusConfig[req.status]?.label || req.status,
-      'ملاحظات المسؤول': req.admin_notes || '-',
-      'تاريخ التقديم': format(new Date(req.created_at), 'dd/MM/yyyy HH:mm', { locale: ar }),
-      'تاريخ المعالجة': req.processed_at 
+    const data = filteredRequests.map((req) => ({
+      application_number: req.application_number,
+      email: req.email,
+      phone: req.phone || 'غير متوفر',
+      reason: req.reason,
+      additional_details: req.additional_details || '-',
+      status: statusConfig[req.status]?.label || req.status,
+      admin_notes: req.admin_notes || '-',
+      created_at: format(new Date(req.created_at), 'dd/MM/yyyy HH:mm', { locale: ar }),
+      processed_at: req.processed_at 
         ? format(new Date(req.processed_at), 'dd/MM/yyyy HH:mm', { locale: ar }) 
         : '-',
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'طلبات الاسترداد');
-
-    // Set column widths
-    worksheet['!cols'] = [
-      { wch: 15 }, // رقم الطلب
-      { wch: 25 }, // البريد الإلكتروني
-      { wch: 15 }, // رقم الهاتف
-      { wch: 30 }, // سبب الاسترداد
-      { wch: 40 }, // تفاصيل إضافية
-      { wch: 12 }, // الحالة
-      { wch: 30 }, // ملاحظات المسؤول
-      { wch: 18 }, // تاريخ التقديم
-      { wch: 18 }, // تاريخ المعالجة
-    ];
-
-    const fileName = `طلبات_الاسترداد_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
+    await exportToExcel({
+      sheetName: 'طلبات الاسترداد',
+      fileName: `طلبات_الاسترداد_${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
+      columns: [
+        { header: 'رقم الطلب', key: 'application_number', width: 15 },
+        { header: 'البريد الإلكتروني', key: 'email', width: 25 },
+        { header: 'رقم الهاتف', key: 'phone', width: 15 },
+        { header: 'سبب الاسترداد', key: 'reason', width: 30 },
+        { header: 'تفاصيل إضافية', key: 'additional_details', width: 40 },
+        { header: 'الحالة', key: 'status', width: 12 },
+        { header: 'ملاحظات المسؤول', key: 'admin_notes', width: 30 },
+        { header: 'تاريخ التقديم', key: 'created_at', width: 18 },
+        { header: 'تاريخ المعالجة', key: 'processed_at', width: 18 },
+      ],
+      data,
+    });
 
     toast({
       title: 'تم التصدير',

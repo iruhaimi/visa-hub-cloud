@@ -60,7 +60,7 @@ import {
   Trash2,
   X
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { exportToExcel } from '@/lib/exportToExcel';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -416,35 +416,35 @@ export default function UsersManagement() {
   };
 
   // Export users to Excel
-  const exportUsersToExcel = (type: 'staff' | 'customers' | 'all') => {
+  const exportUsersToExcel = async (type: 'staff' | 'customers' | 'all') => {
     const usersToExport = type === 'staff' 
       ? staffUsers 
       : type === 'customers' 
         ? customerUsers 
         : [...staffUsers, ...customerUsers];
     
-    const exportData = usersToExport.map(user => ({
-      'الاسم': user.full_name || 'غير محدد',
-      'رقم الجوال': user.phone || '-',
-      'الجنسية': user.nationality || '-',
-      'تاريخ التسجيل': format(new Date(user.created_at), 'dd/MM/yyyy', { locale: ar }),
-      'الصلاحيات': user.roles.map(r => ROLE_OPTIONS.find(o => o.value === r)?.label).join(', ') || 'عميل',
+    const data = usersToExport.map(user => ({
+      full_name: user.full_name || 'غير محدد',
+      phone: user.phone || '-',
+      nationality: user.nationality || '-',
+      created_at: format(new Date(user.created_at), 'dd/MM/yyyy', { locale: ar }),
+      roles: user.roles.map(r => ROLE_OPTIONS.find(o => o.value === r)?.label).join(', ') || 'عميل',
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'المستخدمين');
-    
-    ws['!cols'] = [
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 20 },
-    ];
-    
     const typeName = type === 'staff' ? 'الموظفين' : type === 'customers' ? 'العملاء' : 'المستخدمين';
-    XLSX.writeFile(wb, `${typeName}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    
+    await exportToExcel({
+      sheetName: 'المستخدمين',
+      fileName: `${typeName}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
+      columns: [
+        { header: 'الاسم', key: 'full_name', width: 25 },
+        { header: 'رقم الجوال', key: 'phone', width: 15 },
+        { header: 'الجنسية', key: 'nationality', width: 15 },
+        { header: 'تاريخ التسجيل', key: 'created_at', width: 15 },
+        { header: 'الصلاحيات', key: 'roles', width: 20 },
+      ],
+      data,
+    });
     toast.success(`تم تصدير قائمة ${typeName} بنجاح`);
   };
 
@@ -526,28 +526,27 @@ export default function UsersManagement() {
   }, [activityLog, debouncedLogSearchQuery, logDateFrom, logDateTo]);
 
   // Export activity log to Excel
-  const exportActivityLogToExcel = () => {
-    const exportData = filteredActivityLog.map(log => ({
-      'التاريخ والوقت': format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: ar }),
-      'الإجراء': getActionLabel(log.action),
-      'المستخدم المستهدف': log.target_user_name || 'غير معروف',
-      'الصلاحية': ROLE_OPTIONS.find(r => r.value === log.role)?.label || log.role,
-      'بواسطة': log.performer_name || 'غير معروف',
+  const exportActivityLogToExcel = async () => {
+    const data = filteredActivityLog.map(log => ({
+      created_at: format(new Date(log.created_at), 'dd/MM/yyyy HH:mm', { locale: ar }),
+      action: getActionLabel(log.action),
+      target_user_name: log.target_user_name || 'غير معروف',
+      role: ROLE_OPTIONS.find(r => r.value === log.role)?.label || log.role,
+      performer_name: log.performer_name || 'غير معروف',
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'سجل النشاطات');
-    
-    ws['!cols'] = [
-      { wch: 20 },
-      { wch: 15 },
-      { wch: 25 },
-      { wch: 12 },
-      { wch: 25 },
-    ];
-    
-    XLSX.writeFile(wb, `سجل_النشاطات_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    await exportToExcel({
+      sheetName: 'سجل النشاطات',
+      fileName: `سجل_النشاطات_${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
+      columns: [
+        { header: 'التاريخ والوقت', key: 'created_at', width: 20 },
+        { header: 'الإجراء', key: 'action', width: 15 },
+        { header: 'المستخدم المستهدف', key: 'target_user_name', width: 25 },
+        { header: 'الصلاحية', key: 'role', width: 12 },
+        { header: 'بواسطة', key: 'performer_name', width: 25 },
+      ],
+      data,
+    });
     toast.success('تم تصدير سجل النشاطات بنجاح');
   };
 
