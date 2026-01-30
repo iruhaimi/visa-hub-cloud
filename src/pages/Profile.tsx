@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,13 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Phone, CreditCard, Wallet, Save, Loader2, Camera, Upload, FileText, RotateCcw, ChevronRight, ChevronLeft } from 'lucide-react';
+import { User, Phone, Save, Loader2, Camera, Upload, FileText, RotateCcw, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ProfileCompletionAlert } from '@/components/profile/ProfileCompletionAlert';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
-import { CountryPicker, CityPicker } from '@/components/ui/CountryCityPicker';
-import { DatePicker } from '@/components/ui/DatePicker';
 import { filterNonNumeric as filterPhoneNonNumeric } from '@/lib/inputFilters';
+
 const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { direction } = useLanguage();
@@ -28,23 +26,14 @@ const Profile = () => {
     full_name: '',
     phone: '',
     countryCode: '+966',
-    date_of_birth: '',
-    nationality: '',
-    passport_number: '',
-    passport_expiry: '',
-    address: '',
-    city: '',
-    country: '',
   });
 
   useEffect(() => {
     if (profile) {
-      // Extract country code from phone if exists (e.g., "+966512345678" -> "+966")
       let countryCode = '+966';
       let phoneNumber = profile.phone || '';
       
       if (phoneNumber.startsWith('+')) {
-        // Try to match common country codes
         const codes = ['+966', '+971', '+973', '+974', '+965', '+968', '+20', '+962', '+961', '+963', '+964', '+967', '+970', '+212', '+213', '+216', '+218', '+249', '+90', '+44', '+1', '+33', '+49', '+91', '+92', '+60', '+62', '+86'];
         for (const code of codes) {
           if (phoneNumber.startsWith(code)) {
@@ -59,34 +48,19 @@ const Profile = () => {
         full_name: profile.full_name || '',
         phone: phoneNumber,
         countryCode: countryCode,
-        date_of_birth: profile.date_of_birth || '',
-        nationality: profile.nationality || '',
-        passport_number: profile.passport_number || '',
-        passport_expiry: profile.passport_expiry || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        country: profile.country || '',
       });
     }
   }, [profile]);
 
-  // Filter to remove Arabic characters and non-numeric from phone field
-  const filterArabicChars = (value: string) => {
-    return value.replace(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g, '');
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Filter phone field to only allow numbers
     const processedValue = name === 'phone' ? filterPhoneNonNumeric(value) : value;
     setFormData(prev => ({ ...prev, [name]: processedValue }));
   };
 
-  // Handle phone input - allow only digits and limit to 9 characters
   const handlePhoneInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
     let filtered = filterPhoneNonNumeric(input.value);
-    // Limit to 9 digits
     if (filtered.length > 9) {
       filtered = filtered.slice(0, 9);
     }
@@ -104,7 +78,6 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file || !user || !profile) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: isRTL ? 'خطأ' : 'Error',
@@ -114,7 +87,6 @@ const Profile = () => {
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: isRTL ? 'خطأ' : 'Error',
@@ -127,23 +99,19 @@ const Profile = () => {
     setIsUploadingAvatar(true);
 
     try {
-      // Generate unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/avatar.${fileExt}`;
 
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: `${publicUrl}?t=${Date.now()}` })
@@ -166,7 +134,6 @@ const Profile = () => {
       });
     } finally {
       setIsUploadingAvatar(false);
-      // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -179,7 +146,6 @@ const Profile = () => {
 
     setIsLoading(true);
     try {
-      // Combine country code with phone number for storage
       const fullPhone = formData.phone ? `${formData.countryCode}${formData.phone}` : null;
       
       const { error } = await supabase
@@ -187,13 +153,6 @@ const Profile = () => {
         .update({
           full_name: formData.full_name || null,
           phone: fullPhone,
-          date_of_birth: formData.date_of_birth || null,
-          nationality: formData.nationality || null,
-          passport_number: formData.passport_number || null,
-          passport_expiry: formData.passport_expiry || null,
-          address: formData.address || null,
-          city: formData.city || null,
-          country: formData.country || null,
         })
         .eq('id', profile.id);
 
@@ -220,19 +179,9 @@ const Profile = () => {
   const labels = {
     pageTitle: isRTL ? 'الملف الشخصي' : 'Profile',
     personalInfo: isRTL ? 'المعلومات الشخصية' : 'Personal Information',
-    contactInfo: isRTL ? 'معلومات الاتصال' : 'Contact Information',
-    passportInfo: isRTL ? 'معلومات جواز السفر' : 'Passport Information',
-    walletBalance: isRTL ? 'رصيد المحفظة' : 'Wallet Balance',
     fullName: isRTL ? 'الاسم الكامل' : 'Full Name',
     email: isRTL ? 'البريد الإلكتروني' : 'Email',
     phone: isRTL ? 'رقم الهاتف' : 'Phone Number',
-    dateOfBirth: isRTL ? 'تاريخ الميلاد' : 'Date of Birth',
-    nationality: isRTL ? 'الجنسية' : 'Nationality',
-    passportNumber: isRTL ? 'رقم جواز السفر' : 'Passport Number',
-    passportExpiry: isRTL ? 'تاريخ انتهاء الجواز' : 'Passport Expiry',
-    address: isRTL ? 'العنوان' : 'Address',
-    city: isRTL ? 'المدينة' : 'City',
-    country: isRTL ? 'الدولة' : 'Country',
     save: isRTL ? 'حفظ التغييرات' : 'Save Changes',
     saving: isRTL ? 'جاري الحفظ...' : 'Saving...',
     changePhoto: isRTL ? 'تغيير الصورة' : 'Change Photo',
@@ -244,28 +193,9 @@ const Profile = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  // Calculate missing profile fields
-  const missingFields = useMemo(() => {
-    const requiredFields = [
-      'full_name',
-      'phone',
-      'date_of_birth',
-      'nationality',
-      'passport_number',
-      'passport_expiry',
-      'address',
-      'city',
-      'country',
-    ];
-    return requiredFields.filter((field) => !formData[field as keyof typeof formData]);
-  }, [formData]);
-
   return (
     <div className="container mx-auto py-8 px-4" dir={direction}>
-      <div className="max-w-4xl mx-auto">
-        {/* Profile Completion Alert */}
-        <ProfileCompletionAlert missingFields={missingFields} isRTL={isRTL} />
-
+      <div className="max-w-2xl mx-auto">
         {/* Header with Avatar Upload */}
         <div className="flex items-center gap-6 mb-8">
           <div className="relative group">
@@ -276,7 +206,6 @@ const Profile = () => {
               </AvatarFallback>
             </Avatar>
             
-            {/* Upload Overlay */}
             <button
               type="button"
               onClick={handleAvatarClick}
@@ -290,7 +219,6 @@ const Profile = () => {
               )}
             </button>
             
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -334,7 +262,7 @@ const Profile = () => {
                 {labels.personalInfo}
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
+            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="full_name">{labels.fullName}</Label>
                 <Input
@@ -345,38 +273,7 @@ const Profile = () => {
                   placeholder={labels.fullName}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="date_of_birth">{labels.dateOfBirth}</Label>
-                <DatePicker
-                  value={formData.date_of_birth}
-                  onChange={(value) => setFormData(prev => ({ ...prev, date_of_birth: value }))}
-                  isRTL={isRTL}
-                  placeholder={labels.dateOfBirth}
-                  maxDate={new Date()}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nationality">{labels.nationality}</Label>
-                <Input
-                  id="nationality"
-                  name="nationality"
-                  value={formData.nationality}
-                  onChange={handleInputChange}
-                  placeholder={labels.nationality}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
-                {labels.contactInfo}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
+              
               <div className="space-y-2">
                 <Label htmlFor="email">{labels.email}</Label>
                 <Input
@@ -387,6 +284,7 @@ const Profile = () => {
                   className="bg-muted"
                 />
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="phone">{labels.phone}</Label>
                 <div className="flex gap-2 flex-row-reverse">
@@ -411,84 +309,6 @@ const Profile = () => {
                     className="flex-1"
                   />
                 </div>
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="address">{labels.address}</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  placeholder={labels.address}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">{labels.country}</Label>
-                <CountryPicker
-                  value={formData.country}
-                  onChange={(value) => {
-                    setFormData(prev => ({ ...prev, country: value, city: '' }));
-                  }}
-                  isRTL={isRTL}
-                  placeholder={labels.country}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="city">{labels.city}</Label>
-                <CityPicker
-                  country={formData.country}
-                  value={formData.city}
-                  onChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
-                  isRTL={isRTL}
-                  placeholder={labels.city}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Passport Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                {labels.passportInfo}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="passport_number">{labels.passportNumber}</Label>
-                <Input
-                  id="passport_number"
-                  name="passport_number"
-                  value={formData.passport_number}
-                  onChange={handleInputChange}
-                  placeholder={labels.passportNumber}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="passport_expiry">{labels.passportExpiry}</Label>
-                <DatePicker
-                  value={formData.passport_expiry}
-                  onChange={(value) => setFormData(prev => ({ ...prev, passport_expiry: value }))}
-                  isRTL={isRTL}
-                  placeholder={labels.passportExpiry}
-                  minDate={new Date()}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Wallet Balance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="h-5 w-5" />
-                {labels.walletBalance}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">
-                {profile?.wallet_balance || 0} {isRTL ? 'ر.س' : 'SAR'}
               </div>
             </CardContent>
           </Card>
