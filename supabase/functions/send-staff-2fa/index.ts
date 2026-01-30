@@ -47,6 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     let emailSent = false;
     let smsSent = false;
+    let resendRecipientRestricted = false;
     const results: { email?: boolean; sms?: boolean; errors?: string[] } = {
       errors: [],
     };
@@ -112,6 +113,18 @@ const handler = async (req: Request): Promise<Response> => {
           const errorData = await emailResponse.json();
           console.error("Resend email error:", errorData);
           results.errors?.push(`Email error: ${JSON.stringify(errorData)}`);
+
+          // Resend limitation: in test mode you can only send to your own email.
+          // Treat this as a non-fatal "dev/test mode" so the login flow can continue.
+          if (
+            errorData &&
+            (errorData.statusCode === 403 || emailResponse.status === 403) &&
+            errorData.name === "validation_error" &&
+            typeof errorData.message === "string" &&
+            errorData.message.includes("You can only send testing emails")
+          ) {
+            resendRecipientRestricted = true;
+          }
         }
       } catch (emailError: unknown) {
         console.error("Email sending failed:", emailError);
@@ -215,6 +228,28 @@ const handler = async (req: Request): Promise<Response> => {
           success: true,
           message: "Test mode - no providers configured",
           testMode: true,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Resend test-mode restriction: don't fail the request with 500, allow frontend fallback.
+    if (resendRecipientRestricted) {
+      console.log(
+        `[TEST MODE] Resend blocked recipient (domain not verified). Allowing fallback for ${email}.`
+      );
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          emailSent: false,
+          smsSent: false,
+          testMode: true,
+          error: "Resend test-mode restriction: domain not verified",
+          details: results.errors,
         }),
         {
           status: 200,
