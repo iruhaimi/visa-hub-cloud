@@ -112,8 +112,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agent_transfer_requests_from_agent_id_fkey"
+            columns: ["from_agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "agent_transfer_requests_reviewed_by_fkey"
             columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_transfer_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_transfer_requests_to_agent_id_fkey"
+            columns: ["to_agent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -122,7 +143,7 @@ export type Database = {
             foreignKeyName: "agent_transfer_requests_to_agent_id_fkey"
             columns: ["to_agent_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profiles_agent_view"
             referencedColumns: ["id"]
           },
         ]
@@ -179,6 +200,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agent_work_submissions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "agent_work_submissions_application_id_fkey"
             columns: ["application_id"]
             isOneToOne: false
@@ -190,6 +218,13 @@ export type Database = {
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_work_submissions_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
             referencedColumns: ["id"]
           },
         ]
@@ -253,6 +288,13 @@ export type Database = {
             columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_documents_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
             referencedColumns: ["id"]
           },
         ]
@@ -394,6 +436,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "application_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       applications: {
@@ -466,10 +515,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "applications_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "applications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
             referencedColumns: ["id"]
           },
           {
@@ -564,6 +627,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "application_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_access_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "application_documents_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -722,6 +792,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
             referencedColumns: ["id"]
           },
         ]
@@ -932,6 +1009,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "refund_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       role_activity_log: {
@@ -958,6 +1042,39 @@ export type Database = {
           performed_by?: string
           role?: Database["public"]["Enums"]["app_role"]
           target_user_id?: string
+        }
+        Relationships: []
+      }
+      security_audit_log: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1319,15 +1436,105 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_agent_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      application_documents_safe: {
+        Row: {
+          application_id: string | null
+          created_at: string | null
+          document_type: string | null
+          file_name: string | null
+          file_size: number | null
+          id: string | null
+          mime_type: string | null
+          status: Database["public"]["Enums"]["document_status"] | null
+          updated_at: string | null
+          verification_notes: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          created_at?: string | null
+          document_type?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string | null
+          mime_type?: string | null
+          status?: Database["public"]["Enums"]["document_status"] | null
+          updated_at?: string | null
+          verification_notes?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          created_at?: string | null
+          document_type?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string | null
+          mime_type?: string | null
+          status?: Database["public"]["Enums"]["document_status"] | null
+          updated_at?: string | null
+          verification_notes?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_documents_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles_agent_view: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          phone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_access_application: {
         Args: { _app_id: string; _user_id: string }
+        Returns: boolean
+      }
+      check_2fa_rate_limit: {
+        Args: { check_user_id: string }
         Returns: boolean
       }
       clear_failed_login_attempts: {
@@ -1346,6 +1553,16 @@ export type Database = {
         Returns: number
       }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
+      get_secure_document_info: {
+        Args: { doc_id: string }
+        Returns: {
+          created_at: string
+          document_type: string
+          file_name: string
+          id: string
+          status: string
+        }[]
+      }
       get_user_email: { Args: { target_user_id: string }; Returns: string }
       has_permission: {
         Args: {
