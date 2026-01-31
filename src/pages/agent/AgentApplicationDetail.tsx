@@ -41,6 +41,7 @@ import { NotesHistory } from '@/components/admin/NotesHistory';
 import { TransferRequestDialog } from '@/components/agent/TransferRequestDialog';
 import { WorkSubmissionDialog } from '@/components/agent/WorkSubmissionDialog';
 import { AgentRequestsHistory } from '@/components/agent/AgentRequestsHistory';
+import { ApplicationMessages } from '@/components/messages/ApplicationMessages';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -617,9 +618,14 @@ export default function AgentApplicationDetail() {
           )}
         </div>
 
-        {/* Sidebar - Notes & History */}
+        {/* Sidebar - Notes, Messages & History */}
         <div className="xl:col-span-1 space-y-6">
           <div className="sticky top-6 space-y-6">
+            {/* Customer Messaging */}
+            <ApplicationMessages 
+              applicationId={application.id}
+              customerName={application.profile?.full_name}
+            />
             <NotesHistory applicationId={application.id} />
             <AgentRequestsHistory applicationId={application.id} />
           </div>

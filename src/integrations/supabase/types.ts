@@ -257,6 +257,62 @@ export type Database = {
           },
         ]
       }
+      application_messages: {
+        Row: {
+          application_id: string
+          attachment_name: string | null
+          attachment_path: string | null
+          attachment_type: string | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          priority: Database["public"]["Enums"]["message_priority"]
+          read_at: string | null
+          sender_id: string
+          sender_name: string | null
+          sender_type: string
+        }
+        Insert: {
+          application_id: string
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_type?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          priority?: Database["public"]["Enums"]["message_priority"]
+          read_at?: string | null
+          sender_id: string
+          sender_name?: string | null
+          sender_type: string
+        }
+        Update: {
+          application_id?: string
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_type?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          priority?: Database["public"]["Enums"]["message_priority"]
+          read_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_messages_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_notes: {
         Row: {
           application_id: string
@@ -1279,6 +1335,7 @@ export type Database = {
         | "cancelled"
       approval_status: "pending" | "approved" | "rejected" | "expired"
       document_status: "pending" | "verified" | "rejected"
+      message_priority: "normal" | "important" | "urgent"
       note_type: "agent" | "admin" | "system"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       sensitive_operation_type:
@@ -1444,6 +1501,7 @@ export const Constants = {
       ],
       approval_status: ["pending", "approved", "rejected", "expired"],
       document_status: ["pending", "verified", "rejected"],
+      message_priority: ["normal", "important", "urgent"],
       note_type: ["agent", "admin", "system"],
       payment_status: ["pending", "completed", "failed", "refunded"],
       sensitive_operation_type: [

@@ -379,7 +379,7 @@ const MyApplications = () => {
                         </Button>
                       )}
                       <Button asChild variant="outline" size="sm">
-                        <Link to={`/track?id=${app.id}`}>
+                        <Link to={`/application?id=${app.id}`}>
                           <Eye className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                           {labels.viewDetails}
                         </Link>
