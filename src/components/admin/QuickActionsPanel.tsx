@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -37,7 +36,6 @@ import {
   Loader2,
   FileCheck,
   Clock,
-  AlertTriangle,
   Download
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -46,6 +44,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { FilePreview } from '@/components/ui/FilePreview';
+import { useAdminNotifications } from '@/hooks/useAdminNotifications';
 
 interface Agent {
   id: string;
@@ -133,6 +133,55 @@ export function QuickActionsPanel() {
   const [workReviewOpen, setWorkReviewOpen] = useState(false);
   const [selectedWork, setSelectedWork] = useState<PendingWork | null>(null);
   const [workNotes, setWorkNotes] = useState('');
+
+  // Fetch functions with useCallback for notifications
+  const fetchPendingTransfersCallback = useCallback(async () => {
+    const { data } = await supabase
+      .from('agent_transfer_requests')
+      .select(`
+        id,
+        application_id,
+        reason,
+        created_at,
+        from_agent:profiles!agent_transfer_requests_from_agent_id_fkey(full_name),
+        to_agent:profiles!agent_transfer_requests_to_agent_id_fkey(full_name),
+        application:applications(
+          id,
+          visa_type:visa_types(name, country:countries(name)),
+          profile:profiles!applications_user_id_fkey(full_name)
+        )
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+    
+    setPendingTransfers(data || []);
+  }, []);
+
+  const fetchPendingWorkCallback = useCallback(async () => {
+    const { data } = await supabase
+      .from('agent_work_submissions')
+      .select(`
+        id,
+        application_id,
+        file_name,
+        file_path,
+        notes,
+        created_at,
+        agent:profiles!agent_work_submissions_agent_id_fkey(full_name),
+        application:applications(
+          id,
+          visa_type:visa_types(name, country:countries(name)),
+          profile:profiles!applications_user_id_fkey(full_name)
+        )
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+    
+    setPendingWork(data || []);
+  }, []);
+
+  // Real-time admin notifications
+  useAdminNotifications(fetchPendingTransfersCallback, fetchPendingWorkCallback);
 
   useEffect(() => {
     fetchAllData();
@@ -1004,67 +1053,53 @@ export function QuickActionsPanel() {
             </DialogHeader>
           </div>
 
-          <div className="p-6 space-y-5">
-            {selectedWork && (
-              <>
-                {/* Agent & Application Info */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="font-semibold text-foreground">{selectedWork.agent?.full_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="shrink-0 text-xs">
-                    <Clock className="h-3 w-3 ml-1" />
-                    {formatDistanceToNow(new Date(selectedWork.created_at), { locale: ar, addSuffix: true })}
-                  </Badge>
-                </div>
-                
-                {/* File Card */}
-                <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-lg bg-primary/10 shrink-0">
-                      <FileCheck className="h-5 w-5 text-primary" />
+          <ScrollArea className="max-h-[60vh]">
+            <div className="p-6 space-y-5">
+              {selectedWork && (
+                <>
+                  {/* Agent & Application Info */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">{selectedWork.agent?.full_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
+                      </p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{selectedWork.file_name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">ملف إتمام العمل</p>
-                    </div>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="gap-2 shrink-0 shadow-sm"
-                      onClick={() => handleDownloadFile(selectedWork.file_path, selectedWork.file_name)}
-                    >
-                      <Download className="h-4 w-4" />
-                      تحميل
-                    </Button>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      <Clock className="h-3 w-3 ml-1" />
+                      {formatDistanceToNow(new Date(selectedWork.created_at), { locale: ar, addSuffix: true })}
+                    </Badge>
                   </div>
-                </div>
-
-                {/* Agent Notes */}
-                {selectedWork.notes && (
-                  <div className="rounded-lg bg-muted/50 border p-4">
-                    <p className="text-xs font-medium text-muted-foreground mb-2">ملاحظات الوكيل:</p>
-                    <p className="text-sm leading-relaxed">{selectedWork.notes}</p>
-                  </div>
-                )}
-
-                {/* Admin Notes Input */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">ملاحظات المشرف (اختياري)</label>
-                  <Textarea
-                    placeholder="أضف ملاحظاتك هنا..."
-                    value={workNotes}
-                    onChange={(e) => setWorkNotes(e.target.value)}
-                    rows={3}
-                    className="resize-none bg-background"
+                  
+                  {/* File Preview Component */}
+                  <FilePreview 
+                    fileName={selectedWork.file_name}
+                    filePath={selectedWork.file_path}
                   />
-                </div>
-              </>
-            )}
-          </div>
+
+                  {/* Agent Notes */}
+                  {selectedWork.notes && (
+                    <div className="rounded-lg bg-muted/50 border p-4">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">ملاحظات الوكيل:</p>
+                      <p className="text-sm leading-relaxed">{selectedWork.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Admin Notes Input */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">ملاحظات المشرف (اختياري)</label>
+                    <Textarea
+                      placeholder="أضف ملاحظاتك هنا..."
+                      value={workNotes}
+                      onChange={(e) => setWorkNotes(e.target.value)}
+                      rows={3}
+                      className="resize-none bg-background"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </ScrollArea>
 
           {/* Footer Actions */}
           <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-end gap-3">
