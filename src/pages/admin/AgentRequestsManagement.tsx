@@ -33,7 +33,8 @@ import {
   Clock,
   ArrowLeftRight,
   Archive,
-  TrendingUp
+  TrendingUp,
+  AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -42,6 +43,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import JSZip from 'jszip';
 import { AgentPerformanceReport } from '@/components/admin/charts/AgentPerformanceReport';
+import { UrgentTasksDashboard } from '@/components/admin/UrgentTasksDashboard';
 
 interface TransferRequest {
   id: string;
@@ -478,8 +480,12 @@ export default function AgentRequestsManagement() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="transfers" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="urgent" className="space-y-4">
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="urgent" className="gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            المهام العاجلة
+          </TabsTrigger>
           <TabsTrigger value="transfers" className="gap-2">
             <UserMinus className="h-4 w-4" />
             طلبات التحويل
@@ -499,6 +505,11 @@ export default function AgentRequestsManagement() {
             تقرير الأداء
           </TabsTrigger>
         </TabsList>
+
+        {/* Urgent Tasks Tab */}
+        <TabsContent value="urgent">
+          <UrgentTasksDashboard />
+        </TabsContent>
 
         {/* Transfer Requests Tab */}
         <TabsContent value="transfers">
