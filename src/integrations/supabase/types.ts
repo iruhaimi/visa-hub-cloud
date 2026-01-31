@@ -928,6 +928,33 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_permissions: {
+        Row: {
+          created_at: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          permission: Database["public"]["Enums"]["staff_permission"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          permission: Database["public"]["Enums"]["staff_permission"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          permission?: Database["public"]["Enums"]["staff_permission"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       staff_recovery_codes: {
         Row: {
           code_hash: string
@@ -1116,6 +1143,13 @@ export type Database = {
       }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       get_user_email: { Args: { target_user_id: string }; Returns: string }
+      has_permission: {
+        Args: {
+          _permission: Database["public"]["Enums"]["staff_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1135,6 +1169,7 @@ export type Database = {
       }
       is_customer: { Args: { _user_id: string }; Returns: boolean }
       is_email_locked_out: { Args: { check_email: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "customer" | "agent" | "admin"
@@ -1151,6 +1186,17 @@ export type Database = {
       document_status: "pending" | "verified" | "rejected"
       note_type: "agent" | "admin" | "system"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      staff_permission:
+        | "manage_applications"
+        | "manage_users"
+        | "manage_staff"
+        | "manage_settings"
+        | "manage_offers"
+        | "manage_countries"
+        | "manage_hero"
+        | "view_reports"
+        | "process_refunds"
+        | "manage_unlock_requests"
       wallet_transaction_type:
         | "deposit"
         | "withdrawal"
@@ -1299,6 +1345,18 @@ export const Constants = {
       document_status: ["pending", "verified", "rejected"],
       note_type: ["agent", "admin", "system"],
       payment_status: ["pending", "completed", "failed", "refunded"],
+      staff_permission: [
+        "manage_applications",
+        "manage_users",
+        "manage_staff",
+        "manage_settings",
+        "manage_offers",
+        "manage_countries",
+        "manage_hero",
+        "view_reports",
+        "process_refunds",
+        "manage_unlock_requests",
+      ],
       wallet_transaction_type: [
         "deposit",
         "withdrawal",

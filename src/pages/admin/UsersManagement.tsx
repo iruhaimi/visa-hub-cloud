@@ -749,6 +749,10 @@ export default function UsersManagement() {
                     setShowDeleteStaffDialog(true);
                   }}
                   isAdmin={isAdmin}
+                  onRefresh={() => {
+                    fetchUsers();
+                    fetchActivityLog();
+                  }}
                 />
               )}
             </CardContent>
