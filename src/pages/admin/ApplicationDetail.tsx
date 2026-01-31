@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -411,23 +412,24 @@ export default function ApplicationDetail() {
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card rounded-lg border p-4">
         <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
+          <Button asChild variant="ghost" size="icon" className="shrink-0">
             <Link to={isAdmin ? '/admin/applications' : '/agent/applications'}>
               <ArrowRight className="h-5 w-5" />
             </Link>
           </Button>
           <div>
-            <h2 className="text-2xl font-bold">تفاصيل الطلب</h2>
-            <p className="text-muted-foreground font-mono text-sm">{application.id}</p>
+            <h2 className="text-xl sm:text-2xl font-bold">تفاصيل الطلب</h2>
+            <p className="text-muted-foreground font-mono text-xs sm:text-sm">{application.id}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mr-12 sm:mr-0">
           {getStatusBadge(application.status)}
           {application.status === 'approved' && (
             <Button 
               variant="outline" 
+              size="sm"
               onClick={() => generateApplicationPDF(application as any)}
             >
               <FileDown className="h-4 w-4 ml-2" />
@@ -435,162 +437,229 @@ export default function ApplicationDetail() {
             </Button>
           )}
           {isAdmin && (
-            <Button variant="outline" onClick={() => setShowAgentDialog(true)}>
+            <Button variant="outline" size="sm" onClick={() => setShowAgentDialog(true)}>
               <UserCog className="h-4 w-4 ml-2" />
               {application.assigned_agent ? 'تغيير الوكيل' : 'تعيين وكيل'}
             </Button>
           )}
-          <Button onClick={() => setShowStatusDialog(true)}>
+          <Button size="sm" onClick={() => setShowStatusDialog(true)}>
             تغيير الحالة
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid gap-6 xl:grid-cols-3">
+        {/* Main Info - Takes 2 columns */}
+        <div className="xl:col-span-2 space-y-6">
           {/* Applicant Info */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <User className="h-5 w-5 text-primary" />
                 معلومات مقدم الطلب
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <InfoRow label="الاسم الكامل" value={application.profile?.full_name} />
-                <InfoRow label="رقم الجوال" value={application.profile?.phone} />
-                <InfoRow label="الجنسية" value={application.profile?.nationality} />
-                <InfoRow label="تاريخ الميلاد" value={application.profile?.date_of_birth ? format(new Date(application.profile.date_of_birth), 'dd/MM/yyyy') : '-'} />
-                <InfoRow label="رقم الجواز" value={application.profile?.passport_number} />
-                <InfoRow label="تاريخ انتهاء الجواز" value={application.profile?.passport_expiry ? format(new Date(application.profile.passport_expiry), 'dd/MM/yyyy') : '-'} />
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">الاسم الكامل</p>
+                  <p className="font-medium">{application.profile?.full_name || '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">رقم الجوال</p>
+                  <p className="font-medium" dir="ltr">{application.profile?.phone || '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">الجنسية</p>
+                  <p className="font-medium">{application.profile?.nationality || '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">تاريخ الميلاد</p>
+                  <p className="font-medium">{application.profile?.date_of_birth ? format(new Date(application.profile.date_of_birth), 'dd/MM/yyyy') : '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">رقم الجواز</p>
+                  <p className="font-medium" dir="ltr">{application.profile?.passport_number || '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">تاريخ انتهاء الجواز</p>
+                  <p className="font-medium">{application.profile?.passport_expiry ? format(new Date(application.profile.passport_expiry), 'dd/MM/yyyy') : '-'}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Travel Info */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plane className="h-5 w-5" />
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Plane className="h-5 w-5 text-primary" />
                 معلومات السفر
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <InfoRow label="الوجهة" value={application.visa_type?.country?.name} />
-                <InfoRow label="نوع التأشيرة" value={application.visa_type?.name} />
-                <InfoRow label="تاريخ السفر" value={application.travel_date ? format(new Date(application.travel_date), 'dd/MM/yyyy') : '-'} />
-                <InfoRow label="تاريخ العودة" value={application.return_date ? format(new Date(application.return_date), 'dd/MM/yyyy') : '-'} />
-                <InfoRow label="الغرض من السفر" value={application.purpose_of_travel} className="md:col-span-2" />
-                <InfoRow label="تفاصيل الإقامة" value={application.accommodation_details} className="md:col-span-2" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">الوجهة</p>
+                  <p className="font-medium">{application.visa_type?.country?.name || '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">نوع التأشيرة</p>
+                  <p className="font-medium">{application.visa_type?.name || '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">تاريخ السفر</p>
+                  <p className="font-medium">{application.travel_date ? format(new Date(application.travel_date), 'dd/MM/yyyy') : '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">تاريخ العودة</p>
+                  <p className="font-medium">{application.return_date ? format(new Date(application.return_date), 'dd/MM/yyyy') : '-'}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50 sm:col-span-2">
+                  <p className="text-xs text-muted-foreground">الغرض من السفر</p>
+                  <p className="font-medium">{application.purpose_of_travel || '-'}</p>
+                </div>
+                {application.accommodation_details && (
+                  <div className="space-y-1 p-3 rounded-lg bg-muted/50 sm:col-span-2">
+                    <p className="text-xs text-muted-foreground">تفاصيل الإقامة</p>
+                    <p className="font-medium">{application.accommodation_details}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Documents */}
+          {/* Documents & Status History in a row */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Documents */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <FileText className="h-5 w-5 text-primary" />
+                  المستندات ({documents.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {documents.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">لا توجد مستندات مرفقة</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[250px]">
+                    <div className="space-y-2 pl-2">
+                      {documents.map((doc) => (
+                        <div 
+                          key={doc.id}
+                          className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <FileText className="h-8 w-8 text-muted-foreground shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{doc.document_type}</p>
+                              <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`rounded-full px-2 py-0.5 text-xs ${
+                              doc.status === 'verified' 
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                                : doc.status === 'rejected'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}>
+                              {doc.status === 'verified' ? 'تم التحقق' : doc.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
+                            </span>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadDocument(doc)}>
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Status History */}
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock className="h-5 w-5 text-primary" />
+                  سجل الحالات
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {statusHistory.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 mx-auto text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">لا يوجد سجل</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[250px]">
+                    <div className="space-y-4 pl-2">
+                      {statusHistory.map((history) => (
+                        <div key={history.id} className="border-r-2 border-primary pr-4 pb-2">
+                          <p className="text-sm font-medium">
+                            {STATUS_OPTIONS.find(s => s.value === history.new_status)?.label || history.new_status}
+                          </p>
+                          {history.notes && (
+                            <p className="text-sm text-muted-foreground mt-2 bg-muted/50 rounded p-2">{history.notes}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {format(new Date(history.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Application Summary */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                المستندات المرفقة ({documents.length})
-              </CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">ملخص الطلب</CardTitle>
             </CardHeader>
             <CardContent>
-              {documents.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">لا توجد مستندات مرفقة</p>
-              ) : (
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div 
-                      key={doc.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-8 w-8 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{doc.document_type}</p>
-                          <p className="text-sm text-muted-foreground">{doc.file_name}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`rounded-full px-2 py-0.5 text-xs ${
-                          doc.status === 'verified' 
-                            ? 'bg-success/10 text-success' 
-                            : doc.status === 'rejected'
-                            ? 'bg-destructive/10 text-destructive'
-                            : 'bg-muted text-muted-foreground'
-                        }`}>
-                          {doc.status === 'verified' ? 'تم التحقق' : doc.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => downloadDocument(doc)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+              <div className="grid gap-4 sm:grid-cols-4">
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50 text-center">
+                  <p className="text-xs text-muted-foreground">تاريخ الإنشاء</p>
+                  <p className="font-medium text-sm">{format(new Date(application.created_at), 'dd MMM yyyy', { locale: ar })}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50 text-center">
+                  <p className="text-xs text-muted-foreground">السعر</p>
+                  <p className="font-medium">{application.visa_type?.price} ر.س</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50 text-center">
+                  <p className="text-xs text-muted-foreground">مدة المعالجة</p>
+                  <p className="font-medium">{application.visa_type?.processing_days} أيام</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50 text-center">
+                  <p className="text-xs text-muted-foreground">الوكيل المسؤول</p>
+                  <p className="font-medium">{application.assigned_agent?.full_name || 'غير معين'}</p>
+                </div>
+              </div>
+              {application.rejection_reason && (
+                <div className="mt-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
+                  <p className="text-sm font-medium text-red-700 dark:text-red-400">سبب الرفض:</p>
+                  <p className="text-sm mt-1 text-red-600 dark:text-red-300">{application.rejection_reason}</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Quick Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>معلومات سريعة</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <InfoRow label="تاريخ الإنشاء" value={format(new Date(application.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })} />
-              <InfoRow label="السعر" value={`${application.visa_type?.price} ر.س`} />
-              <InfoRow label="مدة المعالجة" value={`${application.visa_type?.processing_days} أيام عمل`} />
-              <InfoRow 
-                label="الوكيل المسؤول" 
-                value={application.assigned_agent?.full_name || 'غير معين'} 
-              />
-            </CardContent>
-          </Card>
-
-          {/* Notes History - New System */}
-          <NotesHistory applicationId={application.id} />
-
-          {/* Status History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>سجل الحالات</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {statusHistory.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">لا يوجد سجل</p>
-              ) : (
-                <div className="space-y-3">
-                  {statusHistory.map((history) => (
-                    <div key={history.id} className="border-r-2 border-primary/20 pr-3">
-                      <p className="text-sm font-medium">
-                        {STATUS_OPTIONS.find(s => s.value === history.new_status)?.label || history.new_status}
-                      </p>
-                      {history.notes && (
-                        <p className="text-xs text-muted-foreground mt-1">{history.notes}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(history.created_at), 'dd/MM/yyyy HH:mm')}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Sidebar - Notes */}
+        <div className="xl:col-span-1">
+          <div className="sticky top-6">
+            <NotesHistory applicationId={application.id} />
+          </div>
         </div>
       </div>
-
       {/* Status Change Dialog */}
       <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
         <DialogContent dir="rtl">
