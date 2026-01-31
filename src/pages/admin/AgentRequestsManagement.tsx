@@ -32,7 +32,8 @@ import {
   Download,
   Clock,
   ArrowLeftRight,
-  Archive
+  Archive,
+  TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -40,6 +41,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import JSZip from 'jszip';
+import { AgentPerformanceReport } from '@/components/admin/charts/AgentPerformanceReport';
 
 interface TransferRequest {
   id: string;
@@ -492,6 +494,10 @@ export default function AgentRequestsManagement() {
               <Badge variant="destructive" className="mr-2">{pendingWorkGroups.length}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="performance" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            تقرير الأداء
+          </TabsTrigger>
         </TabsList>
 
         {/* Transfer Requests Tab */}
@@ -651,6 +657,11 @@ export default function AgentRequestsManagement() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Performance Report Tab */}
+        <TabsContent value="performance">
+          <AgentPerformanceReport />
         </TabsContent>
       </Tabs>
 

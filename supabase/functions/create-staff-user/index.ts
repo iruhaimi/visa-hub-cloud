@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, full_name, phone, role, sendEmail = true } = await req.json()
+    const { email, password, full_name, phone, role, sendEmail = true, grantSuperAdmin = false } = await req.json()
 
     // Validate required fields
     if (!email || !password || !role) {
@@ -111,6 +111,23 @@ Deno.serve(async (req) => {
 
     if (roleError) {
       console.error('Error adding role:', roleError)
+    }
+
+    // Grant super admin permission if requested and role is admin
+    if (grantSuperAdmin && role === 'admin') {
+      const { error: permError } = await adminClient
+        .from('staff_permissions')
+        .insert({
+          user_id: newUser.user!.id,
+          permission: 'manage_staff',
+          granted_by: callingUser.id
+        })
+
+      if (permError) {
+        console.error('Error granting super admin:', permError)
+      } else {
+        console.log('Super admin permission granted to:', email)
+      }
     }
 
     // Log the activity

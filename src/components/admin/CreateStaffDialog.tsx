@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { Loader2, UserPlus, Eye, EyeOff, Crown, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { filterArabicChars, filterNonNumeric } from '@/lib/inputFilters';
@@ -32,6 +33,7 @@ interface CreateStaffDialogProps {
 export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaffDialogProps) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [grantSuperAdmin, setGrantSuperAdmin] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -49,6 +51,7 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
       role: '',
     });
     setShowPassword(false);
+    setGrantSuperAdmin(false);
   };
 
   const handleSubmit = async () => {
@@ -71,6 +74,7 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
           full_name: formData.full_name || null,
           phone: formData.phone || null,
           role: formData.role,
+          grantSuperAdmin: formData.role === 'admin' && grantSuperAdmin,
         }
       });
 
@@ -202,7 +206,10 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
             <Label htmlFor="staff_role">الصلاحية *</Label>
             <Select
               value={formData.role}
-              onValueChange={(value: AppRole) => setFormData(prev => ({ ...prev, role: value }))}
+              onValueChange={(value: AppRole) => {
+                setFormData(prev => ({ ...prev, role: value }));
+                if (value !== 'admin') setGrantSuperAdmin(false);
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="اختر الصلاحية" />
@@ -222,10 +229,31 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
                 </SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              💡 لمنح صلاحيات المدير العام، قم بتعديل الصلاحيات بعد إنشاء الحساب من قسم إدارة الموظفين
-            </p>
           </div>
+
+          {/* Super Admin Option - Only visible when admin role is selected */}
+          {formData.role === 'admin' && (
+            <div className="p-4 rounded-lg border-2 border-dashed border-warning/50 bg-warning/5 space-y-3">
+              <div className="flex items-center gap-3">
+                <Crown className="h-5 w-5 text-warning" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm">صلاحية المدير العام</p>
+                  <p className="text-xs text-muted-foreground">يمنح جميع الصلاحيات بما في ذلك إدارة الموظفين</p>
+                </div>
+                <Checkbox
+                  id="grant_super_admin"
+                  checked={grantSuperAdmin}
+                  onCheckedChange={(checked) => setGrantSuperAdmin(checked === true)}
+                />
+              </div>
+              {grantSuperAdmin && (
+                <div className="flex items-center gap-2 p-2 rounded bg-warning/10 text-warning text-xs">
+                  <Shield className="h-4 w-4" />
+                  <span>سيتم منح هذا المستخدم صلاحيات كاملة على النظام</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter className="gap-2">
