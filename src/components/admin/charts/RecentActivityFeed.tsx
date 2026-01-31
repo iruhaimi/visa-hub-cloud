@@ -37,16 +37,16 @@ interface RecentActivityFeedProps {
   onRefresh?: () => void;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; icon: typeof FileText; color: string; bgColor: string }> = {
-  draft: { label: 'مسودة', icon: FileText, color: 'text-muted-foreground', bgColor: 'bg-muted' },
-  pending_payment: { label: 'بانتظار الدفع', icon: Clock, color: 'text-warning', bgColor: 'bg-warning/10' },
-  submitted: { label: 'مقدم', icon: FileText, color: 'text-info', bgColor: 'bg-info/10' },
-  under_review: { label: 'قيد المراجعة', icon: AlertCircle, color: 'text-primary', bgColor: 'bg-primary/10' },
-  documents_required: { label: 'مستندات مطلوبة', icon: AlertCircle, color: 'text-warning', bgColor: 'bg-warning/10' },
-  processing: { label: 'قيد المعالجة', icon: Clock, color: 'text-primary', bgColor: 'bg-primary/10' },
-  approved: { label: 'معتمد', icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10' },
-  rejected: { label: 'مرفوض', icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10' },
-  cancelled: { label: 'ملغي', icon: XCircle, color: 'text-muted-foreground', bgColor: 'bg-muted' },
+const STATUS_CONFIG: Record<string, { label: string; icon: typeof FileText; color: string; bgColor: string; borderColor: string }> = {
+  draft: { label: 'مسودة', icon: FileText, color: 'text-muted-foreground', bgColor: 'bg-muted/50', borderColor: 'border-muted-foreground/30' },
+  pending_payment: { label: 'بانتظار الدفع', icon: Clock, color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/30' },
+  submitted: { label: 'مقدم', icon: FileText, color: 'text-info', bgColor: 'bg-info/10', borderColor: 'border-info/30' },
+  under_review: { label: 'قيد المراجعة', icon: AlertCircle, color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/30' },
+  documents_required: { label: 'مستندات مطلوبة', icon: AlertCircle, color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/30' },
+  processing: { label: 'قيد المعالجة', icon: Clock, color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/30' },
+  approved: { label: 'معتمد', icon: CheckCircle, color: 'text-success', bgColor: 'bg-success/10', borderColor: 'border-success/30' },
+  rejected: { label: 'مرفوض', icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive/30' },
+  cancelled: { label: 'ملغي', icon: XCircle, color: 'text-muted-foreground', bgColor: 'bg-muted/50', borderColor: 'border-muted-foreground/30' },
 };
 
 export default function RecentActivityFeed({ activities, onRefresh }: RecentActivityFeedProps) {
@@ -128,7 +128,7 @@ export default function RecentActivityFeed({ activities, onRefresh }: RecentActi
                         <Icon className={`h-4 w-4 ${newConfig.color}`} />
                       </div>
                       
-                      <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-medium">
                             تغيير حالة الطلب
@@ -144,18 +144,32 @@ export default function RecentActivityFeed({ activities, onRefresh }: RecentActi
                           </Link>
                         </div>
                         
+                        {/* Status badges - showing old → new based on the image reference */}
                         <div className="flex items-center gap-2 flex-wrap">
-                          {oldConfig && (
+                          {oldConfig ? (
                             <>
-                              <Badge variant="outline" className={`${oldConfig.color} border-current/30`}>
+                              <Badge 
+                                variant="outline" 
+                                className={`${oldConfig.bgColor} ${oldConfig.color} border ${oldConfig.borderColor} font-medium px-3 py-1`}
+                              >
                                 {oldConfig.label}
                               </Badge>
-                              <span className="text-muted-foreground">←</span>
+                              <span className="text-muted-foreground text-lg">←</span>
+                              <Badge 
+                                variant="outline"
+                                className={`${newConfig.bgColor} ${newConfig.color} border ${newConfig.borderColor} font-medium px-3 py-1`}
+                              >
+                                {newConfig.label}
+                              </Badge>
                             </>
+                          ) : (
+                            <Badge 
+                              variant="outline"
+                              className={`${newConfig.bgColor} ${newConfig.color} border ${newConfig.borderColor} font-medium px-3 py-1`}
+                            >
+                              {newConfig.label}
+                            </Badge>
                           )}
-                          <Badge className={`${newConfig.bgColor} ${newConfig.color} border-0`}>
-                            {newConfig.label}
-                          </Badge>
                         </div>
                         
                         <p className="text-xs text-muted-foreground">
@@ -166,9 +180,10 @@ export default function RecentActivityFeed({ activities, onRefresh }: RecentActi
                         </p>
                         
                         {activity.notes && (
-                          <p className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 mt-2">
-                            💬 {activity.notes}
-                          </p>
+                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2 mt-2">
+                            <span className="shrink-0">💬</span>
+                            <span className="leading-relaxed">{activity.notes}</span>
+                          </div>
                         )}
                       </div>
                     </div>
