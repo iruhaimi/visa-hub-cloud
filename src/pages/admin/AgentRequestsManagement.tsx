@@ -31,13 +31,15 @@ import {
   Eye,
   Download,
   Clock,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Archive
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import JSZip from 'jszip';
 
 interface TransferRequest {
   id: string;
@@ -335,6 +337,49 @@ export default function AgentRequestsManagement() {
     } catch (error) {
       console.error('Error downloading file:', error);
       toast.error('حدث خطأ في تحميل الملف');
+    }
+  };
+
+  const [downloadingZip, setDownloadingZip] = useState(false);
+
+  const downloadAllAsZip = async (group: GroupedWorkSubmission) => {
+    if (!group.files.length) return;
+    
+    setDownloadingZip(true);
+    try {
+      const zip = new JSZip();
+      
+      for (const file of group.files) {
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .download(file.file_path);
+        
+        if (error) {
+          console.error(`Error downloading ${file.file_name}:`, error);
+          continue;
+        }
+        
+        zip.file(file.file_name, data);
+      }
+      
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const applicantName = group.application?.profile?.full_name || 'طلب';
+      const countryName = group.application?.visa_type?.country?.name || '';
+      const zipFileName = `ملفات_إتمام_${applicantName}_${countryName}.zip`;
+      
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = zipFileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast.success(`تم تحميل ${group.files.length} ملفات بنجاح`);
+    } catch (error) {
+      console.error('Error creating ZIP:', error);
+      toast.error('حدث خطأ في إنشاء الملف المضغوط');
+    } finally {
+      setDownloadingZip(false);
     }
   };
 
@@ -706,7 +751,25 @@ export default function AgentRequestsManagement() {
               </div>
 
               <div className="p-3 rounded-lg border space-y-2">
-                <p className="text-sm font-medium mb-3">الملفات المرفقة ({selectedWorkGroup.files.length}):</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">الملفات المرفقة ({selectedWorkGroup.files.length}):</p>
+                  {selectedWorkGroup.files.length > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadAllAsZip(selectedWorkGroup)}
+                      disabled={downloadingZip}
+                      className="gap-2"
+                    >
+                      {downloadingZip ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Archive className="h-4 w-4" />
+                      )}
+                      تحميل الكل (ZIP)
+                    </Button>
+                  )}
+                </div>
                 <ScrollArea className="max-h-[200px]">
                   <div className="space-y-2">
                     {selectedWorkGroup.files.map((file, index) => (
