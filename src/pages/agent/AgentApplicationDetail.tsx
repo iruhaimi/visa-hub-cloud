@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDocumentAccessLog } from '@/hooks/useDocumentAccessLog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,7 +35,8 @@ import {
   Save,
   FileDown,
   UserMinus,
-  FileCheck
+  FileCheck,
+  Eye
 } from 'lucide-react';
 import { generateApplicationPDF } from '@/lib/generateApplicationPDF';
 import { NotesHistory } from '@/components/admin/NotesHistory';
@@ -116,6 +118,7 @@ function InfoRow({ label, value, className = '' }: { label: string; value: strin
 export default function AgentApplicationDetail() {
   const { id } = useParams<{ id: string }>();
   const { profile: currentUserProfile } = useAuth();
+  const { logDocumentAccess } = useDocumentAccessLog();
   const [application, setApplication] = useState<ApplicationData | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [statusHistory, setStatusHistory] = useState<StatusHistory[]>([]);
@@ -131,6 +134,10 @@ export default function AgentApplicationDetail() {
   // Transfer and work submission dialogs
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [showWorkSubmissionDialog, setShowWorkSubmissionDialog] = useState(false);
+  
+  // Document preview
+  const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   // Notes
   const [agentNotes, setAgentNotes] = useState('');
@@ -289,6 +296,11 @@ export default function AgentApplicationDetail() {
 
   const downloadDocument = async (doc: Document) => {
     try {
+      // Log document access
+      if (id) {
+        logDocumentAccess(doc.id, id, 'download', doc.document_type);
+      }
+
       const { data, error } = await supabase.storage
         .from('documents')
         .download(doc.file_path);
@@ -307,8 +319,44 @@ export default function AgentApplicationDetail() {
     }
   };
 
+  const viewDocument = async (doc: Document) => {
+    try {
+      // Log document access
+      if (id) {
+        logDocumentAccess(doc.id, id, 'view', doc.document_type);
+      }
+
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(doc.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
+      setPreviewDoc(doc);
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast.error('حدث خطأ في عرض المستند');
+    }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setPreviewDoc(null);
+  };
+
   const updateDocumentStatus = async (docId: string, status: 'verified' | 'rejected') => {
     try {
+      // Log the update action
+      const doc = documents.find(d => d.id === docId);
+      if (doc && id) {
+        logDocumentAccess(docId, id, 'update', doc.document_type);
+      }
+
       const { error } = await supabase
         .from('application_documents')
         .update({ 
@@ -534,26 +582,29 @@ export default function AgentApplicationDetail() {
                             <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           <span className={`rounded-full px-2 py-0.5 text-xs ${
                             doc.status === 'verified' 
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                              ? 'bg-success/10 text-success' 
                               : doc.status === 'rejected'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                              ? 'bg-destructive/10 text-destructive'
+                              : 'bg-warning/10 text-warning'
                           }`}>
                             {doc.status === 'verified' ? 'تم التحقق' : doc.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
                           </span>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadDocument(doc)}>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => viewDocument(doc)} title="معاينة">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadDocument(doc)} title="تحميل">
                             <Download className="h-4 w-4" />
                           </Button>
                           {doc.status === 'pending' && (
                             <>
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateDocumentStatus(doc.id, 'verified')}>
-                                <CheckCircle className="h-4 w-4 text-green-600" />
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateDocumentStatus(doc.id, 'verified')} title="قبول">
+                                <CheckCircle className="h-4 w-4 text-success" />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateDocumentStatus(doc.id, 'rejected')}>
-                                <XCircle className="h-4 w-4 text-red-600" />
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateDocumentStatus(doc.id, 'rejected')} title="رفض">
+                                <XCircle className="h-4 w-4 text-destructive" />
                               </Button>
                             </>
                           )}
@@ -706,6 +757,42 @@ export default function AgentApplicationDetail() {
         applicationId={application.id}
         onSuccess={fetchApplicationData}
       />
+
+      {/* Document Preview Dialog */}
+      {previewDoc && previewUrl && (
+        <Dialog open={!!previewDoc} onOpenChange={(open) => !open && closePreview()}>
+          <DialogContent className="max-w-4xl h-[85vh] p-0 flex flex-col" dir="rtl">
+            <DialogHeader className="px-4 py-3 border-b shrink-0">
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                {previewDoc.file_name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-auto bg-muted/20 flex items-center justify-center p-4">
+              {previewDoc.file_name.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full rounded-lg border shadow-lg bg-white"
+                  title={previewDoc.file_name}
+                />
+              ) : (
+                <img
+                  src={previewUrl}
+                  alt={previewDoc.file_name}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                />
+              )}
+            </div>
+            <DialogFooter className="px-4 py-3 border-t shrink-0">
+              <Button variant="outline" onClick={closePreview}>إغلاق</Button>
+              <Button onClick={() => downloadDocument(previewDoc)}>
+                <Download className="h-4 w-4 ml-2" />
+                تحميل
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

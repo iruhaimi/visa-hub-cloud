@@ -18,7 +18,8 @@ import {
    UserCheck,
    ArrowLeftRight,
    Crown,
-   Shield
+   Shield,
+   FileSearch
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -98,6 +99,12 @@ export default function AdminLayout() {
       title: 'العمليات الحساسة',
       icon: Shield,
       href: '/admin/sensitive-operations',
+      show: isAdmin && isSuperAdmin,
+    },
+    {
+      title: 'سجلات وصول المستندات',
+      icon: FileSearch,
+      href: '/admin/document-logs',
       show: isAdmin && isSuperAdmin,
     },
     {
