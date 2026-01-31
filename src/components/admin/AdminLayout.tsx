@@ -101,6 +101,12 @@ export default function AdminLayout() {
       show: isAdmin && isSuperAdmin,
     },
     {
+      title: 'إعدادات المالك',
+      icon: Crown,
+      href: '/admin/owner-settings',
+      show: isAdmin && isSuperAdmin,
+    },
+    {
       title: 'الإعدادات',
       icon: Settings,
       href: '/admin/settings',
