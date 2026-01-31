@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import type { Profile, UserRole, AppRole } from '@/types/database';
 
 interface AuthContextType {
@@ -14,7 +15,7 @@ interface AuthContextType {
   isCustomer: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
+  signOut: (isStaff?: boolean) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -131,8 +132,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signOut = async () => {
+  const signOut = async (isStaff: boolean = false) => {
     await supabase.auth.signOut();
+    // Staff members should be redirected to staff portal, not customer auth page
+    if (isStaff) {
+      window.location.href = '/portal-x7k9m2';
+    }
   };
 
   const isAdmin = roles.includes('admin');

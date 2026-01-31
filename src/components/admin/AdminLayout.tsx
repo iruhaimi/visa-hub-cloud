@@ -115,9 +115,7 @@ export default function AdminLayout() {
   ];
 
   const handleSignOut = async () => {
-    await signOut();
-    // Redirect staff to staff portal instead of customer auth
-    navigate('/portal-x7k9m2');
+    await signOut(true); // Pass true to redirect to staff portal
   };
 
   return (
