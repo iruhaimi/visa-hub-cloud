@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -26,11 +27,13 @@ import {
   Filter,
   Loader2,
   RefreshCw,
-  Download
+  Download,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { exportToExcel } from '@/lib/exportToExcel';
+import { BulkAssignDialog } from '@/components/admin/BulkAssignDialog';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'جميع الحالات' },
@@ -45,12 +48,19 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'ملغي' },
 ];
 
+const ASSIGNMENT_OPTIONS = [
+  { value: 'all', label: 'الكل' },
+  { value: 'unassigned', label: 'بدون وكيل' },
+  { value: 'assigned', label: 'مُسند' },
+];
+
 interface Application {
   id: string;
   status: string;
   created_at: string;
   travel_date: string | null;
   user_id: string;
+  assigned_agent_id: string | null;
   visa_type: {
     name: string;
     country: {
@@ -61,6 +71,9 @@ interface Application {
     full_name: string;
     phone: string;
   };
+  assigned_agent?: {
+    full_name: string;
+  } | null;
 }
 
 export default function ApplicationsList() {
@@ -69,10 +82,13 @@ export default function ApplicationsList() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [assignmentFilter, setAssignmentFilter] = useState('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
 
   useEffect(() => {
     fetchApplications();
-  }, [statusFilter]);
+  }, [statusFilter, assignmentFilter]);
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -85,6 +101,7 @@ export default function ApplicationsList() {
           created_at,
           travel_date,
           user_id,
+          assigned_agent_id,
           visa_type:visa_types(
             name,
             country:countries(name)
@@ -92,6 +109,9 @@ export default function ApplicationsList() {
           profile:profiles!applications_user_id_fkey(
             full_name,
             phone
+          ),
+          assigned_agent:profiles!applications_assigned_agent_id_fkey(
+            full_name
           )
         `)
         .order('created_at', { ascending: false });
@@ -100,10 +120,17 @@ export default function ApplicationsList() {
         query = query.eq('status', statusFilter as any);
       }
 
+      if (assignmentFilter === 'unassigned') {
+        query = query.is('assigned_agent_id', null);
+      } else if (assignmentFilter === 'assigned') {
+        query = query.not('assigned_agent_id', 'is', null);
+      }
+
       const { data, error } = await query;
 
       if (error) throw error;
       setApplications(data || []);
+      setSelectedIds(new Set());
     } catch (error) {
       console.error('Error fetching applications:', error);
     } finally {
@@ -118,9 +145,37 @@ export default function ApplicationsList() {
       app.id.toLowerCase().includes(searchLower) ||
       app.profile?.full_name?.toLowerCase().includes(searchLower) ||
       app.profile?.phone?.includes(searchQuery) ||
-      app.visa_type?.country?.name?.toLowerCase().includes(searchLower)
+      app.visa_type?.country?.name?.toLowerCase().includes(searchLower) ||
+      app.assigned_agent?.full_name?.toLowerCase().includes(searchLower)
     );
   });
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredApplications.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredApplications.map(a => a.id)));
+    }
+  };
+
+  const selectedAppsForBulk = filteredApplications
+    .filter(a => selectedIds.has(a.id))
+    .map(a => ({
+      id: a.id,
+      applicant_name: a.profile?.full_name || 'عميل',
+      country: a.visa_type?.country?.name || '',
+      visa_type: a.visa_type?.name || '',
+    }));
 
   const getStatusLabel = (status: string) => {
     const statusLabels: Record<string, string> = {
@@ -188,12 +243,18 @@ export default function ApplicationsList() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold">إدارة الطلبات</h2>
           <p className="text-muted-foreground">عرض وإدارة جميع طلبات التأشيرات</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {selectedIds.size > 0 && (
+            <Button onClick={() => setBulkAssignOpen(true)} variant="default" size="sm">
+              <Users className="h-4 w-4 ml-2" />
+              تعيين جماعي ({selectedIds.size})
+            </Button>
+          )}
           <Button onClick={handleExportToExcel} variant="outline" size="sm">
             <Download className="h-4 w-4 ml-2" />
             تصدير Excel
@@ -219,12 +280,25 @@ export default function ApplicationsList() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="w-full md:w-40">
                 <Filter className="h-4 w-4 ml-2" />
-                <SelectValue placeholder="فلترة حسب الحالة" />
+                <SelectValue placeholder="الحالة" />
               </SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
+              <SelectTrigger className="w-full md:w-36">
+                <Users className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="الإسناد" />
+              </SelectTrigger>
+              <SelectContent>
+                {ASSIGNMENT_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -237,10 +311,15 @@ export default function ApplicationsList() {
 
       {/* Applications Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between">
           <CardTitle>
             الطلبات ({filteredApplications.length})
           </CardTitle>
+          {selectedIds.size > 0 && (
+            <span className="text-sm text-muted-foreground">
+              تم تحديد {selectedIds.size} طلب
+            </span>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -256,10 +335,16 @@ export default function ApplicationsList() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={selectedIds.size === filteredApplications.length && filteredApplications.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="text-right">رقم الطلب</TableHead>
                     <TableHead className="text-right">مقدم الطلب</TableHead>
                     <TableHead className="text-right">الوجهة</TableHead>
-                    <TableHead className="text-right">نوع التأشيرة</TableHead>
+                    <TableHead className="text-right">الوكيل</TableHead>
                     <TableHead className="text-right">تاريخ الإنشاء</TableHead>
                     <TableHead className="text-right">الحالة</TableHead>
                     <TableHead className="text-right">إجراءات</TableHead>
@@ -267,7 +352,13 @@ export default function ApplicationsList() {
                 </TableHeader>
                 <TableBody>
                   {filteredApplications.map((app) => (
-                    <TableRow key={app.id}>
+                    <TableRow key={app.id} className={selectedIds.has(app.id) ? 'bg-primary/5' : ''}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(app.id)}
+                          onCheckedChange={() => toggleSelect(app.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono text-xs">
                         {app.id.slice(0, 8)}...
                       </TableCell>
@@ -278,7 +369,11 @@ export default function ApplicationsList() {
                         </div>
                       </TableCell>
                       <TableCell>{app.visa_type?.country?.name || '-'}</TableCell>
-                      <TableCell>{app.visa_type?.name || '-'}</TableCell>
+                      <TableCell>
+                        {app.assigned_agent?.full_name || (
+                          <span className="text-destructive text-xs">غير مُسند</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {format(new Date(app.created_at), 'dd MMM yyyy', { locale: ar })}
                       </TableCell>
@@ -299,6 +394,14 @@ export default function ApplicationsList() {
           )}
         </CardContent>
       </Card>
+
+      {/* Bulk Assign Dialog */}
+      <BulkAssignDialog
+        open={bulkAssignOpen}
+        onOpenChange={setBulkAssignOpen}
+        selectedApplications={selectedAppsForBulk}
+        onSuccess={fetchApplications}
+      />
     </div>
   );
 }
