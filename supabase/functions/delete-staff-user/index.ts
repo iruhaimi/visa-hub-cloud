@@ -47,6 +47,20 @@ Deno.serve(async (req) => {
       )
     }
 
+    // SECURITY FIX: Check if calling user has manage_staff permission
+    const { data: hasManageStaffPermission } = await adminClient.rpc('has_permission', { 
+      _user_id: callingUser.id, 
+      _permission: 'manage_staff' 
+    })
+
+    if (!hasManageStaffPermission) {
+      console.log(`Security: User ${callingUser.id} attempted to delete staff without manage_staff permission`)
+      return new Response(
+        JSON.stringify({ success: false, error: 'ليس لديك صلاحية إدارة الموظفين' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Parse request body
     const { user_id } = await req.json()
 
@@ -80,6 +94,41 @@ Deno.serve(async (req) => {
       )
     }
 
+    // SECURITY FIX: Check if target user has manage_staff permission (Super Admin)
+    // Only Super Admins can delete other Super Admins
+    const { data: targetHasManageStaff } = await adminClient.rpc('has_permission', { 
+      _user_id: user_id, 
+      _permission: 'manage_staff' 
+    })
+
+    if (targetHasManageStaff) {
+      // Count how many super admins exist
+      const { data: superAdmins, error: countError } = await adminClient
+        .from('staff_permissions')
+        .select('user_id')
+        .eq('permission', 'manage_staff')
+
+      if (countError) {
+        console.error('Error counting super admins:', countError)
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to verify super admin count' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Prevent deleting the last super admin
+      const uniqueSuperAdmins = [...new Set(superAdmins?.map(s => s.user_id) || [])]
+      if (uniqueSuperAdmins.length <= 1) {
+        console.log(`Security: Prevented deletion of last super admin ${user_id}`)
+        return new Response(
+          JSON.stringify({ success: false, error: 'لا يمكن حذف آخر مدير عام في النظام. يجب وجود مدير عام واحد على الأقل.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`Super admin ${callingUser.id} is deleting another super admin ${user_id}. Remaining super admins: ${uniqueSuperAdmins.length - 1}`)
+    }
+
     // Log the activity before deletion
     await adminClient
       .from('role_activity_log')
@@ -90,7 +139,13 @@ Deno.serve(async (req) => {
         role: 'admin' // We use admin as placeholder for full deletion
       })
 
-    // Delete user roles first
+    // Delete staff permissions first
+    await adminClient
+      .from('staff_permissions')
+      .delete()
+      .eq('user_id', user_id)
+
+    // Delete user roles
     await adminClient
       .from('user_roles')
       .delete()
@@ -113,7 +168,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`Staff user ${user_id} deleted successfully by admin ${callingUser.id}`)
+    console.log(`Staff user ${user_id} deleted successfully by super admin ${callingUser.id}`)
 
     return new Response(
       JSON.stringify({ 
