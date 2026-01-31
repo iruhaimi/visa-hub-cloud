@@ -164,7 +164,7 @@ export function WorkSubmissionsSection({ applicationId }: WorkSubmissionsSection
             <p className="text-sm text-muted-foreground">لا توجد ملفات إتمام عمل مرفقة</p>
           </div>
         ) : (
-          <ScrollArea className="max-h-[400px]">
+          <ScrollArea className="h-[350px] pr-2">
             <div className="space-y-4 pl-2">
               {submissions.map((submission) => {
                 const statusConfig = getStatusConfig(submission.status);
