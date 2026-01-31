@@ -33,10 +33,23 @@ import {
   Calendar,
   Target,
   Zap,
-  Crown
+  Crown,
+  Download
 } from 'lucide-react';
-import { format, subMonths, subWeeks, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
+import { format, subMonths, subWeeks, startOfMonth, endOfMonth, differenceInDays, eachMonthOfInterval } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { exportToExcel } from '@/lib/exportToExcel';
+import { toast } from 'sonner';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend 
+} from 'recharts';
 
 interface AgentPerformance {
   id: string;
@@ -67,14 +80,34 @@ const SORT_OPTIONS = [
   { value: 'avgProcessingDays', label: 'سرعة الإنجاز' },
 ];
 
+interface MonthlyTrend {
+  month: string;
+  monthLabel: string;
+  [agentName: string]: string | number;
+}
+
+const AGENT_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--success))',
+  'hsl(var(--warning))',
+  'hsl(var(--destructive))',
+  'hsl(var(--info))',
+  '#8b5cf6',
+  '#ec4899',
+  '#14b8a6',
+];
+
 export default function AgentsComparisonTable() {
   const [agents, setAgents] = useState<AgentPerformance[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('month');
   const [sortBy, setSortBy] = useState('completionRate');
+  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchAgentsPerformance();
+    fetchMonthlyTrends();
   }, [period]);
 
   const getDateRange = () => {
@@ -204,6 +237,114 @@ export default function AgentsComparisonTable() {
     }
   };
 
+  // Fetch monthly performance trends for line chart
+  const fetchMonthlyTrends = async () => {
+    try {
+      // Get last 6 months
+      const now = new Date();
+      const months = eachMonthOfInterval({
+        start: subMonths(now, 5),
+        end: now,
+      });
+
+      // Fetch agents
+      const { data: agentRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'agent');
+
+      if (!agentRoles || agentRoles.length === 0) {
+        setMonthlyTrends([]);
+        return;
+      }
+
+      const { data: agentProfiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, user_id')
+        .in('user_id', agentRoles.map(r => r.user_id));
+
+      // Fetch all applications for the period
+      const { data: applications } = await supabase
+        .from('applications')
+        .select('id, status, assigned_agent_id, approved_at')
+        .not('assigned_agent_id', 'is', null)
+        .gte('approved_at', subMonths(now, 6).toISOString());
+
+      // Build monthly data
+      const trends: MonthlyTrend[] = months.map(month => {
+        const monthStart = startOfMonth(month);
+        const monthEnd = endOfMonth(month);
+        
+        const entry: MonthlyTrend = {
+          month: format(month, 'yyyy-MM'),
+          monthLabel: format(month, 'MMM', { locale: ar }),
+        };
+
+        (agentProfiles || []).forEach(agent => {
+          const agentName = agent.full_name || 'وكيل';
+          const completed = (applications || []).filter(app => {
+            if (app.assigned_agent_id !== agent.id || app.status !== 'approved' || !app.approved_at) return false;
+            const approvedDate = new Date(app.approved_at);
+            return approvedDate >= monthStart && approvedDate <= monthEnd;
+          }).length;
+          entry[agentName] = completed;
+        });
+
+        return entry;
+      });
+
+      setMonthlyTrends(trends);
+    } catch (error) {
+      console.error('Error fetching monthly trends:', error);
+    }
+  };
+
+  // Export to Excel
+  const handleExportExcel = async () => {
+    setExporting(true);
+    try {
+      const periodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || period;
+      
+      await exportToExcel({
+        sheetName: 'أداء الوكلاء',
+        fileName: `تقرير_أداء_الوكلاء_${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
+        columns: [
+          { header: 'الترتيب', key: 'rank', width: 10 },
+          { header: 'الوكيل', key: 'name', width: 25 },
+          { header: 'إجمالي المسند', key: 'totalAssigned', width: 15 },
+          { header: 'المنجز', key: 'completed', width: 12 },
+          { header: 'قيد المعالجة', key: 'pending', width: 15 },
+          { header: 'المرفوض', key: 'rejected', width: 12 },
+          { header: 'طلبات التحويل', key: 'transferred', width: 15 },
+          { header: 'متوسط أيام الإنجاز', key: 'avgProcessingDays', width: 18 },
+          { header: 'نسبة الإنجاز %', key: 'completionRate', width: 15 },
+          { header: 'عدد الملاحظات', key: 'notesCount', width: 15 },
+          { header: 'عدد التسليمات', key: 'workSubmissions', width: 15 },
+        ],
+        data: sortedAgents.map((agent, idx) => ({
+          rank: idx + 1,
+          name: agent.name,
+          totalAssigned: agent.totalAssigned,
+          completed: agent.completed,
+          pending: agent.pending,
+          rejected: agent.rejected,
+          transferred: agent.transferred,
+          avgProcessingDays: agent.avgProcessingDays || 0,
+          completionRate: agent.completionRate,
+          notesCount: agent.notesCount,
+          workSubmissions: agent.workSubmissions,
+        })),
+      });
+
+      toast.success('تم تصدير التقرير بنجاح');
+    } catch (error) {
+      console.error('Error exporting:', error);
+      toast.error('حدث خطأ أثناء التصدير');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const sortedAgents = useMemo(() => {
     return [...agents].sort((a, b) => {
       switch (sortBy) {
@@ -284,6 +425,20 @@ export default function AgentsComparisonTable() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              disabled={exporting || agents.length === 0}
+              className="gap-2"
+            >
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              تصدير Excel
+            </Button>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger className="w-36">
                 <Calendar className="h-4 w-4 ml-2" />
@@ -310,6 +465,55 @@ export default function AgentsComparisonTable() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Monthly Performance Trends Line Chart */}
+        {monthlyTrends.length > 0 && agents.length > 0 && (
+          <div className="rounded-lg border p-4 bg-muted/20">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">اتجاه الأداء الشهري</h3>
+              <span className="text-xs text-muted-foreground">(آخر 6 أشهر)</span>
+            </div>
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyTrends}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="monthLabel" 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      direction: 'rtl'
+                    }}
+                    formatter={(value: number, name: string) => [`${value} طلب`, name]}
+                  />
+                  <Legend 
+                    wrapperStyle={{ direction: 'rtl', paddingTop: '10px' }}
+                  />
+                  {agents.slice(0, 8).map((agent, idx) => (
+                    <Line
+                      key={agent.id}
+                      type="monotone"
+                      dataKey={agent.name}
+                      stroke={AGENT_COLORS[idx % AGENT_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: AGENT_COLORS[idx % AGENT_COLORS.length] }}
+                      activeDot={{ r: 6 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
         {/* Summary Stats */}
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <div className="text-center p-4 rounded-lg bg-muted/50">
