@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useSystemBackups } from '@/hooks/useSystemBackups';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Crown, Shield, UserPlus, Trash2, Users, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Crown, Shield, UserPlus, Trash2, Users, AlertTriangle, Loader2, CheckCircle2, Download, Database, HardDrive, Calendar, FileArchive, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 interface StaffUser {
@@ -51,6 +56,10 @@ export default function OwnerSettings() {
   const [confirmGrantDialog, setConfirmGrantDialog] = useState(false);
   const [confirmRevokeDialog, setConfirmRevokeDialog] = useState(false);
   const [targetUser, setTargetUser] = useState<StaffUser | null>(null);
+  const [backupNotes, setBackupNotes] = useState('');
+
+  // System backups
+  const { backups, loading: loadingBackups, creating, createBackup, downloadBackup, deleteBackup } = useSystemBackups();
 
   // Fetch all admin staff
   const { data: staffUsers, isLoading: loadingStaff } = useQuery({
@@ -390,7 +399,133 @@ export default function OwnerSettings() {
         </CardContent>
       </Card>
 
-      {/* Grant Confirmation Dialog */}
+      {/* System Backup Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5 text-primary" />
+            النسخ الاحتياطي
+          </CardTitle>
+          <CardDescription>
+            إنشاء وإدارة النسخ الاحتياطية لقاعدة البيانات
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Create Backup */}
+          <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <HardDrive className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-medium">إنشاء نسخة احتياطية جديدة</h3>
+                <p className="text-sm text-muted-foreground">
+                  سيتم تصدير جميع البيانات الأساسية في ملف ZIP
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="backup-notes">ملاحظات (اختياري)</Label>
+              <Input
+                id="backup-notes"
+                placeholder="مثال: نسخة قبل التحديث الكبير..."
+                value={backupNotes}
+                onChange={(e) => setBackupNotes(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={() => {
+                createBackup(backupNotes || undefined);
+                setBackupNotes('');
+              }}
+              disabled={creating}
+              className="w-full gap-2"
+            >
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  جاري الإنشاء...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  إنشاء وتحميل نسخة احتياطية
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Backup History */}
+          <div>
+            <h3 className="font-medium mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              سجل النسخ الاحتياطية
+            </h3>
+            {loadingBackups ? (
+              <div className="space-y-2">
+                {[1, 2].map(i => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : backups.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileArchive className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>لا توجد نسخ احتياطية سابقة</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-[250px]">
+                <div className="space-y-2">
+                  {backups.map((backup) => (
+                    <div
+                      key={backup.id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-muted">
+                          <FileArchive className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{backup.file_name}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {format(new Date(backup.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })}
+                            <span>•</span>
+                            <span>{(backup.file_size / 1024).toFixed(1)} KB</span>
+                          </div>
+                          {backup.notes && (
+                            <p className="text-xs text-muted-foreground mt-1">{backup.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => downloadBackup(backup)}
+                          title="تحميل"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteBackup(backup.id)}
+                          title="حذف"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+
       <AlertDialog open={confirmGrantDialog} onOpenChange={setConfirmGrantDialog}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
