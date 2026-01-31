@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   FileCheck, 
-  Download, 
   Loader2, 
   User, 
   Calendar,
-  FileText,
   CheckCircle,
   XCircle,
   Clock,
@@ -18,7 +15,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { toast } from 'sonner';
+import { FilePreview } from '@/components/ui/FilePreview';
 
 interface WorkSubmission {
   id: string;
@@ -42,7 +39,6 @@ interface WorkSubmissionsSectionProps {
 export function WorkSubmissionsSection({ applicationId }: WorkSubmissionsSectionProps) {
   const [submissions, setSubmissions] = useState<WorkSubmission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSubmissions();
@@ -75,32 +71,6 @@ export function WorkSubmissionsSection({ applicationId }: WorkSubmissionsSection
       console.error('Error fetching work submissions:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const downloadFile = async (submission: WorkSubmission) => {
-    setDownloading(submission.id);
-    try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .download(submission.file_path);
-
-      if (error) throw error;
-
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = submission.file_name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success('تم تحميل الملف بنجاح');
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      toast.error('حدث خطأ في تحميل الملف');
-    } finally {
-      setDownloading(null);
     }
   };
 
@@ -175,47 +145,28 @@ export function WorkSubmissionsSection({ applicationId }: WorkSubmissionsSection
                     key={submission.id}
                     className="rounded-lg border p-4 space-y-3 hover:bg-muted/50 transition-colors"
                   >
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                          <FileText className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{submission.file_name}</p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                            <User className="h-3 w-3" />
-                            <span>{submission.agent?.full_name || 'غير معروف'}</span>
-                            <span>•</span>
-                            <Calendar className="h-3 w-3" />
-                            <span>{format(new Date(submission.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })}</span>
-                          </div>
-                        </div>
+                    {/* Header with Agent Info */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="h-4 w-4" />
+                        <span className="font-medium text-foreground">{submission.agent?.full_name || 'غير معروف'}</span>
+                        <span className="mx-1">•</span>
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>{format(new Date(submission.created_at), 'dd MMM yyyy - HH:mm', { locale: ar })}</span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="outline" className={statusConfig.className}>
-                          <StatusIcon className="h-3 w-3 ml-1" />
-                          {statusConfig.label}
-                        </Badge>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => downloadFile(submission)}
-                          disabled={downloading === submission.id}
-                        >
-                          {downloading === submission.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Download className="h-4 w-4 ml-1" />
-                              تحميل
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                      <Badge variant="outline" className={statusConfig.className}>
+                        <StatusIcon className="h-3 w-3 ml-1" />
+                        {statusConfig.label}
+                      </Badge>
                     </div>
 
-                    {/* Notes */}
+                    {/* File Preview */}
+                    <FilePreview 
+                      fileName={submission.file_name}
+                      filePath={submission.file_path}
+                    />
+
+                    {/* Agent Notes */}
                     {submission.notes && (
                       <div className="rounded-lg bg-muted/50 p-3">
                         <p className="text-xs text-muted-foreground mb-1">ملاحظات الوكيل:</p>
