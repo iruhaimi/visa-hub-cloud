@@ -31,6 +31,7 @@ import PaymentFailed from "@/pages/PaymentFailed";
 import Auth from "@/pages/Auth";
 import Profile from "@/pages/Profile";
 import MyApplications from "@/pages/MyApplications";
+import MyApplicationDetail from "@/pages/MyApplicationDetail";
 import SpecialOffers from "@/pages/SpecialOffers";
 import ResetPassword from "@/pages/ResetPassword";
 import SecureStaffAuth from "@/pages/SecureStaffAuth";
@@ -86,6 +87,7 @@ const App = () => (
                 <Route path="/payment-failed" element={<PaymentFailed />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/my-applications" element={<MyApplications />} />
+                <Route path="/application" element={<MyApplicationDetail />} />
                 <Route path="/offers" element={<SpecialOffers />} />
               </Route>
 
