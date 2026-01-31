@@ -11,7 +11,8 @@ export type StaffPermission =
   | 'manage_hero'
   | 'view_reports'
   | 'process_refunds'
-  | 'manage_unlock_requests';
+  | 'manage_unlock_requests'
+  | 'view_revenue';
 
 export type ApplicationStatus = 
   | 'draft'
@@ -259,6 +260,11 @@ export const PERMISSION_LABELS: Record<StaffPermission, { label: string; descrip
     label: 'طلبات فك القفل',
     description: 'مراجعة وموافقة طلبات فك قفل الحسابات',
     icon: 'Unlock'
+  },
+  view_revenue: {
+    label: 'عرض الإيرادات',
+    description: 'الاطلاع على إحصائيات الإيرادات والمبيعات',
+    icon: 'DollarSign'
   }
 };
 
