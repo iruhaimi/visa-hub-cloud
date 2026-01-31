@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Search, 
   Eye, 
@@ -31,9 +34,16 @@ import {
   X,
   FileText,
   Clock,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ArrowLeftRight,
+  CheckCircle2,
+  AlertCircle,
+  Send,
+  FileCheck,
+  UserMinus,
+  TrendingUp
 } from 'lucide-react';
-import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, differenceInDays } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { exportToExcel } from '@/lib/exportToExcel';
 import { toast } from 'sonner';
@@ -81,20 +91,46 @@ interface Country {
   name: string;
 }
 
+interface TransferRequest {
+  id: string;
+  application_id: string;
+  status: string;
+  to_agent_id: string;
+  created_at: string;
+}
+
+interface WorkSubmission {
+  id: string;
+  application_id: string;
+  status: string;
+  created_at: string;
+}
+
 export default function AgentApplicationsList() {
+  const { profile } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [transferRequests, setTransferRequests] = useState<TransferRequest[]>([]);
+  const [workSubmissions, setWorkSubmissions] = useState<WorkSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [countryFilter, setCountryFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchApplications();
     fetchCountries();
   }, []);
+
+  useEffect(() => {
+    if (profile) {
+      fetchTransferRequests();
+      fetchWorkSubmissions();
+    }
+  }, [profile]);
 
   const fetchCountries = async () => {
     const { data } = await supabase
@@ -104,6 +140,28 @@ export default function AgentApplicationsList() {
       .order('name');
     
     setCountries(data || []);
+  };
+
+  const fetchTransferRequests = async () => {
+    if (!profile) return;
+    
+    const { data } = await supabase
+      .from('agent_transfer_requests')
+      .select('id, application_id, status, to_agent_id, created_at')
+      .eq('from_agent_id', profile.id);
+    
+    setTransferRequests(data || []);
+  };
+
+  const fetchWorkSubmissions = async () => {
+    if (!profile) return;
+    
+    const { data } = await supabase
+      .from('agent_work_submissions')
+      .select('id, application_id, status, created_at')
+      .eq('agent_id', profile.id);
+    
+    setWorkSubmissions(data || []);
   };
 
   const fetchApplications = async () => {
@@ -138,6 +196,20 @@ export default function AgentApplicationsList() {
     }
   };
 
+  // Get transfer status for an application
+  const getTransferStatus = (appId: string) => {
+    const transfer = transferRequests.find(t => t.application_id === appId);
+    if (!transfer) return null;
+    return transfer.status;
+  };
+
+  // Get work submission status for an application
+  const getWorkStatus = (appId: string) => {
+    const work = workSubmissions.find(w => w.application_id === appId);
+    if (!work) return null;
+    return work.status;
+  };
+
   // Active filters count
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -157,7 +229,7 @@ export default function AgentApplicationsList() {
 
   // Filter applications
   const filteredApplications = useMemo(() => {
-    return applications.filter(app => {
+    let filtered = applications.filter(app => {
       // Search filter
       if (searchQuery) {
         const searchLower = searchQuery.toLowerCase();
@@ -206,7 +278,28 @@ export default function AgentApplicationsList() {
 
       return true;
     });
-  }, [applications, searchQuery, statusFilter, countryFilter, dateRangeFilter]);
+
+    // Tab filter
+    if (activeTab === 'transferred') {
+      const transferredAppIds = transferRequests.map(t => t.application_id);
+      filtered = filtered.filter(app => transferredAppIds.includes(app.id));
+    } else if (activeTab === 'completed') {
+      const completedAppIds = workSubmissions
+        .filter(w => w.status === 'approved')
+        .map(w => w.application_id);
+      filtered = filtered.filter(app => completedAppIds.includes(app.id));
+    } else if (activeTab === 'pending_work') {
+      const pendingWorkAppIds = workSubmissions
+        .filter(w => w.status === 'pending')
+        .map(w => w.application_id);
+      filtered = filtered.filter(app => pendingWorkAppIds.includes(app.id));
+    } else if (activeTab === 'active') {
+      const activeStatuses = ['submitted', 'under_review', 'documents_required', 'processing'];
+      filtered = filtered.filter(app => activeStatuses.includes(app.status));
+    }
+
+    return filtered;
+  }, [applications, searchQuery, statusFilter, countryFilter, dateRangeFilter, activeTab, transferRequests, workSubmissions]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -241,14 +334,33 @@ export default function AgentApplicationsList() {
     );
   };
 
-  // Stats
+  // Enhanced stats
   const stats = useMemo(() => {
     const total = applications.length;
     const pending = applications.filter(a => ['submitted', 'under_review', 'documents_required', 'processing'].includes(a.status)).length;
     const approved = applications.filter(a => a.status === 'approved').length;
     const rejected = applications.filter(a => a.status === 'rejected').length;
-    return { total, pending, approved, rejected };
-  }, [applications]);
+    
+    const transferredCount = transferRequests.length;
+    const pendingTransfers = transferRequests.filter(t => t.status === 'pending').length;
+    const completedWork = workSubmissions.filter(w => w.status === 'approved').length;
+    const pendingWork = workSubmissions.filter(w => w.status === 'pending').length;
+    
+    // Calculate productivity rate
+    const productivityRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+    
+    return { 
+      total, 
+      pending, 
+      approved, 
+      rejected,
+      transferredCount,
+      pendingTransfers,
+      completedWork,
+      pendingWork,
+      productivityRate
+    };
+  }, [applications, transferRequests, workSubmissions]);
 
   const handleExportToExcel = async () => {
     if (filteredApplications.length === 0) {
@@ -277,6 +389,8 @@ export default function AgentApplicationsList() {
         country: app.visa_type?.country?.name || '-',
         visa_type: app.visa_type?.name || '-',
         status: statusLabels[app.status] || app.status,
+        transfer_status: getTransferStatus(app.id) ? 'محول' : '-',
+        work_status: getWorkStatus(app.id) === 'approved' ? 'مكتمل' : getWorkStatus(app.id) === 'pending' ? 'بانتظار المراجعة' : '-',
         submitted_at: app.submitted_at 
           ? format(new Date(app.submitted_at), 'dd/MM/yyyy')
           : format(new Date(app.created_at), 'dd/MM/yyyy'),
@@ -292,6 +406,8 @@ export default function AgentApplicationsList() {
           { header: 'الوجهة', key: 'country', width: 15 },
           { header: 'نوع التأشيرة', key: 'visa_type', width: 20 },
           { header: 'الحالة', key: 'status', width: 15 },
+          { header: 'التحويل', key: 'transfer_status', width: 12 },
+          { header: 'الإتمام', key: 'work_status', width: 15 },
           { header: 'تاريخ التقديم', key: 'submitted_at', width: 15 },
         ],
         data,
@@ -304,6 +420,109 @@ export default function AgentApplicationsList() {
     } finally {
       setExporting(false);
     }
+  };
+
+  // Get indicator badges for application row
+  const getApplicationIndicators = (appId: string) => {
+    const transferStatus = getTransferStatus(appId);
+    const workStatus = getWorkStatus(appId);
+    const indicators = [];
+
+    if (transferStatus === 'pending') {
+      indicators.push(
+        <TooltipProvider key="transfer-pending">
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className="bg-warning/10 text-warning border-warning/30 gap-1">
+                <ArrowLeftRight className="h-3 w-3" />
+                تحويل معلق
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>طلب تحويل قيد انتظار موافقة المشرف</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    } else if (transferStatus === 'approved') {
+      indicators.push(
+        <TooltipProvider key="transfer-approved">
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className="bg-info/10 text-info gap-1">
+                <UserMinus className="h-3 w-3" />
+                تم التحويل
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>تم تحويل هذا الطلب لوكيل آخر</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    } else if (transferStatus === 'rejected') {
+      indicators.push(
+        <TooltipProvider key="transfer-rejected">
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className="bg-destructive/10 text-destructive gap-1">
+                <X className="h-3 w-3" />
+                تحويل مرفوض
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>تم رفض طلب التحويل</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    if (workStatus === 'pending') {
+      indicators.push(
+        <TooltipProvider key="work-pending">
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className="bg-primary/10 text-primary gap-1">
+                <Clock className="h-3 w-3" />
+                إتمام معلق
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>ملف الإتمام قيد مراجعة المشرف</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    } else if (workStatus === 'approved') {
+      indicators.push(
+        <TooltipProvider key="work-approved">
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className="bg-success/10 text-success gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                مكتمل
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>تم اعتماد إتمام المعاملة</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    } else if (workStatus === 'returned') {
+      indicators.push(
+        <TooltipProvider key="work-returned">
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge className="bg-warning/10 text-warning gap-1">
+                <AlertCircle className="h-3 w-3" />
+                معاد للمراجعة
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>أعاد المشرف الملف للتعديل</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return indicators;
+  };
+
+  // Get days since submission
+  const getDaysSinceSubmission = (submittedAt: string | null, createdAt: string) => {
+    const date = submittedAt ? new Date(submittedAt) : new Date(createdAt);
+    return differenceInDays(new Date(), date);
   };
 
   return (
@@ -328,15 +547,15 @@ export default function AgentApplicationsList() {
             )}
             تصدير Excel
           </Button>
-          <Button onClick={fetchApplications} variant="outline" size="sm">
+          <Button onClick={() => { fetchApplications(); fetchTransferRequests(); fetchWorkSubmissions(); }} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 ml-2" />
             تحديث
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      {/* Enhanced Quick Stats */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-3">
@@ -367,29 +586,73 @@ export default function AgentApplicationsList() {
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-success/10">
-                <FileText className="h-5 w-5 text-success" />
+                <CheckCircle2 className="h-5 w-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.approved}</p>
-                <p className="text-xs text-muted-foreground">معتمدة</p>
+                <p className="text-2xl font-bold">{stats.completedWork}</p>
+                <p className="text-xs text-muted-foreground">معاملات مكتملة</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-destructive/5 to-destructive/10 border-destructive/20">
+        <Card className="bg-gradient-to-br from-info/5 to-info/10 border-info/20">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <FileText className="h-5 w-5 text-destructive" />
+              <div className="p-2 rounded-lg bg-info/10">
+                <ArrowLeftRight className="h-5 w-5 text-info" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.rejected}</p>
-                <p className="text-xs text-muted-foreground">مرفوضة</p>
+                <p className="text-2xl font-bold">{stats.transferredCount}</p>
+                <p className="text-xs text-muted-foreground">طلبات محولة</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-success/5 to-success/10 border-success/20">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-success/10">
+                <TrendingUp className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.productivityRate}%</p>
+                <p className="text-xs text-muted-foreground">معدل الإنجاز</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Category Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full justify-start bg-muted/50 p-1 h-auto flex-wrap">
+          <TabsTrigger value="all" className="gap-2 data-[state=active]:bg-background">
+            <FileText className="h-4 w-4" />
+            الكل
+            <Badge variant="secondary" className="mr-1">{applications.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="active" className="gap-2 data-[state=active]:bg-background">
+            <Clock className="h-4 w-4" />
+            نشطة
+            <Badge variant="secondary" className="mr-1">{stats.pending}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="pending_work" className="gap-2 data-[state=active]:bg-background">
+            <Send className="h-4 w-4" />
+            بانتظار الاعتماد
+            <Badge variant="secondary" className="mr-1">{stats.pendingWork}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="gap-2 data-[state=active]:bg-background">
+            <FileCheck className="h-4 w-4" />
+            مكتملة
+            <Badge variant="secondary" className="mr-1">{stats.completedWork}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="transferred" className="gap-2 data-[state=active]:bg-background">
+            <ArrowLeftRight className="h-4 w-4" />
+            محولة
+            <Badge variant="secondary" className="mr-1">{stats.transferredCount}</Badge>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Advanced Filters */}
       <Card>
@@ -511,47 +774,68 @@ export default function AgentApplicationsList() {
                     <TableHead className="text-right">رقم الطلب</TableHead>
                     <TableHead className="text-right">مقدم الطلب</TableHead>
                     <TableHead className="text-right">الوجهة</TableHead>
-                    <TableHead className="text-right">نوع التأشيرة</TableHead>
                     <TableHead className="text-right">تاريخ التقديم</TableHead>
                     <TableHead className="text-right">الحالة</TableHead>
+                    <TableHead className="text-right">حالة العمل</TableHead>
                     <TableHead className="text-right">إجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredApplications.map((app) => (
-                    <TableRow key={app.id} className="hover:bg-muted/50">
-                      <TableCell className="font-mono text-xs">
-                        {app.id.slice(0, 8)}...
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{app.profile?.full_name || 'غير محدد'}</p>
-                          <p className="text-xs text-muted-foreground">{app.profile?.phone || '-'}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3 w-3 text-muted-foreground" />
-                          {app.visa_type?.country?.name || '-'}
-                        </div>
-                      </TableCell>
-                      <TableCell>{app.visa_type?.name || '-'}</TableCell>
-                      <TableCell>
-                        {app.submitted_at 
-                          ? format(new Date(app.submitted_at), 'dd MMM yyyy', { locale: ar })
-                          : format(new Date(app.created_at), 'dd MMM yyyy', { locale: ar })}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(app.status)}</TableCell>
-                      <TableCell>
-                        <Button asChild size="sm" variant="outline">
-                          <Link to={`/agent/applications/${app.id}`}>
-                            <Eye className="h-4 w-4 ml-1" />
-                            عرض
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredApplications.map((app) => {
+                    const indicators = getApplicationIndicators(app.id);
+                    const daysSince = getDaysSinceSubmission(app.submitted_at, app.created_at);
+                    
+                    return (
+                      <TableRow key={app.id} className="hover:bg-muted/50">
+                        <TableCell className="font-mono text-xs">
+                          <div className="flex flex-col gap-1">
+                            <span>{app.id.slice(0, 8)}...</span>
+                            {daysSince > 3 && (
+                              <Badge variant="outline" className="text-[10px] px-1 py-0 w-fit bg-warning/10 text-warning border-warning/30">
+                                منذ {daysSince} يوم
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{app.profile?.full_name || 'غير محدد'}</p>
+                            <p className="text-xs text-muted-foreground">{app.profile?.phone || '-'}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            <div>
+                              <p>{app.visa_type?.country?.name || '-'}</p>
+                              <p className="text-xs text-muted-foreground">{app.visa_type?.name || '-'}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {app.submitted_at 
+                            ? format(new Date(app.submitted_at), 'dd MMM yyyy', { locale: ar })
+                            : format(new Date(app.created_at), 'dd MMM yyyy', { locale: ar })}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(app.status)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {indicators.length > 0 ? indicators : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button asChild size="sm" variant="outline">
+                            <Link to={`/agent/applications/${app.id}`}>
+                              <Eye className="h-4 w-4 ml-1" />
+                              عرض
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
