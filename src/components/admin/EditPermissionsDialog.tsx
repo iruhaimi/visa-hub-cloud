@@ -12,11 +12,14 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Shield, Crown, FileText, Users, Settings, Percent, Globe, Layout, BarChart3, RefreshCcw, Unlock } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Shield, Crown, FileText, Users, Settings, Percent, Globe, Layout, BarChart3, RefreshCcw, Unlock, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { StaffPermission } from '@/types/database';
 import { PERMISSION_LABELS, ALL_PERMISSIONS } from '@/types/database';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface EditPermissionsDialogProps {
   open: boolean;
@@ -47,14 +50,19 @@ export function EditPermissionsDialog({
   userName,
   onSuccess,
 }: EditPermissionsDialogProps) {
+  const { user } = useAuth();
+  const { isSuperAdmin: currentUserIsSuperAdmin } = usePermissions();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [currentPermissions, setCurrentPermissions] = useState<StaffPermission[]>([]);
   const [selectedPermissions, setSelectedPermissions] = useState<StaffPermission[]>([]);
+  const [superAdminCount, setSuperAdminCount] = useState(0);
+  const [targetIsSuperAdmin, setTargetIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     if (open && userId) {
       fetchPermissions();
+      fetchSuperAdminCount();
     }
   }, [open, userId]);
 
@@ -71,6 +79,7 @@ export function EditPermissionsDialog({
       const permissions = (data || []).map((p: any) => p.permission as StaffPermission);
       setCurrentPermissions(permissions);
       setSelectedPermissions(permissions);
+      setTargetIsSuperAdmin(permissions.includes('manage_staff'));
     } catch (error) {
       console.error('Error fetching permissions:', error);
       toast.error('حدث خطأ في جلب الصلاحيات');
@@ -79,7 +88,29 @@ export function EditPermissionsDialog({
     }
   };
 
+  const fetchSuperAdminCount = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('staff_permissions')
+        .select('user_id')
+        .eq('permission', 'manage_staff');
+
+      if (!error && data) {
+        const uniqueUsers = [...new Set(data.map(d => d.user_id))];
+        setSuperAdminCount(uniqueUsers.length);
+      }
+    } catch (error) {
+      console.error('Error fetching super admin count:', error);
+    }
+  };
+
   const togglePermission = (permission: StaffPermission) => {
+    // Prevent removing manage_staff from last super admin
+    if (permission === 'manage_staff' && targetIsSuperAdmin && superAdminCount <= 1) {
+      toast.error('لا يمكن إزالة صلاحية إدارة الموظفين من آخر مدير عام');
+      return;
+    }
+    
     setSelectedPermissions(prev => {
       if (prev.includes(permission)) {
         return prev.filter(p => p !== permission);
@@ -93,10 +124,30 @@ export function EditPermissionsDialog({
   };
 
   const clearAllPermissions = () => {
+    // If this is the last super admin, keep manage_staff
+    if (targetIsSuperAdmin && superAdminCount <= 1) {
+      setSelectedPermissions(['manage_staff']);
+      toast.warning('تم الاحتفاظ بصلاحية إدارة الموظفين لأنك آخر مدير عام');
+      return;
+    }
     setSelectedPermissions([]);
   };
 
+  // Check if current user can edit this user's permissions
+  const canEditPermissions = currentUserIsSuperAdmin;
+  
+  // Check if trying to remove manage_staff from last super admin
+  const isRemovingLastSuperAdmin = targetIsSuperAdmin && 
+    superAdminCount <= 1 && 
+    !selectedPermissions.includes('manage_staff');
+
   const handleSave = async () => {
+    // Security check: Prevent removing manage_staff from last super admin
+    if (isRemovingLastSuperAdmin) {
+      toast.error('لا يمكن إزالة صلاحية إدارة الموظفين من آخر مدير عام في النظام');
+      return;
+    }
+
     setSaving(true);
     try {
       // Find permissions to add and remove
@@ -158,12 +209,29 @@ export function EditPermissionsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
+        {!canEditPermissions ? (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              ليس لديك صلاحية تعديل صلاحيات الموظفين. هذه الميزة متاحة فقط للمدراء العامين.
+            </AlertDescription>
+          </Alert>
+        ) : loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
           <>
+            {/* Warning for last super admin */}
+            {targetIsSuperAdmin && superAdminCount <= 1 && (
+              <Alert className="mb-4 border-warning/50 bg-warning/10">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <AlertDescription className="text-warning">
+                  <strong>تحذير:</strong> هذا هو المدير العام الوحيد في النظام. لا يمكن إزالة صلاحية إدارة الموظفين منه.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="flex items-center justify-between mb-4">
               <div className="flex gap-2">
                 <Button
@@ -262,7 +330,10 @@ export function EditPermissionsDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             إلغاء
           </Button>
-          <Button onClick={handleSave} disabled={saving || !hasChanges}>
+          <Button 
+            onClick={handleSave} 
+            disabled={saving || !hasChanges || !canEditPermissions || isRemovingLastSuperAdmin}
+          >
             {saving && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
             حفظ التغييرات
           </Button>
