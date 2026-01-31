@@ -475,8 +475,8 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Revenue Stats */}
-            <RevenueStatsCard payments={stats.payments} />
+            {/* Revenue Stats - Only visible to Super Admins */}
+            {isSuperAdmin && <RevenueStatsCard payments={stats.payments} />}
             
             {/* Performance Metrics */}
             <PerformanceMetricsCard applications={stats.allApplications} />
