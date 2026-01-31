@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { User as UserIcon, Shield, MoreHorizontal, UserCog, Trash2, UserX, Mail, Copy, Settings2 } from 'lucide-react';
+import { User as UserIcon, Shield, MoreHorizontal, UserCog, Trash2, UserX, Mail, Copy, Settings2, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { AppRole } from '@/types/database';
 import { EditPermissionsDialog } from './EditPermissionsDialog';
 
@@ -51,19 +52,6 @@ interface StaffUsersTableProps {
   onRefresh?: () => void;
 }
 
-const getRoleBadge = (role: AppRole) => {
-  const config: Record<AppRole, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-    customer: { label: 'عميل', variant: 'secondary' },
-    agent: { label: 'وكيل', variant: 'default' },
-    admin: { label: 'مشرف', variant: 'destructive' },
-  };
-  return (
-    <Badge variant={config[role].variant} className="text-xs px-2 py-0.5">
-      {config[role].label}
-    </Badge>
-  );
-};
-
 export function StaffUsersTable({
   users,
   onViewProfile,
@@ -75,10 +63,78 @@ export function StaffUsersTable({
   onRefresh,
 }: StaffUsersTableProps) {
   const [editPermissionsUser, setEditPermissionsUser] = useState<UserWithRole | null>(null);
+  const [ownerUserIds, setOwnerUserIds] = useState<Set<string>>(new Set());
+
+  // Fetch which users have manage_staff permission (owners)
+  useEffect(() => {
+    const fetchOwners = async () => {
+      const { data, error } = await supabase
+        .from('staff_permissions')
+        .select('user_id')
+        .eq('permission', 'manage_staff');
+      
+      if (!error && data) {
+        setOwnerUserIds(new Set(data.map(p => p.user_id)));
+      }
+    };
+    fetchOwners();
+  }, [users]);
 
   const copyEmail = (email: string) => {
     navigator.clipboard.writeText(email);
     toast.success('تم نسخ البريد الإلكتروني');
+  };
+
+  // Get role badge with owner detection
+  const getRoleBadge = (role: AppRole, userId: string, clickable = false, onClick?: () => void) => {
+    const isOwner = ownerUserIds.has(userId);
+    
+    // If user is an owner (has manage_staff permission), show "مالك" instead of "مشرف"
+    if (role === 'admin' && isOwner) {
+      return (
+        <Badge 
+          className={`text-xs px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 ${clickable ? 'cursor-pointer hover:opacity-80 transition-all hover:scale-105' : ''}`}
+          onClick={onClick}
+        >
+          <Crown className="h-3 w-3 ml-1" />
+          مالك
+        </Badge>
+      );
+    }
+
+    const config: Record<AppRole, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+      customer: { label: 'عميل', variant: 'secondary' },
+      agent: { label: 'وكيل', variant: 'default' },
+      admin: { label: 'مشرف', variant: 'destructive' },
+    };
+    
+    return (
+      <Badge 
+        variant={config[role].variant} 
+        className={`text-xs px-2 py-0.5 ${clickable ? 'cursor-pointer hover:opacity-80 transition-all hover:scale-105' : ''}`}
+        onClick={onClick}
+      >
+        {config[role].label}
+      </Badge>
+    );
+  };
+
+  // Get role indicator dot color and title
+  const getRoleIndicator = (role: AppRole, userId: string) => {
+    const isOwner = ownerUserIds.has(userId);
+    if (role === 'admin' && isOwner) {
+      return {
+        color: 'bg-gradient-to-r from-amber-500 to-orange-500',
+        title: 'مالك'
+      };
+    }
+    if (role === 'admin') {
+      return { color: 'bg-destructive', title: 'مشرف' };
+    }
+    if (role === 'agent') {
+      return { color: 'bg-primary', title: 'وكيل' };
+    }
+    return { color: 'bg-muted-foreground', title: 'عميل' };
   };
 
   if (users.length === 0) {
@@ -124,16 +180,16 @@ export function StaffUsersTable({
                         {userItem.full_name || 'غير محدد'}
                       </button>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        {userItem.roles.map((role) => (
-                          <span 
-                            key={role} 
-                            className={`w-2 h-2 rounded-full ${
-                              role === 'admin' ? 'bg-destructive' : 
-                              role === 'agent' ? 'bg-primary' : 'bg-muted-foreground'
-                            }`}
-                            title={role === 'admin' ? 'مشرف' : role === 'agent' ? 'وكيل' : 'عميل'}
-                          />
-                        ))}
+                        {userItem.roles.map((role) => {
+                          const indicator = getRoleIndicator(role, userItem.user_id);
+                          return (
+                            <span 
+                              key={role} 
+                              className={`w-2 h-2 rounded-full ${indicator.color}`}
+                              title={indicator.title}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -180,17 +236,14 @@ export function StaffUsersTable({
                         isAdmin ? (
                           <Tooltip key={role}>
                             <TooltipTrigger asChild>
-                              <button
-                                onClick={() => onRemoveRole(userItem.user_id, role)}
-                                className="transition-all hover:scale-105 hover:opacity-80"
-                              >
-                                {getRoleBadge(role)}
-                              </button>
+                              <span>
+                                {getRoleBadge(role, userItem.user_id, true, () => onRemoveRole(userItem.user_id, role))}
+                              </span>
                             </TooltipTrigger>
                             <TooltipContent>اضغط لحذف الدور</TooltipContent>
                           </Tooltip>
                         ) : (
-                          <span key={role}>{getRoleBadge(role)}</span>
+                          <span key={role}>{getRoleBadge(role, userItem.user_id)}</span>
                         )
                       ))
                     ) : (
