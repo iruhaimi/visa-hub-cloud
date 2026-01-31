@@ -823,107 +823,175 @@ export function QuickActionsPanel() {
 
       {/* Assign Agent Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              تعيين وكيل للطلب
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent dir="rtl" className="max-w-md p-0 overflow-hidden data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out">
+          {/* Header */}
+          <div className="bg-gradient-to-l from-destructive/10 to-destructive/5 px-6 py-4 border-b">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 rounded-lg bg-destructive/10">
+                  <UserPlus className="h-5 w-5 text-destructive" />
+                </div>
+                تعيين وكيل للطلب
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 space-y-5">
             {selectedApp && (
-              <div className="p-3 rounded-lg bg-muted">
-                <p className="font-medium">{selectedApp.profile?.full_name || 'عميل'}</p>
-                <p className="text-sm text-muted-foreground">
-                  {selectedApp.visa_type?.country?.name} - {selectedApp.visa_type?.name}
-                </p>
+              <div className="rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-muted shrink-0">
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{selectedApp.profile?.full_name || 'عميل'}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedApp.visa_type?.country?.name} - {selectedApp.visa_type?.name}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
-            <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر الوكيل" />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.map(agent => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={agent.avatar_url || undefined} />
-                        <AvatarFallback>{agent.full_name?.charAt(0) || 'و'}</AvatarFallback>
-                      </Avatar>
-                      <span>{agent.full_name || 'وكيل'}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">اختر الوكيل المسؤول</label>
+              <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="اختر الوكيل" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents.map(agent => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={agent.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">{agent.full_name?.charAt(0) || 'و'}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{agent.full_name || 'وكيل'}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
+
+          {/* Footer */}
+          <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-end gap-3">
+            <Button variant="outline" onClick={() => setAssignDialogOpen(false)} className="px-6">
               إلغاء
             </Button>
-            <Button onClick={handleAssignAgent} disabled={!selectedAgent || actionLoading === 'assign'}>
-              {actionLoading === 'assign' && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-              تعيين
+            <Button 
+              onClick={handleAssignAgent} 
+              disabled={!selectedAgent || actionLoading === 'assign'}
+              className="px-6 gap-2"
+            >
+              {actionLoading === 'assign' && <Loader2 className="h-4 w-4 animate-spin" />}
+              <UserPlus className="h-4 w-4" />
+              تعيين الوكيل
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Transfer Action Dialog */}
       <Dialog open={transferActionOpen} onOpenChange={(open) => !open && handleCloseTransferDialog()}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ArrowLeftRight className="h-5 w-5" />
-              مراجعة طلب التحويل
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {selectedTransfer && (
-              <div className="p-3 rounded-lg bg-muted space-y-2">
-                <p className="font-medium">
-                  من: {selectedTransfer.from_agent?.full_name} → إلى: {selectedTransfer.to_agent?.full_name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {selectedTransfer.application?.profile?.full_name} - {selectedTransfer.application?.visa_type?.country?.name}
-                </p>
-                <p className="text-sm">السبب: {selectedTransfer.reason}</p>
-              </div>
-            )}
-            <Textarea
-              placeholder="ملاحظات المشرف (اختياري)"
-              value={transferNotes}
-              onChange={(e) => setTransferNotes(e.target.value)}
-              rows={3}
-            />
+        <DialogContent dir="rtl" className="max-w-md p-0 overflow-hidden data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out">
+          {/* Header */}
+          <div className="bg-gradient-to-l from-warning/10 to-warning/5 px-6 py-4 border-b">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 rounded-lg bg-warning/10">
+                  <ArrowLeftRight className="h-5 w-5 text-warning" />
+                </div>
+                مراجعة طلب التحويل
+              </DialogTitle>
+            </DialogHeader>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleCloseTransferDialog}>
+
+          <div className="p-6 space-y-5">
+            {selectedTransfer && (
+              <>
+                {/* Transfer Info Card */}
+                <div className="rounded-xl border-2 border-dashed border-warning/30 bg-warning/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-muted text-xs">
+                          {selectedTransfer.from_agent?.full_name?.charAt(0) || 'و'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium text-sm">{selectedTransfer.from_agent?.full_name}</span>
+                    </div>
+                    <ArrowLeftRight className="h-5 w-5 text-warning shrink-0" />
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{selectedTransfer.to_agent?.full_name}</span>
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-success/10 text-success text-xs">
+                          {selectedTransfer.to_agent?.full_name?.charAt(0) || 'و'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                  <div className="text-center pt-2 border-t border-warning/20">
+                    <p className="text-sm text-muted-foreground">
+                      {selectedTransfer.application?.profile?.full_name} - {selectedTransfer.application?.visa_type?.country?.name}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div className="rounded-lg bg-muted/50 border p-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">سبب التحويل:</p>
+                  <p className="text-sm leading-relaxed">{selectedTransfer.reason}</p>
+                </div>
+
+                {/* Admin Notes */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">ملاحظات المشرف (اختياري)</label>
+                  <Textarea
+                    placeholder="أضف ملاحظاتك هنا..."
+                    value={transferNotes}
+                    onChange={(e) => setTransferNotes(e.target.value)}
+                    rows={3}
+                    className="resize-none bg-background"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-end gap-3">
+            <Button variant="outline" onClick={handleCloseTransferDialog} className="px-6">
               إلغاء
             </Button>
             <Button
               variant="destructive"
               onClick={() => handleTransferAction('reject')}
               disabled={actionLoading === 'reject'}
+              className="px-6 gap-2"
             >
-              {actionLoading === 'reject' && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-              رفض
+              {actionLoading === 'reject' && <Loader2 className="h-4 w-4 animate-spin" />}
+              <X className="h-4 w-4" />
+              رفض التحويل
             </Button>
             <Button
               onClick={() => handleTransferAction('approve')}
               disabled={actionLoading === 'approve'}
+              className="px-6 gap-2 bg-success hover:bg-success/90 text-success-foreground"
             >
-              {actionLoading === 'approve' && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-              موافقة
+              {actionLoading === 'approve' && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Check className="h-4 w-4" />
+              الموافقة
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Work Review Dialog */}
       <Dialog open={workReviewOpen} onOpenChange={(open) => !open && handleCloseWorkDialog()}>
-        <DialogContent dir="rtl" className="max-w-md p-0 overflow-hidden">
+        <DialogContent dir="rtl" className="max-w-md p-0 overflow-hidden data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out">
           {/* Header */}
           <div className="bg-gradient-to-l from-primary/10 to-primary/5 px-6 py-4 border-b">
             <DialogHeader>
@@ -1030,47 +1098,66 @@ export function QuickActionsPanel() {
 
       {/* Reply to Note Dialog */}
       <Dialog open={replyDialogOpen} onOpenChange={(open) => !open && handleCloseReplyDialog()}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              الرد على ملاحظة الوكيل
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent dir="rtl" className="max-w-md p-0 overflow-hidden data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out">
+          {/* Header */}
+          <div className="bg-gradient-to-l from-info/10 to-info/5 px-6 py-4 border-b">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 rounded-lg bg-info/10">
+                  <MessageCircle className="h-5 w-5 text-info" />
+                </div>
+                الرد على ملاحظة الوكيل
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 space-y-5">
             {selectedNote && (
-              <div className="p-3 rounded-lg bg-muted space-y-2">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">
+              <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-info/10 text-info text-sm">
                       {(selectedNote.author_name || 'و').charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="font-medium text-sm">{selectedNote.author_name}</span>
+                  <div>
+                    <p className="font-semibold text-sm">{selectedNote.author_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedNote.application?.profile?.full_name} - {selectedNote.application?.visa_type?.country?.name}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm">{selectedNote.content}</p>
+                <p className="text-sm bg-background rounded-lg p-3 border leading-relaxed">{selectedNote.content}</p>
               </div>
             )}
-            <Textarea
-              placeholder="اكتب ردك هنا..."
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              rows={4}
-            />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">ردك على الملاحظة</label>
+              <Textarea
+                placeholder="اكتب ردك هنا..."
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                rows={4}
+                className="resize-none bg-background"
+              />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseReplyDialog}>
+
+          {/* Footer */}
+          <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-end gap-3">
+            <Button variant="outline" onClick={handleCloseReplyDialog} className="px-6">
               إلغاء
             </Button>
             <Button
               onClick={handleReplyNote}
               disabled={!replyContent.trim() || actionLoading === 'reply'}
+              className="px-6 gap-2"
             >
-              {actionLoading === 'reply' && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-              <Send className="h-4 w-4 ml-2" />
+              {actionLoading === 'reply' && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Send className="h-4 w-4" />
               إرسال الرد
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
