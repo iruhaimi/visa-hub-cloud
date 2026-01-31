@@ -91,42 +91,34 @@ export default function SecureStaffAuth() {
     }
   };
 
+  // Generate 2FA code via Edge Function (uses service_role for DB insert)
   const generate2FACode = async (userId: string, userEmail: string): Promise<{ code: string; emailSent: boolean }> => {
-    // Generate 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    // Save code to database
-    const { error } = await supabase.from('staff_2fa_codes').insert({
-      user_id: userId,
-      email: userEmail,
-      code,
-      expires_at: expiresAt.toISOString(),
-    });
-
-    if (error) throw error;
-
-    // Send 2FA code via edge function (SMS or Email)
-    let emailSent = false;
     try {
       const { data, error: sendError } = await supabase.functions.invoke('send-staff-2fa', {
-        body: { email: userEmail, code }
+        body: { 
+          email: userEmail, 
+          userId: userId 
+        }
       });
       
       if (sendError) {
-        console.error('Failed to send 2FA code:', sendError);
-        // Don't throw - allow fallback to showing code
-      } else if (data?.success) {
-        emailSent = true;
-      } else {
-        console.warn('Email not sent - using fallback mode');
+        console.error('Failed to generate 2FA code:', sendError);
+        throw new Error('Failed to create verification code');
       }
+      
+      if (data?.error && !data?.success) {
+        console.error('2FA generation error:', data.error);
+        throw new Error(data.error);
+      }
+      
+      const emailSent = data?.emailSent === true;
+      const code = data?.code || ''; // Code returned in test/fallback mode
+      
+      return { code, emailSent };
     } catch (err) {
-      console.error('Error sending 2FA code:', err);
-      // Don't throw - allow fallback
+      console.error('Error in generate2FACode:', err);
+      throw err;
     }
-    
-    return { code, emailSent };
   };
 
   const handleLogin = async (e: React.FormEvent) => {
