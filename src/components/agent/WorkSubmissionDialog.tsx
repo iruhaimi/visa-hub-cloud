@@ -37,14 +37,20 @@ export function WorkSubmissionDialog({
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
+  const addFiles = (files: File[]) => {
     for (const file of files) {
       // Validate file size (max 10MB per file)
       if (file.size > 10 * 1024 * 1024) {
         toast.error(`حجم الملف ${file.name} يجب أن يكون أقل من 10 ميجابايت`);
+        continue;
+      }
+
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/zip', 'application/x-rar-compressed'];
+      if (!allowedTypes.some(type => file.type.startsWith(type.split('/')[0]) || file.type === type)) {
+        toast.error(`نوع الملف ${file.name} غير مدعوم`);
         continue;
       }
 
@@ -56,11 +62,44 @@ export function WorkSubmissionDialog({
 
       setSelectedFiles(prev => [...prev, { file, id: crypto.randomUUID() }]);
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    addFiles(files);
 
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set to false if we're leaving the drop zone entirely
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    addFiles(files);
   };
 
   const handleRemoveFile = (id: string) => {
@@ -212,23 +251,28 @@ export function WorkSubmissionDialog({
             )}
 
             {/* Upload Area */}
-            <button
-              type="button"
+            <div
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`w-full rounded-xl border-2 border-dashed transition-all duration-200 hover:border-primary hover:bg-primary/5 ${
-                selectedFiles.length === 0 
-                  ? 'py-10 border-muted-foreground/30' 
-                  : 'py-4 border-primary/30 bg-primary/5'
-              }`}
+              className={`w-full rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
+                isDragging 
+                  ? 'border-primary bg-primary/10 scale-[1.02]' 
+                  : selectedFiles.length === 0 
+                    ? 'py-10 border-muted-foreground/30 hover:border-primary hover:bg-primary/5' 
+                    : 'py-4 border-primary/30 bg-primary/5 hover:border-primary hover:bg-primary/10'
+              } ${selectedFiles.length === 0 ? 'py-10' : 'py-4'}`}
             >
               {selectedFiles.length === 0 ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="p-4 rounded-full bg-primary/10">
-                    <Upload className="h-8 w-8 text-primary" />
+                <div className="flex flex-col items-center gap-3 pointer-events-none">
+                  <div className={`p-4 rounded-full transition-colors ${isDragging ? 'bg-primary/20' : 'bg-primary/10'}`}>
+                    <Upload className={`h-8 w-8 ${isDragging ? 'text-primary animate-bounce' : 'text-primary'}`} />
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-medium text-foreground">
-                      اضغط لاختيار الملفات
+                      {isDragging ? 'أفلت الملفات هنا' : 'اضغط لاختيار الملفات'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       أو اسحب الملفات وأفلتها هنا
@@ -236,12 +280,12 @@ export function WorkSubmissionDialog({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center gap-2 text-primary font-medium">
+                <div className="flex items-center justify-center gap-2 text-primary font-medium pointer-events-none">
                   <Plus className="h-5 w-5" />
-                  إضافة ملفات أخرى
+                  {isDragging ? 'أفلت لإضافة المزيد' : 'إضافة ملفات أخرى'}
                 </div>
               )}
-            </button>
+            </div>
           </div>
 
           <div className="space-y-2">
