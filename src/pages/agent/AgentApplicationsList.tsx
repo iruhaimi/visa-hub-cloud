@@ -30,10 +30,13 @@ import {
   MapPin,
   X,
   FileText,
-  Clock
+  Clock,
+  FileSpreadsheet
 } from 'lucide-react';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { exportToExcel } from '@/lib/exportToExcel';
+import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'جميع الحالات' },
@@ -82,6 +85,7 @@ export default function AgentApplicationsList() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [countryFilter, setCountryFilter] = useState('all');
@@ -246,6 +250,62 @@ export default function AgentApplicationsList() {
     return { total, pending, approved, rejected };
   }, [applications]);
 
+  const handleExportToExcel = async () => {
+    if (filteredApplications.length === 0) {
+      toast.error('لا توجد بيانات للتصدير');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const statusLabels: Record<string, string> = {
+        draft: 'مسودة',
+        pending_payment: 'بانتظار الدفع',
+        submitted: 'مقدم',
+        under_review: 'قيد المراجعة',
+        documents_required: 'مستندات مطلوبة',
+        processing: 'قيد المعالجة',
+        approved: 'معتمد',
+        rejected: 'مرفوض',
+        cancelled: 'ملغي',
+      };
+
+      const data = filteredApplications.map(app => ({
+        id: app.id.slice(0, 8),
+        full_name: app.profile?.full_name || '-',
+        phone: app.profile?.phone || '-',
+        country: app.visa_type?.country?.name || '-',
+        visa_type: app.visa_type?.name || '-',
+        status: statusLabels[app.status] || app.status,
+        submitted_at: app.submitted_at 
+          ? format(new Date(app.submitted_at), 'dd/MM/yyyy')
+          : format(new Date(app.created_at), 'dd/MM/yyyy'),
+      }));
+
+      await exportToExcel({
+        sheetName: 'طلباتي',
+        fileName: `طلباتي_${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
+        columns: [
+          { header: 'رقم الطلب', key: 'id', width: 15 },
+          { header: 'مقدم الطلب', key: 'full_name', width: 25 },
+          { header: 'الجوال', key: 'phone', width: 18 },
+          { header: 'الوجهة', key: 'country', width: 15 },
+          { header: 'نوع التأشيرة', key: 'visa_type', width: 20 },
+          { header: 'الحالة', key: 'status', width: 15 },
+          { header: 'تاريخ التقديم', key: 'submitted_at', width: 15 },
+        ],
+        data,
+      });
+
+      toast.success('تم تصدير البيانات بنجاح');
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast.error('حدث خطأ في تصدير البيانات');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
@@ -254,10 +314,25 @@ export default function AgentApplicationsList() {
           <h2 className="text-2xl font-bold">طلباتي</h2>
           <p className="text-muted-foreground">عرض وإدارة الطلبات المعينة لك</p>
         </div>
-        <Button onClick={fetchApplications} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 ml-2" />
-          تحديث
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleExportToExcel} 
+            variant="outline" 
+            size="sm"
+            disabled={exporting || filteredApplications.length === 0}
+          >
+            {exporting ? (
+              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="h-4 w-4 ml-2" />
+            )}
+            تصدير Excel
+          </Button>
+          <Button onClick={fetchApplications} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 ml-2" />
+            تحديث
+          </Button>
+        </div>
       </div>
 
       {/* Quick Stats */}

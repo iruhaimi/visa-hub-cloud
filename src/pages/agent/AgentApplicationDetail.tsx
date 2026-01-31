@@ -32,10 +32,14 @@ import {
   Loader2,
   AlertCircle,
   Save,
-  FileDown
+  FileDown,
+  UserMinus,
+  FileCheck
 } from 'lucide-react';
 import { generateApplicationPDF } from '@/lib/generateApplicationPDF';
 import { NotesHistory } from '@/components/admin/NotesHistory';
+import { TransferRequestDialog } from '@/components/agent/TransferRequestDialog';
+import { WorkSubmissionDialog } from '@/components/agent/WorkSubmissionDialog';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -121,6 +125,10 @@ export default function AgentApplicationDetail() {
   const [newStatus, setNewStatus] = useState<ApplicationStatus | ''>('');
   const [statusNote, setStatusNote] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
+  
+  // Transfer and work submission dialogs
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [showWorkSubmissionDialog, setShowWorkSubmissionDialog] = useState(false);
   
   // Notes
   const [agentNotes, setAgentNotes] = useState('');
@@ -389,6 +397,22 @@ export default function AgentApplicationDetail() {
               تحميل PDF
             </Button>
           )}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowTransferDialog(true)}
+          >
+            <UserMinus className="h-4 w-4 ml-2" />
+            طلب تحويل
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowWorkSubmissionDialog(true)}
+          >
+            <FileCheck className="h-4 w-4 ml-2" />
+            تأكيد إتمام العمل
+          </Button>
           <Button size="sm" onClick={() => setShowStatusDialog(true)}>
             تغيير الحالة
           </Button>
@@ -658,6 +682,22 @@ export default function AgentApplicationDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Transfer Request Dialog */}
+      <TransferRequestDialog
+        open={showTransferDialog}
+        onOpenChange={setShowTransferDialog}
+        applicationId={application.id}
+        onSuccess={fetchApplicationData}
+      />
+
+      {/* Work Submission Dialog */}
+      <WorkSubmissionDialog
+        open={showWorkSubmissionDialog}
+        onOpenChange={setShowWorkSubmissionDialog}
+        applicationId={application.id}
+        onSuccess={fetchApplicationData}
+      />
     </div>
   );
 }
