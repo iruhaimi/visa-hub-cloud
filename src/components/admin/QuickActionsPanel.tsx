@@ -37,7 +37,8 @@ import {
   Loader2,
   FileCheck,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,6 +71,7 @@ interface PendingWork {
   id: string;
   application_id: string;
   file_name: string;
+  file_path: string;
   notes: string | null;
   created_at: string;
   agent: { full_name: string } | null;
@@ -215,6 +217,7 @@ export function QuickActionsPanel() {
         id,
         application_id,
         file_name,
+        file_path,
         notes,
         created_at,
         agent:profiles!agent_work_submissions_agent_id_fkey(full_name),
@@ -374,6 +377,27 @@ export function QuickActionsPanel() {
     setSelectedWork(work);
     setWorkNotes(''); // تفريغ الملاحظات عند فتح حوار جديد
     setWorkReviewOpen(true);
+  };
+
+  const handleDownloadFile = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(filePath);
+
+      if (error) throw error;
+
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('تم تحميل الملف بنجاح');
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error('حدث خطأ في تحميل الملف');
+    }
   };
 
   const handleCloseTransferDialog = () => {
@@ -899,7 +923,7 @@ export function QuickActionsPanel() {
 
       {/* Work Review Dialog */}
       <Dialog open={workReviewOpen} onOpenChange={(open) => !open && handleCloseWorkDialog()}>
-        <DialogContent dir="rtl">
+        <DialogContent dir="rtl" className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileCheck className="h-5 w-5" />
@@ -908,14 +932,39 @@ export function QuickActionsPanel() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             {selectedWork && (
-              <div className="p-3 rounded-lg bg-muted space-y-2">
-                <p className="font-medium">الوكيل: {selectedWork.agent?.full_name}</p>
+              <div className="p-4 rounded-lg bg-muted space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">الوكيل: {selectedWork.agent?.full_name}</p>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(selectedWork.created_at), { locale: ar, addSuffix: true })}
+                  </span>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
+                  العميل: {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
                 </p>
-                <p className="text-sm">الملف: {selectedWork.file_name}</p>
+                
+                {/* File download section */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-background border">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <FileCheck className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium truncate">{selectedWork.file_name}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 shrink-0"
+                    onClick={() => handleDownloadFile(selectedWork.file_path, selectedWork.file_name)}
+                  >
+                    <Download className="h-4 w-4" />
+                    تحميل
+                  </Button>
+                </div>
+
                 {selectedWork.notes && (
-                  <p className="text-sm text-muted-foreground">{selectedWork.notes}</p>
+                  <div className="p-3 rounded-lg bg-background border">
+                    <p className="text-xs text-muted-foreground mb-1">ملاحظات الوكيل:</p>
+                    <p className="text-sm">{selectedWork.notes}</p>
+                  </div>
                 )}
               </div>
             )}
