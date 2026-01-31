@@ -49,6 +49,7 @@ import LoginAttemptsManagement from "@/pages/admin/LoginAttemptsManagement";
 import UnlockRequestsManagement from "@/pages/admin/UnlockRequestsManagement";
 import AgentRequestsManagement from "@/pages/admin/AgentRequestsManagement";
 import SensitiveOperations from "@/pages/admin/SensitiveOperations";
+import OwnerSettings from "@/pages/admin/OwnerSettings";
 // Agent Pages
 import AgentDashboard from "@/pages/agent/AgentDashboard";
 import AgentApplicationsList from "@/pages/agent/AgentApplicationsList";
@@ -114,6 +115,7 @@ const App = () => (
                 <Route path="unlock-requests" element={<UnlockRequestsManagement />} />
                 <Route path="agent-requests" element={<AgentRequestsManagement />} />
                 <Route path="sensitive-operations" element={<SensitiveOperations />} />
+                <Route path="owner-settings" element={<OwnerSettings />} />
               </Route>
 
               {/* Agent Routes */}
