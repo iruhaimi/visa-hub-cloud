@@ -923,78 +923,108 @@ export function QuickActionsPanel() {
 
       {/* Work Review Dialog */}
       <Dialog open={workReviewOpen} onOpenChange={(open) => !open && handleCloseWorkDialog()}>
-        <DialogContent dir="rtl" className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileCheck className="h-5 w-5" />
-              مراجعة ملف إتمام العمل
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {selectedWork && (
-              <div className="p-4 rounded-lg bg-muted space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium">الوكيل: {selectedWork.agent?.full_name}</p>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(selectedWork.created_at), { locale: ar, addSuffix: true })}
-                  </span>
+        <DialogContent dir="rtl" className="max-w-md p-0 overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-l from-primary/10 to-primary/5 px-6 py-4 border-b">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FileCheck className="h-5 w-5 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  العميل: {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
-                </p>
-                
-                {/* File download section */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background border">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <FileCheck className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm font-medium truncate">{selectedWork.file_name}</span>
+                مراجعة ملف إتمام العمل
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 space-y-5">
+            {selectedWork && (
+              <>
+                {/* Agent & Application Info */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-foreground">{selectedWork.agent?.full_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
+                    </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 shrink-0"
-                    onClick={() => handleDownloadFile(selectedWork.file_path, selectedWork.file_name)}
-                  >
-                    <Download className="h-4 w-4" />
-                    تحميل
-                  </Button>
+                  <Badge variant="outline" className="shrink-0 text-xs">
+                    <Clock className="h-3 w-3 ml-1" />
+                    {formatDistanceToNow(new Date(selectedWork.created_at), { locale: ar, addSuffix: true })}
+                  </Badge>
+                </div>
+                
+                {/* File Card */}
+                <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-lg bg-primary/10 shrink-0">
+                      <FileCheck className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{selectedWork.file_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">ملف إتمام العمل</p>
+                    </div>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-2 shrink-0 shadow-sm"
+                      onClick={() => handleDownloadFile(selectedWork.file_path, selectedWork.file_name)}
+                    >
+                      <Download className="h-4 w-4" />
+                      تحميل
+                    </Button>
+                  </div>
                 </div>
 
+                {/* Agent Notes */}
                 {selectedWork.notes && (
-                  <div className="p-3 rounded-lg bg-background border">
-                    <p className="text-xs text-muted-foreground mb-1">ملاحظات الوكيل:</p>
-                    <p className="text-sm">{selectedWork.notes}</p>
+                  <div className="rounded-lg bg-muted/50 border p-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">ملاحظات الوكيل:</p>
+                    <p className="text-sm leading-relaxed">{selectedWork.notes}</p>
                   </div>
                 )}
-              </div>
+
+                {/* Admin Notes Input */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">ملاحظات المشرف (اختياري)</label>
+                  <Textarea
+                    placeholder="أضف ملاحظاتك هنا..."
+                    value={workNotes}
+                    onChange={(e) => setWorkNotes(e.target.value)}
+                    rows={3}
+                    className="resize-none bg-background"
+                  />
+                </div>
+              </>
             )}
-            <Textarea
-              placeholder="ملاحظات المشرف (اختياري)"
-              value={workNotes}
-              onChange={(e) => setWorkNotes(e.target.value)}
-              rows={3}
-            />
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleCloseWorkDialog}>
+
+          {/* Footer Actions */}
+          <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-end gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleCloseWorkDialog}
+              className="px-6"
+            >
               إلغاء
             </Button>
             <Button
               variant="destructive"
               onClick={() => handleWorkAction('reject')}
               disabled={actionLoading === 'reject'}
+              className="px-6 gap-2"
             >
-              {actionLoading === 'reject' && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+              {actionLoading === 'reject' && <Loader2 className="h-4 w-4 animate-spin" />}
               إعادة للمراجعة
             </Button>
             <Button
               onClick={() => handleWorkAction('approve')}
               disabled={actionLoading === 'approve'}
+              className="px-6 gap-2 bg-success hover:bg-success/90 text-success-foreground"
             >
-              {actionLoading === 'approve' && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+              {actionLoading === 'approve' && <Loader2 className="h-4 w-4 animate-spin" />}
               قبول وإتمام الطلب
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
