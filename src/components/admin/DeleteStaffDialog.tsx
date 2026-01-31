@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Trash2, AlertTriangle, Shield } from 'lucide-react';
+import { Loader2, Trash2, AlertTriangle, Shield, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types/database';
@@ -38,11 +38,13 @@ export function DeleteStaffDialog({ user, open, onOpenChange, onSuccess }: Delet
   const [checkingPermissions, setCheckingPermissions] = useState(false);
   const [targetIsSuperAdmin, setTargetIsSuperAdmin] = useState(false);
   const [superAdminCount, setSuperAdminCount] = useState(0);
+  const [reason, setReason] = useState('');
   const { isSuperAdmin: currentUserIsSuperAdmin } = usePermissions();
 
   useEffect(() => {
     if (open && user) {
       checkTargetPermissions();
+      setReason('');
     }
   }, [open, user]);
 
@@ -75,8 +77,11 @@ export function DeleteStaffDialog({ user, open, onOpenChange, onSuccess }: Delet
     }
   };
 
-  const handleDelete = async () => {
-    if (!user) return;
+  const handleRequestDelete = async () => {
+    if (!user || !reason.trim()) {
+      toast.error('يرجى إدخال سبب الحذف');
+      return;
+    }
 
     // Extra security check: Prevent deleting last super admin
     if (targetIsSuperAdmin && superAdminCount <= 1) {
@@ -92,22 +97,30 @@ export function DeleteStaffDialog({ user, open, onOpenChange, onSuccess }: Delet
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('delete-staff-user', {
-        body: { user_id: user.user_id }
-      });
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('غير مصرح');
+
+      // Create a pending sensitive operation
+      const insertData = {
+        operation_type: 'delete_staff',
+        target_user_id: user.user_id,
+        requested_by: currentUser.id,
+        request_reason: reason,
+        operation_data: { user_name: user.full_name },
+      };
+
+      const { error } = await supabase
+        .from('pending_sensitive_operations')
+        .insert(insertData as any);
 
       if (error) throw error;
 
-      if (!data.success) {
-        throw new Error(data.error || 'فشل في حذف الحساب');
-      }
-
-      toast.success('تم حذف حساب الموظف نهائياً');
+      toast.success('تم إنشاء طلب الحذف - في انتظار موافقة مدير عام آخر');
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
-      console.error('Error deleting staff:', error);
-      toast.error(error.message || 'حدث خطأ في حذف الحساب');
+      console.error('Error creating delete request:', error);
+      toast.error(error.message || 'حدث خطأ في إنشاء الطلب');
     } finally {
       setLoading(false);
     }
@@ -116,7 +129,7 @@ export function DeleteStaffDialog({ user, open, onOpenChange, onSuccess }: Delet
   if (!user) return null;
 
   const isLastSuperAdmin = targetIsSuperAdmin && superAdminCount <= 1;
-  const canDelete = currentUserIsSuperAdmin && !isLastSuperAdmin;
+  const canRequestDelete = currentUserIsSuperAdmin && !isLastSuperAdmin;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -124,11 +137,11 @@ export function DeleteStaffDialog({ user, open, onOpenChange, onSuccess }: Delet
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            حذف حساب الموظف نهائياً
+            طلب حذف حساب الموظف
           </AlertDialogTitle>
           <AlertDialogDescription className="text-right space-y-2">
             <p>
-              هل أنت متأكد من حذف حساب <strong>{user.full_name || 'هذا الموظف'}</strong> نهائياً من النظام؟
+              هل أنت متأكد من طلب حذف حساب <strong>{user.full_name || 'هذا الموظف'}</strong>؟
             </p>
             
             {checkingPermissions ? (
@@ -156,30 +169,47 @@ export function DeleteStaffDialog({ user, open, onOpenChange, onSuccess }: Delet
                 </p>
               </div>
             ) : (
-              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 mt-3">
-                <p className="text-destructive text-sm font-medium">
-                  ⚠️ تحذير: هذا الإجراء لا يمكن التراجع عنه!
-                </p>
-                <ul className="text-destructive/80 text-sm mt-2 list-disc list-inside space-y-1">
-                  <li>سيتم حذف الحساب من النظام بالكامل</li>
-                  <li>سيفقد الموظف الوصول إلى لوحة التحكم</li>
-                  <li>لن يتمكن من تسجيل الدخول مرة أخرى</li>
-                </ul>
-              </div>
+              <>
+                <div className="bg-primary/10 border border-primary/20 rounded-md p-3 mt-3">
+                  <p className="text-primary text-sm font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    موافقة ثنائية مطلوبة
+                  </p>
+                  <p className="text-primary/80 text-sm mt-2">
+                    سيتم إرسال طلب الحذف إلى مدير عام آخر للموافقة عليه قبل التنفيذ.
+                  </p>
+                </div>
+                
+                <div className="mt-4">
+                  <label className="text-sm font-medium mb-2 block">سبب الحذف <span className="text-destructive">*</span></label>
+                  <Textarea
+                    placeholder="أدخل سبب حذف هذا الموظف..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+
+                <div className="bg-warning/10 border border-warning/20 rounded-md p-3 mt-3">
+                  <p className="text-warning text-sm font-medium">
+                    ⚠️ تحذير: بعد الموافقة لا يمكن التراجع عن هذا الإجراء!
+                  </p>
+                </div>
+              </>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel disabled={loading}>إلغاء</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
+          <Button
+            onClick={handleRequestDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={loading || !canDelete || checkingPermissions}
+            disabled={loading || !canRequestDelete || checkingPermissions || !reason.trim()}
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
             <Trash2 className="h-4 w-4 ml-2" />
-            حذف نهائياً
-          </AlertDialogAction>
+            طلب الحذف
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

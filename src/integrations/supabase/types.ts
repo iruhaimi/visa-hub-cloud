@@ -669,6 +669,54 @@ export type Database = {
           },
         ]
       }
+      pending_sensitive_operations: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          operation_data: Json | null
+          operation_type: Database["public"]["Enums"]["sensitive_operation_type"]
+          rejection_reason: string | null
+          request_reason: string | null
+          requested_by: string
+          status: Database["public"]["Enums"]["approval_status"]
+          target_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          operation_data?: Json | null
+          operation_type: Database["public"]["Enums"]["sensitive_operation_type"]
+          rejection_reason?: string | null
+          request_reason?: string | null
+          requested_by: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          target_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          operation_data?: Json | null
+          operation_type?: Database["public"]["Enums"]["sensitive_operation_type"]
+          rejection_reason?: string | null
+          request_reason?: string | null
+          requested_by?: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          target_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -985,6 +1033,45 @@ export type Database = {
         }
         Relationships: []
       }
+      system_backups: {
+        Row: {
+          backup_type: string
+          created_at: string
+          created_by: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          notes: string | null
+          records_count: Json | null
+          tables_included: string[]
+        }
+        Insert: {
+          backup_type?: string
+          created_at?: string
+          created_by: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          records_count?: Json | null
+          tables_included: string[]
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string
+          created_by?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          records_count?: Json | null
+          tables_included?: string[]
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1190,9 +1277,14 @@ export type Database = {
         | "approved"
         | "rejected"
         | "cancelled"
+      approval_status: "pending" | "approved" | "rejected" | "expired"
       document_status: "pending" | "verified" | "rejected"
       note_type: "agent" | "admin" | "system"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      sensitive_operation_type:
+        | "delete_staff"
+        | "remove_admin_role"
+        | "remove_manage_staff_permission"
       staff_permission:
         | "manage_applications"
         | "manage_users"
@@ -1349,9 +1441,15 @@ export const Constants = {
         "rejected",
         "cancelled",
       ],
+      approval_status: ["pending", "approved", "rejected", "expired"],
       document_status: ["pending", "verified", "rejected"],
       note_type: ["agent", "admin", "system"],
       payment_status: ["pending", "completed", "failed", "refunded"],
+      sensitive_operation_type: [
+        "delete_staff",
+        "remove_admin_role",
+        "remove_manage_staff_permission",
+      ],
       staff_permission: [
         "manage_applications",
         "manage_users",
