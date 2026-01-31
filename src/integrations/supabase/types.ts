@@ -514,6 +514,60 @@ export type Database = {
         }
         Relationships: []
       }
+      document_access_log: {
+        Row: {
+          access_type: string
+          accessed_by: string
+          accessed_by_name: string | null
+          application_id: string
+          created_at: string
+          document_id: string
+          document_type: string | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          access_type?: string
+          accessed_by: string
+          accessed_by_name?: string | null
+          application_id: string
+          created_at?: string
+          document_id: string
+          document_type?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          access_type?: string
+          accessed_by?: string
+          accessed_by_name?: string | null
+          application_id?: string
+          created_at?: string
+          document_id?: string
+          document_type?: string | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_access_log_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_access_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "application_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_subscribers: {
         Row: {
           created_at: string
