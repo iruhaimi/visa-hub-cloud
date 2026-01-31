@@ -80,23 +80,24 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
 
       // Handle edge function error response
       if (error) {
-        // Try to extract error message from the response context
-        const errorContext = error.context;
-        if (errorContext) {
-          try {
-            const responseBody = await errorContext.json();
-            if (responseBody?.error) {
-              throw new Error(responseBody.error);
-            }
-          } catch (parseError) {
-            // If parsing fails, use the original error
-          }
-        }
-        throw error;
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'حدث خطأ في الاتصال');
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'فشل في إنشاء الحساب');
+      // Handle application-level error in response
+      if (data && !data.success) {
+        const errorMessage = data.error || 'فشل في إنشاء الحساب';
+        
+        // Translate common error messages
+        if (errorMessage.includes('already registered') || errorMessage.includes('email_exists')) {
+          throw new Error('هذا البريد الإلكتروني مسجل مسبقاً');
+        } else if (errorMessage.includes('Invalid email')) {
+          throw new Error('البريد الإلكتروني غير صالح');
+        } else if (errorMessage.includes('weak password') || errorMessage.includes('Password')) {
+          throw new Error('كلمة المرور ضعيفة جداً');
+        } else {
+          throw new Error(errorMessage);
+        }
       }
 
       toast.success('تم إنشاء حساب الموظف بنجاح');
@@ -105,18 +106,7 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
       onSuccess();
     } catch (error: any) {
       console.error('Error creating staff:', error);
-      const errorMessage = error.message || 'حدث خطأ في إنشاء الحساب';
-      
-      // Translate common error messages
-      if (errorMessage.includes('already registered') || errorMessage.includes('email_exists')) {
-        toast.error('هذا البريد الإلكتروني مسجل مسبقاً');
-      } else if (errorMessage.includes('Invalid email')) {
-        toast.error('البريد الإلكتروني غير صالح');
-      } else if (errorMessage.includes('weak password') || errorMessage.includes('Password')) {
-        toast.error('كلمة المرور ضعيفة جداً');
-      } else {
-        toast.error(errorMessage);
-      }
+      toast.error(error.message || 'حدث خطأ في إنشاء الحساب');
     } finally {
       setLoading(false);
     }
