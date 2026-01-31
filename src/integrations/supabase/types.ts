@@ -1137,6 +1137,13 @@ export type Database = {
         Args: { target_email: string }
         Returns: undefined
       }
+      get_agents_for_transfer: {
+        Args: { exclude_profile_id?: string }
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       get_failed_attempts_count: {
         Args: { check_email: string }
         Returns: number

@@ -54,25 +54,19 @@ export function TransferRequestDialog({
   const fetchAgents = async () => {
     setLoadingAgents(true);
     try {
-      // Get all agents except the current user
-      const { data: agentRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'agent');
+      // Use the security definer function to get agents
+      const { data, error } = await supabase
+        .rpc('get_agents_for_transfer', { exclude_profile_id: profile?.id || null });
 
-      if (agentRoles && agentRoles.length > 0) {
-        const userIds = agentRoles.map(r => r.user_id);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('user_id', userIds);
-
-        // Filter out current user
-        const filteredAgents = (profiles || []).filter(a => a.id !== profile?.id);
-        setAgents(filteredAgents);
+      if (error) {
+        console.error('Error fetching agents:', error);
+        setAgents([]);
+      } else {
+        setAgents(data || []);
       }
     } catch (error) {
       console.error('Error fetching agents:', error);
+      setAgents([]);
     } finally {
       setLoadingAgents(false);
     }

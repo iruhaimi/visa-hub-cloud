@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Globe, FileText, Settings2 } from 'lucide-react';
+import { Globe, FileText, Settings2, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CountriesManagement, type Country } from '@/components/admin/settings/CountriesManagement';
 import { VisaTypesManagement } from '@/components/admin/settings/VisaTypesManagement';
+import { PermissionsSettings } from '@/components/admin/settings/PermissionsSettings';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface VisaType {
@@ -131,7 +132,7 @@ export default function Settings() {
 
         {/* Tabs */}
         <Tabs defaultValue="countries" className="w-full">
-          <TabsList className="w-full max-w-md grid grid-cols-2 p-1 bg-muted/50">
+          <TabsList className="w-full max-w-xl grid grid-cols-3 p-1 bg-muted/50">
             <TabsTrigger 
               value="countries" 
               className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -147,10 +148,17 @@ export default function Settings() {
               className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <FileText className="h-4 w-4" />
-              <span>أنواع التأشيرات</span>
+              <span>التأشيرات</span>
               <span className="hidden sm:inline-flex items-center justify-center w-5 h-5 text-xs bg-primary/10 text-primary rounded-full">
                 {visaTypes?.length || 0}
               </span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="permissions" 
+              className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <Shield className="h-4 w-4" />
+              <span>الصلاحيات</span>
             </TabsTrigger>
           </TabsList>
 
@@ -169,6 +177,10 @@ export default function Settings() {
               isLoading={loadingVisaTypes}
               isRTL={isRTL}
             />
+          </TabsContent>
+
+          <TabsContent value="permissions" className="mt-6">
+            <PermissionsSettings />
           </TabsContent>
         </Tabs>
       </div>

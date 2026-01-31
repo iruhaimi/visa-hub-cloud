@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -15,10 +16,12 @@ import {
   Image,
   ShieldAlert,
   UserCheck,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +33,7 @@ export default function AdminLayout() {
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
   const { profile, isAdmin, isAgent, signOut } = useAuth();
+  const { hasPermission, isSuperAdmin } = usePermissions();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -44,55 +48,55 @@ export default function AdminLayout() {
       title: 'الطلبات',
       icon: FileText,
       href: isAdmin ? '/admin/applications' : '/agent/applications',
-      show: true,
+      show: isAdmin ? hasPermission('manage_applications') : true,
     },
     {
       title: 'المستخدمين',
       icon: Users,
       href: '/admin/users',
-      show: isAdmin,
+      show: isAdmin && hasPermission('manage_users'),
     },
     {
       title: 'العروض الخاصة',
       icon: Gift,
       href: '/admin/offers',
-      show: isAdmin,
+      show: isAdmin && hasPermission('manage_offers'),
     },
     {
       title: 'طلبات الاسترداد',
       icon: RotateCcw,
       href: '/admin/refunds',
-      show: isAdmin,
+      show: isAdmin && hasPermission('process_refunds'),
     },
     {
       title: 'إدارة Hero',
       icon: Image,
       href: '/admin/hero',
-      show: isAdmin,
+      show: isAdmin && hasPermission('manage_hero'),
     },
     {
       title: 'سجل محاولات الدخول',
       icon: ShieldAlert,
       href: '/admin/login-attempts',
-      show: isAdmin,
+      show: isAdmin && hasPermission('manage_staff'),
     },
     {
       title: 'طلبات فك القفل',
       icon: UserCheck,
       href: '/admin/unlock-requests',
-      show: isAdmin,
+      show: isAdmin && hasPermission('manage_unlock_requests'),
     },
     {
       title: 'طلبات الوكلاء',
       icon: ArrowLeftRight,
       href: '/admin/agent-requests',
-      show: isAdmin,
+      show: isAdmin && hasPermission('manage_applications'),
     },
     {
       title: 'الإعدادات',
       icon: Settings,
       href: '/admin/settings',
-      show: isAdmin,
+      show: isAdmin && (hasPermission('manage_settings') || hasPermission('manage_countries')),
     },
   ];
 
@@ -176,7 +180,15 @@ export default function AdminLayout() {
           <div className="absolute bottom-0 left-0 right-0 border-t p-4">
             {sidebarOpen && (
               <div className="mb-3 text-sm">
-                <p className="font-medium">{profile?.full_name || 'المستخدم'}</p>
+                <p className="font-medium flex items-center gap-2">
+                  {profile?.full_name || 'المستخدم'}
+                  {isSuperAdmin && (
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                      <Crown className="h-2.5 w-2.5 mr-0.5" />
+                      مدير عام
+                    </Badge>
+                  )}
+                </p>
                 <p className="text-muted-foreground text-xs">
                   {isAdmin ? 'مشرف' : 'وكيل'}
                 </p>
