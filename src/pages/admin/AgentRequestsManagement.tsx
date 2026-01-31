@@ -79,15 +79,35 @@ interface WorkSubmission {
   } | null;
 }
 
+// Grouped work submissions for same application by same agent
+interface GroupedWorkSubmission {
+  application_id: string;
+  agent_id: string;
+  agent: { full_name: string } | null;
+  application: WorkSubmission['application'];
+  files: Array<{
+    id: string;
+    file_path: string;
+    file_name: string;
+    status: string;
+    created_at: string;
+  }>;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  first_submission_id: string;
+}
+
 export default function AgentRequestsManagement() {
   const { profile } = useAuth();
   const [transferRequests, setTransferRequests] = useState<TransferRequest[]>([]);
   const [workSubmissions, setWorkSubmissions] = useState<WorkSubmission[]>([]);
+  const [groupedSubmissions, setGroupedSubmissions] = useState<GroupedWorkSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Dialog states
   const [selectedTransfer, setSelectedTransfer] = useState<TransferRequest | null>(null);
-  const [selectedWork, setSelectedWork] = useState<WorkSubmission | null>(null);
+  const [selectedWorkGroup, setSelectedWorkGroup] = useState<GroupedWorkSubmission | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -134,12 +154,62 @@ export default function AgentRequestsManagement() {
         .order('created_at', { ascending: false });
 
       setWorkSubmissions(submissions || []);
+
+      // Group submissions by application_id + agent_id to show multiple files together
+      const grouped = groupWorkSubmissions(submissions || []);
+      setGroupedSubmissions(grouped);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('حدث خطأ في تحميل البيانات');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Group work submissions by application and agent
+  const groupWorkSubmissions = (submissions: WorkSubmission[]): GroupedWorkSubmission[] => {
+    const groupMap = new Map<string, GroupedWorkSubmission>();
+    
+    for (const sub of submissions) {
+      const key = `${sub.application_id}-${sub.agent_id}`;
+      
+      if (!groupMap.has(key)) {
+        groupMap.set(key, {
+          application_id: sub.application_id,
+          agent_id: sub.agent_id,
+          agent: sub.agent,
+          application: sub.application,
+          files: [],
+          notes: sub.notes,
+          status: sub.status,
+          created_at: sub.created_at,
+          first_submission_id: sub.id,
+        });
+      }
+      
+      const group = groupMap.get(key)!;
+      group.files.push({
+        id: sub.id,
+        file_path: sub.file_path,
+        file_name: sub.file_name,
+        status: sub.status,
+        created_at: sub.created_at,
+      });
+      
+      // Keep the earliest notes if any
+      if (!group.notes && sub.notes) {
+        group.notes = sub.notes;
+      }
+      
+      // Status is pending if any file is pending
+      if (sub.status === 'pending') {
+        group.status = 'pending';
+      }
+    }
+    
+    return Array.from(groupMap.values()).sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   };
 
   const handleTransferAction = async (action: 'approved' | 'rejected') => {
@@ -206,35 +276,38 @@ export default function AgentRequestsManagement() {
   };
 
   const handleWorkAction = async (action: 'approved' | 'returned') => {
-    if (!selectedWork || !profile) return;
+    if (!selectedWorkGroup || !profile) return;
 
     setProcessing(true);
     try {
-      const { error: updateError } = await supabase
-        .from('agent_work_submissions')
-        .update({
-          status: action,
-          admin_notes: adminNotes.trim() || null,
-          reviewed_by: profile.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq('id', selectedWork.id);
+      // Update all files in this group
+      for (const file of selectedWorkGroup.files) {
+        const { error: updateError } = await supabase
+          .from('agent_work_submissions')
+          .update({
+            status: action,
+            admin_notes: adminNotes.trim() || null,
+            reviewed_by: profile.id,
+            reviewed_at: new Date().toISOString(),
+          })
+          .eq('id', file.id);
 
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
+      }
 
       // Notify agent
       await supabase.from('notifications').insert({
-        user_id: selectedWork.agent_id,
+        user_id: selectedWorkGroup.agent_id,
         title: action === 'approved' ? '✅ تم التأكيد على إتمام العمل' : '🔄 تم إعادة الطلب للمراجعة',
         message: action === 'approved' 
-          ? 'تم التأكيد على إتمام عملك على الطلب بنجاح'
+          ? `تم التأكيد على إتمام عملك على الطلب بنجاح (${selectedWorkGroup.files.length} ملفات)`
           : `تم إعادة الطلب إليك للمراجعة: ${adminNotes || 'يرجى المراجعة'}`,
         type: 'work_response',
-        action_url: `/agent/applications/${selectedWork.application_id}`,
+        action_url: `/agent/applications/${selectedWorkGroup.application_id}`,
       });
 
       toast.success(action === 'approved' ? 'تم التأكيد على إتمام العمل' : 'تم إعادة الطلب للوكيل');
-      setSelectedWork(null);
+      setSelectedWorkGroup(null);
       setAdminNotes('');
       fetchData();
     } catch (error) {
@@ -277,7 +350,7 @@ export default function AgentRequestsManagement() {
   };
 
   const pendingTransfers = transferRequests.filter(t => t.status === 'pending');
-  const pendingWork = workSubmissions.filter(w => w.status === 'pending');
+  const pendingWorkGroups = groupedSubmissions.filter(g => g.status === 'pending');
 
   if (loading) {
     return (
@@ -323,7 +396,7 @@ export default function AgentRequestsManagement() {
                 <FileCheck className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{pendingWork.length}</p>
+                <p className="text-2xl font-bold">{pendingWorkGroups.length}</p>
                 <p className="text-xs text-muted-foreground">ملفات إتمام معلقة</p>
               </div>
             </div>
@@ -370,8 +443,8 @@ export default function AgentRequestsManagement() {
           <TabsTrigger value="work" className="gap-2">
             <FileCheck className="h-4 w-4" />
             ملفات إتمام العمل
-            {pendingWork.length > 0 && (
-              <Badge variant="destructive" className="mr-2">{pendingWork.length}</Badge>
+            {pendingWorkGroups.length > 0 && (
+              <Badge variant="destructive" className="mr-2">{pendingWorkGroups.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
@@ -458,7 +531,7 @@ export default function AgentRequestsManagement() {
               <CardTitle>ملفات إتمام العمل</CardTitle>
             </CardHeader>
             <CardContent>
-              {workSubmissions.length === 0 ? (
+              {groupedSubmissions.length === 0 ? (
                 <div className="text-center py-8">
                   <FileCheck className="h-12 w-12 mx-auto text-muted-foreground/30 mb-2" />
                   <p className="text-sm text-muted-foreground">لا توجد ملفات إتمام</p>
@@ -470,7 +543,7 @@ export default function AgentRequestsManagement() {
                       <TableRow>
                         <TableHead className="text-right">الطلب</TableHead>
                         <TableHead className="text-right">الوكيل</TableHead>
-                        <TableHead className="text-right">الملف</TableHead>
+                        <TableHead className="text-right">الملفات</TableHead>
                         <TableHead className="text-right">ملاحظات</TableHead>
                         <TableHead className="text-right">التاريخ</TableHead>
                         <TableHead className="text-right">الحالة</TableHead>
@@ -478,47 +551,43 @@ export default function AgentRequestsManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {workSubmissions.map((work) => (
-                        <TableRow key={work.id}>
+                      {groupedSubmissions.map((group) => (
+                        <TableRow key={`${group.application_id}-${group.agent_id}`}>
                           <TableCell>
                             <Link 
-                              to={`/admin/applications/${work.application_id}`}
+                              to={`/admin/applications/${group.application_id}`}
                               className="text-primary hover:underline"
                             >
-                              {work.application?.profile?.full_name || '-'}
+                              {group.application?.profile?.full_name || '-'}
                               <br />
                               <span className="text-xs text-muted-foreground">
-                                {work.application?.visa_type?.country?.name}
+                                {group.application?.visa_type?.country?.name}
                               </span>
                             </Link>
                           </TableCell>
-                          <TableCell>{work.agent?.full_name || '-'}</TableCell>
+                          <TableCell>{group.agent?.full_name || '-'}</TableCell>
                           <TableCell>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => downloadFile(work.file_path, work.file_name)}
-                            >
-                              <Download className="h-4 w-4 ml-1" />
-                              {work.file_name.length > 15 
-                                ? work.file_name.slice(0, 15) + '...' 
-                                : work.file_name}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="gap-1">
+                                <FileCheck className="h-3 w-3" />
+                                {group.files.length} ملفات
+                              </Badge>
+                            </div>
                           </TableCell>
                           <TableCell className="max-w-[200px] truncate">
-                            {work.notes || '-'}
+                            {group.notes || '-'}
                           </TableCell>
                           <TableCell className="text-sm">
-                            {format(new Date(work.created_at), 'dd MMM yyyy', { locale: ar })}
+                            {format(new Date(group.created_at), 'dd MMM yyyy', { locale: ar })}
                           </TableCell>
-                          <TableCell>{getStatusBadge(work.status)}</TableCell>
+                          <TableCell>{getStatusBadge(group.status)}</TableCell>
                           <TableCell>
-                            {work.status === 'pending' ? (
+                            {group.status === 'pending' ? (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  setSelectedWork(work);
+                                  setSelectedWorkGroup(group);
                                   setAdminNotes('');
                                 }}
                               >
@@ -609,46 +678,57 @@ export default function AgentRequestsManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Work Review Dialog */}
-      <Dialog open={!!selectedWork} onOpenChange={() => setSelectedWork(null)}>
-        <DialogContent className="max-w-lg">
+      {/* Work Review Dialog - Updated for multiple files */}
+      <Dialog open={!!selectedWorkGroup} onOpenChange={() => setSelectedWorkGroup(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileCheck className="h-5 w-5" />
-              مراجعة ملف إتمام العمل
+              مراجعة ملفات إتمام العمل
+              {selectedWorkGroup && (
+                <Badge variant="secondary">{selectedWorkGroup.files.length} ملفات</Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
-          {selectedWork && (
+          {selectedWorkGroup && (
             <div className="space-y-4 py-4">
               <div className="grid gap-3">
                 <div className="flex justify-between p-3 rounded-lg bg-muted/50">
                   <span className="text-muted-foreground">الوكيل:</span>
-                  <span className="font-medium">{selectedWork.agent?.full_name}</span>
+                  <span className="font-medium">{selectedWorkGroup.agent?.full_name}</span>
                 </div>
                 <div className="flex justify-between p-3 rounded-lg bg-muted/50">
                   <span className="text-muted-foreground">الطلب:</span>
                   <span className="font-medium">
-                    {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
+                    {selectedWorkGroup.application?.profile?.full_name} - {selectedWorkGroup.application?.visa_type?.country?.name}
                   </span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg border">
-                <p className="text-sm text-muted-foreground mb-2">الملف المرفق:</p>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => downloadFile(selectedWork.file_path, selectedWork.file_name)}
-                >
-                  <Download className="h-4 w-4 ml-2" />
-                  {selectedWork.file_name}
-                </Button>
+              <div className="p-3 rounded-lg border space-y-2">
+                <p className="text-sm font-medium mb-3">الملفات المرفقة ({selectedWorkGroup.files.length}):</p>
+                <ScrollArea className="max-h-[200px]">
+                  <div className="space-y-2">
+                    {selectedWorkGroup.files.map((file, index) => (
+                      <Button
+                        key={file.id}
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                        onClick={() => downloadFile(file.file_path, file.file_name)}
+                      >
+                        <Download className="h-4 w-4 shrink-0" />
+                        <span className="truncate flex-1 text-right">{file.file_name}</span>
+                        <Badge variant="secondary" className="shrink-0">{index + 1}</Badge>
+                      </Button>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
 
-              {selectedWork.notes && (
+              {selectedWorkGroup.notes && (
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-sm text-muted-foreground mb-1">ملاحظات الوكيل:</p>
-                  <p className="text-sm">{selectedWork.notes}</p>
+                  <p className="text-sm">{selectedWorkGroup.notes}</p>
                 </div>
               )}
 
@@ -664,7 +744,7 @@ export default function AgentRequestsManagement() {
             </div>
           )}
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setSelectedWork(null)}>
+            <Button variant="outline" onClick={() => setSelectedWorkGroup(null)}>
               إلغاء
             </Button>
             <Button

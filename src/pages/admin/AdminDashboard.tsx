@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,8 +19,18 @@ import {
   Crown,
   Activity,
   ArrowUpRight,
-  Calendar
+  Calendar,
+  Zap
 } from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  ResponsiveContainer,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 import ApplicationTrendsChart from '@/components/admin/charts/ApplicationTrendsChart';
 import StatusDistributionChart from '@/components/admin/charts/StatusDistributionChart';
 import CountryApplicationsChart from '@/components/admin/charts/CountryApplicationsChart';
@@ -67,6 +77,53 @@ export default function AdminDashboard() {
     if (hour < 17) return 'مساء الخير';
     return 'مساء الخير';
   }
+
+  // Prepare mini chart data for last 7 days
+  const miniChartData = useMemo(() => {
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dayStr = date.toISOString().split('T')[0];
+      const count = stats.allApplications.filter(
+        app => app.created_at.split('T')[0] === dayStr
+      ).length;
+      last7Days.push({
+        day: date.toLocaleDateString('ar-SA', { weekday: 'short' }),
+        count,
+      });
+    }
+    return last7Days;
+  }, [stats.allApplications]);
+
+  // Status distribution for mini pie chart
+  const statusPieData = useMemo(() => {
+    const pending = stats.pendingApplications;
+    const approved = stats.approvedApplications;
+    const rejected = stats.rejectedApplications;
+    const draft = stats.totalApplications - pending - approved - rejected;
+    return [
+      { name: 'معالجة', value: pending, color: 'hsl(var(--warning))' },
+      { name: 'معتمد', value: approved, color: 'hsl(var(--success))' },
+      { name: 'مرفوض', value: rejected, color: 'hsl(var(--destructive))' },
+      { name: 'مسودة', value: Math.max(0, draft), color: 'hsl(var(--muted-foreground))' },
+    ].filter(d => d.value > 0);
+  }, [stats]);
+
+  // Today's stats
+  const todayStats = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayApps = stats.allApplications.filter(
+      app => app.created_at.split('T')[0] === today
+    );
+    const todayApproved = todayApps.filter(app => app.status === 'approved').length;
+    const todaySubmitted = todayApps.filter(app => app.status === 'submitted').length;
+    return {
+      total: todayApps.length,
+      approved: todayApproved,
+      submitted: todaySubmitted,
+    };
+  }, [stats.allApplications]);
 
   useEffect(() => {
     fetchStats();
@@ -193,8 +250,9 @@ export default function AdminDashboard() {
         <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/5 rounded-full translate-x-1/4 translate-y-1/4" />
         <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-white/5 rounded-full" />
         
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-2">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+          {/* Left side - Greeting */}
+          <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2 text-primary-foreground/80">
               <Calendar className="h-4 w-4" />
               <span className="text-sm">
@@ -221,8 +279,19 @@ export default function AdminDashboard() {
             )}
           </div>
           
-          {/* Quick Stats in Hero */}
-          <div className="flex items-center gap-4 mt-4 md:mt-0">
+          {/* Right side - Mini Charts & Stats */}
+          <div className="flex flex-wrap items-start gap-4">
+            {/* Today's Activity Card */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 min-w-[140px]">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="h-4 w-4" />
+                <span className="text-xs font-medium">نشاط اليوم</span>
+              </div>
+              <div className="text-3xl font-bold">{todayStats.total}</div>
+              <div className="text-xs text-primary-foreground/70">طلب جديد</div>
+            </div>
+
+            {/* Quick Stats */}
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center min-w-[100px]">
               <div className="text-3xl font-bold">{stats.pendingApplications}</div>
               <div className="text-xs text-primary-foreground/70">قيد المعالجة</div>
@@ -230,10 +299,83 @@ export default function AdminDashboard() {
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center min-w-[100px]">
               <div className="text-3xl font-bold flex items-center justify-center gap-1">
                 {stats.approvedApplications}
-                <ArrowUpRight className="h-4 w-4 text-green-300" />
+                <ArrowUpRight className="h-4 w-4 text-emerald-300" />
               </div>
               <div className="text-xs text-primary-foreground/70">معتمدة</div>
             </div>
+
+            {/* Mini Area Chart */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 min-w-[180px]">
+              <div className="flex items-center gap-2 mb-1">
+                <Activity className="h-3 w-3" />
+                <span className="text-[10px] font-medium">آخر 7 أيام</span>
+              </div>
+              <div className="h-[50px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={miniChartData}>
+                    <defs>
+                      <linearGradient id="heroChartGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="white" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="white" stopOpacity={0.05}/>
+                      </linearGradient>
+                    </defs>
+                    <Tooltip 
+                      contentStyle={{ 
+                        background: 'rgba(255,255,255,0.9)', 
+                        border: 'none', 
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: 'hsl(var(--primary))'
+                      }}
+                      formatter={(value: number) => [`${value} طلب`, '']}
+                      labelFormatter={(label) => label}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="rgba(255,255,255,0.8)" 
+                      strokeWidth={2}
+                      fill="url(#heroChartGradient)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Mini Pie Chart */}
+            {statusPieData.length > 0 && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 min-w-[100px] flex flex-col items-center">
+                <span className="text-[10px] font-medium mb-1">التوزيع</span>
+                <div className="h-[50px] w-[50px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusPieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={12}
+                        outerRadius={22}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {statusPieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          background: 'rgba(255,255,255,0.95)', 
+                          border: 'none', 
+                          borderRadius: '8px',
+                          fontSize: '11px'
+                        }}
+                        formatter={(value: number, name: string) => [`${value}`, name]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
