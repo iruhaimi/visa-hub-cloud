@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileCheck, 
   Clock, 
@@ -15,7 +14,9 @@ import {
   TrendingUp,
   User,
   Download,
-  BarChart3
+  BarChart3,
+  AlertTriangle,
+  Bell
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -32,146 +33,29 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { format, subDays, startOfDay, eachDayOfInterval } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { format } from 'date-fns';
 import { exportToExcel } from '@/lib/exportToExcel';
 import { toast } from 'sonner';
-
-interface AgentStats {
-  agent_id: string;
-  agent_name: string;
-  avatar_url: string | null;
-  total_assigned: number;
-  completed_applications: number;
-  pending_applications: number;
-  work_submissions_total: number;
-  work_submissions_approved: number;
-  work_submissions_pending: number;
-  transfer_requests_sent: number;
-  transfer_requests_approved: number;
-  completion_rate: number;
-}
-
-interface DailyActivity {
-  date: string;
-  dateLabel: string;
-  [agentName: string]: string | number;
-}
+import { useAgentPerformance, TimePeriod } from '@/hooks/useAgentPerformance';
 
 const CHART_COLORS = ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
+const TIME_PERIOD_LABELS: Record<TimePeriod, string> = {
+  week: 'أسبوع',
+  month: 'شهر',
+  '3months': '3 أشهر'
+};
+
 export function AgentPerformanceReport() {
-  const [agents, setAgents] = useState<AgentStats[]>([]);
-  const [dailyActivity, setDailyActivity] = useState<DailyActivity[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchAgentStats();
-  }, []);
-
-  const fetchAgentStats = async () => {
-    setLoading(true);
-    try {
-      // Get all agents
-      const { data: agentRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'agent');
-      const agentUserIds = agentRoles?.map(r => r.user_id) || [];
-
-      if (agentUserIds.length === 0) {
-        setAgents([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: agentProfiles } = await supabase
-        .from('profiles')
-        .select('id, user_id, full_name, avatar_url')
-        .in('user_id', agentUserIds);
-
-      if (!agentProfiles || agentProfiles.length === 0) {
-        setAgents([]);
-        setLoading(false);
-        return;
-      }
-
-      // Get applications stats
-      const { data: applications } = await supabase
-        .from('applications')
-        .select('assigned_agent_id, status, updated_at');
-
-      // Get work submissions with dates
-      const { data: workSubmissions } = await supabase
-        .from('agent_work_submissions')
-        .select('agent_id, status, created_at');
-
-      // Get transfer requests
-      const { data: transferRequests } = await supabase
-        .from('agent_transfer_requests')
-        .select('from_agent_id, status');
-
-      // Build agent stats
-      const agentStats: AgentStats[] = agentProfiles.map(agent => {
-        const agentApps = applications?.filter(a => a.assigned_agent_id === agent.id) || [];
-        const agentWork = workSubmissions?.filter(w => w.agent_id === agent.id) || [];
-        const agentTransfers = transferRequests?.filter(t => t.from_agent_id === agent.id) || [];
-
-        const completed = agentApps.filter(a => a.status === 'approved').length;
-        const total = agentApps.length;
-
-        return {
-          agent_id: agent.id,
-          agent_name: agent.full_name || 'بدون اسم',
-          avatar_url: agent.avatar_url,
-          total_assigned: total,
-          completed_applications: completed,
-          pending_applications: agentApps.filter(a => !['approved', 'rejected', 'cancelled'].includes(a.status)).length,
-          work_submissions_total: agentWork.length,
-          work_submissions_approved: agentWork.filter(w => w.status === 'approved').length,
-          work_submissions_pending: agentWork.filter(w => w.status === 'pending').length,
-          transfer_requests_sent: agentTransfers.length,
-          transfer_requests_approved: agentTransfers.filter(t => t.status === 'approved').length,
-          completion_rate: total > 0 ? Math.round((completed / total) * 100) : 0,
-        };
-      });
-
-      // Sort by completion rate descending
-      agentStats.sort((a, b) => b.completion_rate - a.completion_rate);
-      setAgents(agentStats);
-
-      // Build daily activity for last 7 days
-      const last7Days = eachDayOfInterval({
-        start: subDays(new Date(), 6),
-        end: new Date()
-      });
-
-      const dailyData: DailyActivity[] = last7Days.map(day => {
-        const dayStart = startOfDay(day);
-        const dayEnd = new Date(dayStart);
-        dayEnd.setHours(23, 59, 59, 999);
-
-        const entry: DailyActivity = {
-          date: format(day, 'yyyy-MM-dd'),
-          dateLabel: format(day, 'EEE', { locale: ar }),
-        };
-
-        agentProfiles.forEach(agent => {
-          const agentName = agent.full_name || 'وكيل';
-          const daySubmissions = workSubmissions?.filter(w => {
-            const wDate = new Date(w.created_at);
-            return w.agent_id === agent.id && wDate >= dayStart && wDate <= dayEnd;
-          }).length || 0;
-          entry[agentName] = daySubmissions;
-        });
-
-        return entry;
-      });
-
-      setDailyActivity(dailyData);
-    } catch (error) {
-      console.error('Error fetching agent stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('week');
+  const { 
+    agents, 
+    dailyActivity, 
+    loading, 
+    lowPerformanceAgents,
+    notifyLowPerformance,
+    performanceThreshold 
+  } = useAgentPerformance(timePeriod);
 
   const exportToExcelHandler = async () => {
     if (agents.length === 0) {
@@ -192,7 +76,7 @@ export function AgentPerformanceReport() {
 
     await exportToExcel({
       sheetName: 'أداء الوكلاء',
-      fileName: `تقرير_أداء_الوكلاء_${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
+      fileName: `تقرير_أداء_الوكلاء_${TIME_PERIOD_LABELS[timePeriod]}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`,
       columns: [
         { header: 'اسم الوكيل', key: 'agent_name', width: 25 },
         { header: 'إجمالي الطلبات', key: 'total_assigned', width: 15 },
@@ -268,18 +152,62 @@ export function AgentPerformanceReport() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Export Button */}
-      <div className="flex items-center justify-between">
+      {/* Header with Filter and Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-6 w-6 text-primary" />
           <h3 className="text-xl font-bold">تقرير أداء الوكلاء</h3>
           <Badge variant="secondary">{agents.length} وكيل</Badge>
         </div>
-        <Button onClick={exportToExcelHandler} variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          تصدير Excel
-        </Button>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Time Period Filter */}
+          <Tabs value={timePeriod} onValueChange={(v) => setTimePeriod(v as TimePeriod)}>
+            <TabsList className="h-9">
+              <TabsTrigger value="week" className="text-xs px-3">أسبوع</TabsTrigger>
+              <TabsTrigger value="month" className="text-xs px-3">شهر</TabsTrigger>
+              <TabsTrigger value="3months" className="text-xs px-3">3 أشهر</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <Button onClick={exportToExcelHandler} variant="outline" size="sm" className="gap-2">
+            <Download className="h-4 w-4" />
+            تصدير Excel
+          </Button>
+        </div>
       </div>
+
+      {/* Low Performance Alert */}
+      {lowPerformanceAgents.length > 0 && (
+        <Card className="border-warning/50 bg-warning/5">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-warning/10">
+                  <AlertTriangle className="h-5 w-5 text-warning" />
+                </div>
+                <div>
+                  <p className="font-medium text-warning">
+                    {lowPerformanceAgents.length} وكيل بأداء منخفض (أقل من {performanceThreshold}%)
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {lowPerformanceAgents.map(a => a.agent_name).join('، ')}
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={notifyLowPerformance} 
+                variant="outline" 
+                size="sm"
+                className="gap-2 border-warning text-warning hover:bg-warning/10"
+              >
+                <Bell className="h-4 w-4" />
+                إرسال تنبيه
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Section */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -288,7 +216,7 @@ export function AgentPerformanceReport() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              نشاط الملفات المرسلة (آخر 7 أيام)
+              نشاط الملفات المرسلة ({TIME_PERIOD_LABELS[timePeriod]})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -298,7 +226,7 @@ export function AgentPerformanceReport() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis 
                     dataKey="dateLabel" 
-                    tick={{ fontSize: 12 }} 
+                    tick={{ fontSize: 11 }} 
                     tickLine={false}
                   />
                   <YAxis 
@@ -322,8 +250,8 @@ export function AgentPerformanceReport() {
                       dataKey={agent.agent_name}
                       stroke={CHART_COLORS[index % CHART_COLORS.length]}
                       strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
                     />
                   ))}
                 </LineChart>
@@ -375,7 +303,7 @@ export function AgentPerformanceReport() {
       </div>
 
       {/* Distribution Pie Chart */}
-      {pieData.length > 0 && (
+      {pieData.length > 0 && pieData.some(d => d.value > 0) && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">توزيع الطلبات على الوكلاء</CardTitle>
@@ -419,83 +347,98 @@ export function AgentPerformanceReport() {
           <CardTitle className="text-base">تفاصيل أداء كل وكيل</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {agents.map((agent, index) => (
-            <div 
-              key={agent.agent_id} 
-              className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-start gap-4">
-                {/* Rank & Avatar */}
-                <div className="relative">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={agent.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                      {agent.agent_name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  {index < 3 && (
-                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                      index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-amber-600'
-                    }`}>
-                      {index + 1}
-                    </div>
-                  )}
-                </div>
-
-                {/* Agent Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold truncate">{agent.agent_name}</h4>
-                    <Badge variant="outline" className="shrink-0">
-                      {agent.completion_rate}% إنجاز
-                    </Badge>
+          {agents.map((agent, index) => {
+            const isLowPerformance = agent.total_assigned >= 3 && agent.completion_rate < performanceThreshold;
+            
+            return (
+              <div 
+                key={agent.agent_id} 
+                className={`p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors ${
+                  isLowPerformance ? 'border-warning/50 bg-warning/5' : ''
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  {/* Rank & Avatar */}
+                  <div className="relative">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={agent.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                        {agent.agent_name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {index < 3 && (
+                      <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                        index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : 'bg-amber-600'
+                      }`}>
+                        {index + 1}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Progress Bar */}
-                  <div className="mb-3">
-                    <Progress 
-                      value={agent.completion_rate} 
-                      className="h-2"
-                    />
+                  {/* Agent Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-semibold truncate">{agent.agent_name}</h4>
+                      <Badge 
+                        variant={isLowPerformance ? "destructive" : "outline"} 
+                        className="shrink-0"
+                      >
+                        {agent.completion_rate}% إنجاز
+                      </Badge>
+                      {isLowPerformance && (
+                        <Badge variant="outline" className="shrink-0 border-warning text-warning">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          أداء منخفض
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="mb-3">
+                      <Progress 
+                        value={agent.completion_rate} 
+                        className={`h-2 ${isLowPerformance ? '[&>div]:bg-warning' : ''}`}
+                      />
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Clock className="h-4 w-4 text-warning" />
+                        <span>{agent.pending_applications} قيد المعالجة</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <span>{agent.completed_applications} مكتمل</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <FileCheck className="h-4 w-4 text-primary" />
+                        <span>{agent.work_submissions_total} ملف مرسل</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <ArrowLeftRight className="h-4 w-4 text-secondary-foreground" />
+                        <span>{agent.transfer_requests_sent} طلب تحويل</span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Clock className="h-4 w-4 text-warning" />
-                      <span>{agent.pending_applications} قيد المعالجة</span>
+                  {/* Summary Stats */}
+                  <div className="hidden md:flex flex-col items-end gap-1 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">إجمالي الطلبات:</span>
+                      <Badge variant="secondary">{agent.total_assigned}</Badge>
                     </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <CheckCircle className="h-4 w-4 text-success" />
-                      <span>{agent.completed_applications} مكتمل</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">ملفات معتمدة:</span>
+                      <Badge variant="default" className="bg-success/10 text-success">
+                        {agent.work_submissions_approved}
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <FileCheck className="h-4 w-4 text-primary" />
-                      <span>{agent.work_submissions_total} ملف مرسل</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <ArrowLeftRight className="h-4 w-4 text-secondary-foreground" />
-                      <span>{agent.transfer_requests_sent} طلب تحويل</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary Stats */}
-                <div className="hidden md:flex flex-col items-end gap-1 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">إجمالي الطلبات:</span>
-                    <Badge variant="secondary">{agent.total_assigned}</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">ملفات معتمدة:</span>
-                    <Badge variant="default" className="bg-success/10 text-success">
-                      {agent.work_submissions_approved}
-                    </Badge>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
     </div>
