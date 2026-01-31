@@ -58,7 +58,8 @@ import {
   UserCog,
   UserPlus,
   Trash2,
-  X
+  X,
+  Crown
 } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportToExcel';
 import { format } from 'date-fns';
@@ -381,6 +382,21 @@ export default function UsersManagement() {
     }
   };
 
+  // Fetch owners (those with manage_staff permission)
+  const [owners, setOwners] = useState<Set<string>>(new Set());
+  
+  useEffect(() => {
+    const fetchOwners = async () => {
+      const { data } = await supabase
+        .from('staff_permissions')
+        .select('user_id')
+        .eq('permission', 'manage_staff');
+      
+      setOwners(new Set(data?.map(o => o.user_id) || []));
+    };
+    fetchOwners();
+  }, [users]);
+
   // Filter users with memoization
   const { staffUsers, customerUsers, stats } = useMemo(() => {
     const filterBySearchAndDate = (user: UserWithRole) => {
@@ -433,17 +449,24 @@ export default function UsersManagement() {
       return isOnlyCustomer || hasNoRoles;
     }).length;
 
+    // Count owners (admins with manage_staff permission)
+    const ownersCount = users.filter(u => u.roles.includes('admin') && owners.has(u.user_id)).length;
+    
+    // Count regular admins (admins without manage_staff permission)
+    const regularAdminsCount = users.filter(u => u.roles.includes('admin') && !owners.has(u.user_id)).length;
+
     return {
       staffUsers: staff,
       customerUsers: customers,
       stats: {
         total: users.length,
-        admins: users.filter(u => u.roles.includes('admin')).length,
+        owners: ownersCount,
+        admins: regularAdminsCount,
         agents: users.filter(u => u.roles.includes('agent')).length,
         customers: customersCount,
       }
     };
-  }, [users, debouncedSearchQuery, dateFrom, dateTo]);
+  }, [users, debouncedSearchQuery, dateFrom, dateTo, owners]);
 
   const getRoleBadge = (role: AppRole) => {
     const config: Record<AppRole, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -638,7 +661,7 @@ export default function UsersManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -648,6 +671,19 @@ export default function UsersManagement() {
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
                 <p className="text-xs text-muted-foreground">إجمالي المستخدمين</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <Crown className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-amber-600">{stats.owners}</p>
+                <p className="text-xs text-muted-foreground">المالكين</p>
               </div>
             </div>
           </CardContent>
