@@ -208,10 +208,23 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
                 <SelectValue placeholder="اختر الصلاحية" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="agent">وكيل - مراجعة الطلبات المُعيّنة</SelectItem>
-                <SelectItem value="admin">مشرف - صلاحيات كاملة على النظام</SelectItem>
+                <SelectItem value="agent">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">وكيل</span>
+                    <span className="text-xs text-muted-foreground">مراجعة ومعالجة الطلبات المُعيّنة فقط</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="admin">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">مشرف</span>
+                    <span className="text-xs text-muted-foreground">إدارة الطلبات والتقارير والإعدادات</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              💡 لمنح صلاحيات المدير العام، قم بتعديل الصلاحيات بعد إنشاء الحساب من قسم إدارة الموظفين
+            </p>
           </div>
         </div>
 
