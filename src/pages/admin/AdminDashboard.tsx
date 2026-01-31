@@ -41,6 +41,7 @@ import PerformanceMetricsCard from '@/components/admin/charts/PerformanceMetrics
 import AgentPerformanceCard from '@/components/admin/charts/AgentPerformanceCard';
 import AgentNotesPerformance from '@/components/admin/charts/AgentNotesPerformance';
 import AgentPerformanceChart from '@/components/admin/charts/AgentPerformanceChart';
+import AgentsComparisonTable from '@/components/admin/charts/AgentsComparisonTable';
 import { QuickActionsPanel } from '@/components/admin/QuickActionsPanel';
 import { UrgentTasksDashboard } from '@/components/admin/UrgentTasksDashboard';
 
@@ -496,6 +497,9 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
+          {/* Agents Comparison Table */}
+          {isAdmin && <AgentsComparisonTable />}
+
           {/* Agent Performance Charts */}
           {isAdmin && <AgentPerformanceChart />}
 
