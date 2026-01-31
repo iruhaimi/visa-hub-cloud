@@ -24,7 +24,7 @@ export default function AgentLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOut(true); // Pass true to indicate staff logout
   };
 
   return (
