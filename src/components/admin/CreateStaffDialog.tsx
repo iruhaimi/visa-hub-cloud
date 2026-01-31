@@ -74,10 +74,25 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
         }
       });
 
-      if (error) throw error;
+      // Handle edge function error response
+      if (error) {
+        // Try to extract error message from the response context
+        const errorContext = error.context;
+        if (errorContext) {
+          try {
+            const responseBody = await errorContext.json();
+            if (responseBody?.error) {
+              throw new Error(responseBody.error);
+            }
+          } catch (parseError) {
+            // If parsing fails, use the original error
+          }
+        }
+        throw error;
+      }
 
-      if (!data.success) {
-        throw new Error(data.error || 'فشل في إنشاء الحساب');
+      if (!data?.success) {
+        throw new Error(data?.error || 'فشل في إنشاء الحساب');
       }
 
       toast.success('تم إنشاء حساب الموظف بنجاح');
@@ -89,8 +104,12 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
       const errorMessage = error.message || 'حدث خطأ في إنشاء الحساب';
       
       // Translate common error messages
-      if (errorMessage.includes('already registered')) {
+      if (errorMessage.includes('already registered') || errorMessage.includes('email_exists')) {
         toast.error('هذا البريد الإلكتروني مسجل مسبقاً');
+      } else if (errorMessage.includes('Invalid email')) {
+        toast.error('البريد الإلكتروني غير صالح');
+      } else if (errorMessage.includes('weak password') || errorMessage.includes('Password')) {
+        toast.error('كلمة المرور ضعيفة جداً');
       } else {
         toast.error(errorMessage);
       }
