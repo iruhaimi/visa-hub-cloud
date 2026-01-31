@@ -14,7 +14,8 @@ import {
   RotateCcw,
   Image,
   ShieldAlert,
-  UserCheck
+  UserCheck,
+  ArrowLeftRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -79,6 +80,12 @@ export default function AdminLayout() {
       title: 'طلبات فك القفل',
       icon: UserCheck,
       href: '/admin/unlock-requests',
+      show: isAdmin,
+    },
+    {
+      title: 'طلبات الوكلاء',
+      icon: ArrowLeftRight,
+      href: '/admin/agent-requests',
       show: isAdmin,
     },
     {
