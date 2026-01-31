@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Loader2, Upload, FileCheck, X } from 'lucide-react';
+import { Loader2, Upload, FileCheck, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface WorkSubmissionDialogProps {
@@ -19,6 +19,11 @@ interface WorkSubmissionDialogProps {
   onOpenChange: (open: boolean) => void;
   applicationId: string;
   onSuccess?: () => void;
+}
+
+interface SelectedFile {
+  file: File;
+  id: string;
 }
 
 export function WorkSubmissionDialog({
@@ -29,73 +34,91 @@ export function WorkSubmissionDialog({
 }: WorkSubmissionDialogProps) {
   const { profile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (max 10MB)
+    const files = Array.from(e.target.files || []);
+    
+    for (const file of files) {
+      // Validate file size (max 10MB per file)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('حجم الملف يجب أن يكون أقل من 10 ميجابايت');
-        return;
+        toast.error(`حجم الملف ${file.name} يجب أن يكون أقل من 10 ميجابايت`);
+        continue;
       }
-      setSelectedFile(file);
-    }
-  };
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
+      // Check if already added
+      if (selectedFiles.some(sf => sf.file.name === file.name && sf.file.size === file.size)) {
+        toast.error(`الملف ${file.name} مضاف مسبقاً`);
+        continue;
+      }
+
+      setSelectedFiles(prev => [...prev, { file, id: crypto.randomUUID() }]);
+    }
+
+    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
+  const handleRemoveFile = (id: string) => {
+    setSelectedFiles(prev => prev.filter(f => f.id !== id));
+  };
+
   const handleSubmit = async () => {
-    if (!selectedFile || !profile) return;
+    if (selectedFiles.length === 0 || !profile) return;
 
     setLoading(true);
     try {
-      // Upload file to storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const filePath = `work-submissions/${applicationId}/${Date.now()}.${fileExt}`;
+      // Upload all files and create records
+      for (const { file } of selectedFiles) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `work-submissions/${applicationId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, selectedFile);
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      // Create work submission record
-      const { error: insertError } = await supabase
-        .from('agent_work_submissions')
-        .insert({
-          application_id: applicationId,
-          agent_id: profile.id,
-          file_path: filePath,
-          file_name: selectedFile.name,
-          notes: notes.trim() || null,
-        });
+        // Create work submission record
+        const { error: insertError } = await supabase
+          .from('agent_work_submissions')
+          .insert({
+            application_id: applicationId,
+            agent_id: profile.id,
+            file_path: filePath,
+            file_name: file.name,
+            notes: notes.trim() || null,
+          });
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
+      }
 
-      toast.success('تم رفع ملف إتمام العمل بنجاح. سيتم مراجعته من قبل المشرف');
+      toast.success(`تم رفع ${selectedFiles.length} ملف بنجاح. سيتم مراجعتها من قبل المشرف`);
       onOpenChange(false);
-      setSelectedFile(null);
+      setSelectedFiles([]);
       setNotes('');
       onSuccess?.();
     } catch (error) {
       console.error('Error submitting work:', error);
-      toast.error('حدث خطأ في رفع الملف');
+      toast.error('حدث خطأ في رفع الملفات');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleClose = () => {
+    onOpenChange(false);
+    setSelectedFiles([]);
+    setNotes('');
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileCheck className="h-5 w-5" />
@@ -104,50 +127,70 @@ export function WorkSubmissionDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <p className="text-sm text-muted-foreground">
-            ارفق ملف يثبت إتمام العمل على هذا الطلب ليتم مراجعته من قبل المشرف والتأكيد على اكتماله.
+            ارفق الملفات التي تثبت إتمام العمل على هذا الطلب ليتم مراجعتها من قبل المشرف.
           </p>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">الملف المرفق *</label>
+            <label className="text-sm font-medium">الملفات المرفقة ({selectedFiles.length})</label>
             <Input
               type="file"
               ref={fileInputRef}
               onChange={handleFileSelect}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
               className="hidden"
+              multiple
             />
             
-            {selectedFile ? (
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileCheck className="h-5 w-5 text-primary shrink-0" />
-                  <span className="text-sm truncate">{selectedFile.name}</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={handleRemoveFile}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+            {/* File List */}
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                {selectedFiles.map(({ file, id }) => (
+                  <div 
+                    key={id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileCheck className="h-5 w-5 text-primary shrink-0" />
+                      <span className="text-sm truncate">{file.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => handleRemoveFile(id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-24 border-dashed"
-                onClick={() => fileInputRef.current?.click()}
-              >
+            )}
+
+            {/* Add More Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className={selectedFiles.length === 0 ? "w-full h-24 border-dashed" : "w-full"}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {selectedFiles.length === 0 ? (
                 <div className="flex flex-col items-center gap-2">
                   <Upload className="h-6 w-6 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    اضغط لاختيار ملف (PDF, DOC, صور)
+                    اضغط لاختيار الملفات (PDF, DOC, صور)
                   </span>
                 </div>
-              </Button>
-            )}
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة ملفات أخرى
+                </>
+              )}
+            </Button>
           </div>
 
           <div className="space-y-2">
@@ -161,15 +204,15 @@ export function WorkSubmissionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={handleClose}>
             إلغاء
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!selectedFile || loading}
+            disabled={selectedFiles.length === 0 || loading}
           >
             {loading && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
-            رفع وإرسال للمراجعة
+            رفع {selectedFiles.length > 0 ? `(${selectedFiles.length})` : ''} وإرسال للمراجعة
           </Button>
         </DialogFooter>
       </DialogContent>
