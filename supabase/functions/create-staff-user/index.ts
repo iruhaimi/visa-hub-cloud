@@ -93,7 +93,15 @@ Deno.serve(async (req) => {
         .eq('user_id', newUser.user.id)
     }
 
-    // Add the staff role (the trigger already adds 'customer' role)
+    // Remove the 'customer' role that was automatically added by the trigger
+    // Staff members (admin/agent) should NOT have the customer role
+    await adminClient
+      .from('user_roles')
+      .delete()
+      .eq('user_id', newUser.user!.id)
+      .eq('role', 'customer')
+
+    // Add the staff role
     const { error: roleError } = await adminClient
       .from('user_roles')
       .insert({
