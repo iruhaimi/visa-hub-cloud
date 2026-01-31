@@ -14,10 +14,11 @@ import {
   Gift,
   RotateCcw,
   Image,
-  ShieldAlert,
-  UserCheck,
-  ArrowLeftRight,
-  Crown
+   ShieldAlert,
+   UserCheck,
+   ArrowLeftRight,
+   Crown,
+   Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -92,6 +93,12 @@ export default function AdminLayout() {
       icon: ArrowLeftRight,
       href: '/admin/agent-requests',
       show: isAdmin && hasPermission('manage_applications'),
+    },
+    {
+      title: 'العمليات الحساسة',
+      icon: Shield,
+      href: '/admin/sensitive-operations',
+      show: isAdmin && isSuperAdmin,
     },
     {
       title: 'الإعدادات',
