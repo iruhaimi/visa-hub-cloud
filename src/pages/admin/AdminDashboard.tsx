@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { 
   FileText, 
   Clock, 
@@ -12,7 +14,12 @@ import {
   Users,
   Loader2,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  Sparkles,
+  Crown,
+  Activity,
+  ArrowUpRight,
+  Calendar
 } from 'lucide-react';
 import ApplicationTrendsChart from '@/components/admin/charts/ApplicationTrendsChart';
 import StatusDistributionChart from '@/components/admin/charts/StatusDistributionChart';
@@ -37,7 +44,8 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
+  const { isSuperAdmin } = usePermissions();
   const [stats, setStats] = useState<DashboardStats>({
     totalApplications: 0,
     pendingApplications: 0,
@@ -50,6 +58,15 @@ export default function AdminDashboard() {
     statusHistory: [],
   });
   const [loading, setLoading] = useState(true);
+  const currentDate = new Date();
+  const greeting = getGreeting();
+
+  function getGreeting() {
+    const hour = currentDate.getHours();
+    if (hour < 12) return 'صباح الخير';
+    if (hour < 17) return 'مساء الخير';
+    return 'مساء الخير';
+  }
 
   useEffect(() => {
     fetchStats();
@@ -169,25 +186,76 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div>
-        <h2 className="text-2xl font-bold">مرحباً بك في لوحة التحكم</h2>
-        <p className="text-muted-foreground">نظرة عامة على حالة الطلبات والإحصائيات</p>
+      {/* Hero Welcome Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 p-6 md:p-8 text-primary-foreground">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/5 rounded-full translate-x-1/4 translate-y-1/4" />
+        <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-white/5 rounded-full" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-primary-foreground/80">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm">
+                {currentDate.toLocaleDateString('ar-SA', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+              <Sparkles className="h-7 w-7" />
+              {greeting}، {profile?.full_name?.split(' ')[0] || 'المشرف'}
+            </h1>
+            <p className="text-primary-foreground/80 max-w-lg">
+              إليك نظرة سريعة على أداء المنصة اليوم. تابع الطلبات والإحصائيات من هنا.
+            </p>
+            {isSuperAdmin && (
+              <Badge className="bg-white/20 text-white hover:bg-white/30 gap-1 mt-2">
+                <Crown className="h-3 w-3" />
+                مدير عام
+              </Badge>
+            )}
+          </div>
+          
+          {/* Quick Stats in Hero */}
+          <div className="flex items-center gap-4 mt-4 md:mt-0">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center min-w-[100px]">
+              <div className="text-3xl font-bold">{stats.pendingApplications}</div>
+              <div className="text-xs text-primary-foreground/70">قيد المعالجة</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center min-w-[100px]">
+              <div className="text-3xl font-bold flex items-center justify-center gap-1">
+                {stats.approvedApplications}
+                <ArrowUpRight className="h-4 w-4 text-green-300" />
+              </div>
+              <div className="text-xs text-primary-foreground/70">معتمدة</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {statCards.map((stat, index) => (
-          <Card key={index}>
+          <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+              <div className={`p-2 rounded-lg ${stat.bgColor} transition-transform group-hover:scale-110`}>
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stat.value}</div>
+              <div className="flex items-center gap-1 mt-1">
+                <Activity className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">من إجمالي الطلبات</span>
+              </div>
             </CardContent>
           </Card>
         ))}
