@@ -1296,6 +1296,7 @@ export type Database = {
         | "view_reports"
         | "process_refunds"
         | "manage_unlock_requests"
+        | "view_revenue"
       wallet_transaction_type:
         | "deposit"
         | "withdrawal"
@@ -1461,6 +1462,7 @@ export const Constants = {
         "view_reports",
         "process_refunds",
         "manage_unlock_requests",
+        "view_revenue",
       ],
       wallet_transaction_type: [
         "deposit",

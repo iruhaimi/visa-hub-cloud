@@ -58,7 +58,7 @@ interface DashboardStats {
 
 export default function AdminDashboard() {
   const { isAdmin, profile } = useAuth();
-  const { isSuperAdmin } = usePermissions();
+  const { isSuperAdmin, hasPermission } = usePermissions();
   const [stats, setStats] = useState<DashboardStats>({
     totalApplications: 0,
     pendingApplications: 0,
@@ -475,8 +475,8 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Revenue Stats - Only visible to Super Admins */}
-            {isSuperAdmin && <RevenueStatsCard payments={stats.payments} />}
+            {/* Revenue Stats - Only visible to users with view_revenue permission */}
+            {hasPermission('view_revenue') && <RevenueStatsCard payments={stats.payments} />}
             
             {/* Performance Metrics */}
             <PerformanceMetricsCard applications={stats.allApplications} />
