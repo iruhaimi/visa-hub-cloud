@@ -466,11 +466,7 @@ export default function AgentApplicationDetail() {
                   <p className="text-xs text-muted-foreground">تاريخ العودة</p>
                   <p className="font-medium">{application.return_date ? format(new Date(application.return_date), 'dd/MM/yyyy') : '-'}</p>
                 </div>
-                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">تاريخ إنشاء الطلب</p>
-                  <p className="font-medium">{format(new Date(application.created_at), 'dd/MM/yyyy - HH:mm', { locale: ar })}</p>
-                </div>
-                <div className="space-y-1 p-3 rounded-lg bg-primary/5 border border-primary/20 sm:col-span-2 lg:col-span-3">
+                <div className="space-y-1 p-3 rounded-lg bg-primary/5 border border-primary/20">
                   <p className="text-xs text-muted-foreground">تاريخ تقديم الطلب</p>
                   <p className="font-medium text-primary">
                     {application.submitted_at 
