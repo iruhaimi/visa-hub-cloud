@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { 
   MessageSquarePlus, 
   Loader2, 
@@ -13,7 +15,9 @@ import {
   Shield,
   User,
   Clock,
-  Lock
+  Lock,
+  Send,
+  Reply
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -96,127 +100,193 @@ export function NotesHistory({ applicationId }: NotesHistoryProps) {
         return {
           label: 'مشرف',
           icon: Shield,
-          className: 'bg-destructive/10 text-destructive border-destructive/20',
+          bgColor: 'bg-red-50 dark:bg-red-950/30',
+          borderColor: 'border-red-200 dark:border-red-800',
+          textColor: 'text-red-700 dark:text-red-300',
+          badgeClass: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-200',
+          avatarBg: 'bg-red-100 dark:bg-red-900',
+          avatarText: 'text-red-700 dark:text-red-300',
         };
       case 'agent':
         return {
           label: 'وكيل',
           icon: User,
-          className: 'bg-primary/10 text-primary border-primary/20',
+          bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+          borderColor: 'border-blue-200 dark:border-blue-800',
+          textColor: 'text-blue-700 dark:text-blue-300',
+          badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-200',
+          avatarBg: 'bg-blue-100 dark:bg-blue-900',
+          avatarText: 'text-blue-700 dark:text-blue-300',
         };
       case 'system':
         return {
           label: 'نظام',
           icon: MessageCircle,
-          className: 'bg-muted text-muted-foreground',
+          bgColor: 'bg-gray-50 dark:bg-gray-900/50',
+          borderColor: 'border-gray-200 dark:border-gray-700',
+          textColor: 'text-gray-600 dark:text-gray-400',
+          badgeClass: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200',
+          avatarBg: 'bg-gray-100 dark:bg-gray-800',
+          avatarText: 'text-gray-600 dark:text-gray-400',
         };
       default:
         return {
           label: type,
           icon: MessageCircle,
-          className: 'bg-muted text-muted-foreground',
+          bgColor: 'bg-gray-50 dark:bg-gray-900/50',
+          borderColor: 'border-gray-200 dark:border-gray-700',
+          textColor: 'text-gray-600 dark:text-gray-400',
+          badgeClass: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200',
+          avatarBg: 'bg-gray-100 dark:bg-gray-800',
+          avatarText: 'text-gray-600 dark:text-gray-400',
         };
     }
   };
 
+  const getInitials = (name: string | null) => {
+    if (!name) return '؟';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0] + parts[1][0];
+    }
+    return name.slice(0, 2);
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <MessageCircle className="h-5 w-5" />
-          سجل الملاحظات
-          <Badge variant="secondary" className="mr-auto">
-            <Lock className="h-3 w-3 ml-1" />
-            لا يمكن تعديلها
+    <Card className="h-full">
+      <CardHeader className="pb-4 border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="h-5 w-5 text-primary" />
+            سجل الملاحظات
+          </CardTitle>
+          <Badge variant="outline" className="gap-1 text-xs font-normal">
+            <Lock className="h-3 w-3" />
+            للموظفين فقط
           </Badge>
-        </CardTitle>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      
+      <CardContent className="p-4 space-y-4">
         {/* Add new note */}
-        <div className="space-y-2">
-          <Textarea
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            placeholder="أضف ملاحظة جديدة..."
-            rows={3}
-            className="resize-none"
-          />
-          <Button 
-            onClick={handleAddNote} 
-            disabled={!newNote.trim() || submitting}
-            className="w-full"
-          >
-            {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin ml-2" />
-            ) : (
-              <MessageSquarePlus className="h-4 w-4 ml-2" />
-            )}
-            إضافة ملاحظة
-          </Button>
+        <div className="space-y-3">
+          <div className="relative">
+            <Textarea
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="اكتب ملاحظتك هنا..."
+              rows={3}
+              className="resize-none pr-4 pb-12 text-sm"
+            />
+            <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {isAdmin ? 'ستظهر كملاحظة مشرف' : 'ستظهر كملاحظة وكيل'}
+              </p>
+              <Button 
+                onClick={handleAddNote} 
+                disabled={!newNote.trim() || submitting}
+                size="sm"
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 ml-1" />
+                    إرسال
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* Notes list */}
-        <div className="border-t pt-4">
-          <p className="text-sm text-muted-foreground mb-3 flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            جميع الملاحظات ({notes.length})
+        <Separator />
+
+        {/* Notes header */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            جميع الملاحظات
           </p>
-          
-          {loading ? (
-            <div className="flex justify-center py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : notes.length === 0 ? (
-            <p className="text-center text-muted-foreground py-6">
-              لا توجد ملاحظات بعد
-            </p>
-          ) : (
-            <ScrollArea className="h-[300px] pr-3">
-              <div className="space-y-3">
-                {notes.map((note) => {
-                  const config = getNoteTypeConfig(note.note_type);
-                  const Icon = config.icon;
-                  
-                  return (
-                    <div 
-                      key={note.id}
-                      className={`rounded-lg border p-3 ${config.className}`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          <span className="font-medium text-sm">
-                            {note.author_name || 'غير معروف'}
+          <Badge variant="secondary" className="text-xs">
+            {notes.length} ملاحظة
+          </Badge>
+        </div>
+        
+        {/* Notes list */}
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : notes.length === 0 ? (
+          <div className="text-center py-8">
+            <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-muted-foreground text-sm">لا توجد ملاحظات بعد</p>
+            <p className="text-muted-foreground/60 text-xs mt-1">ابدأ بإضافة أول ملاحظة</p>
+          </div>
+        ) : (
+          <ScrollArea className="h-[350px]">
+            <div className="space-y-3 pl-2">
+              {notes.map((note, index) => {
+                const config = getNoteTypeConfig(note.note_type);
+                const Icon = config.icon;
+                
+                return (
+                  <div 
+                    key={note.id}
+                    className={`rounded-lg border-2 p-4 ${config.bgColor} ${config.borderColor} transition-all hover:shadow-sm`}
+                  >
+                    {/* Header */}
+                    <div className="flex items-start gap-3">
+                      <Avatar className={`h-10 w-10 ${config.avatarBg} border-2 ${config.borderColor}`}>
+                        <AvatarFallback className={`text-sm font-bold ${config.avatarText}`}>
+                          {getInitials(note.author_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`font-semibold text-sm ${config.textColor}`}>
+                            {note.author_name || 'مستخدم غير معروف'}
                           </span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${config.badgeClass}`}>
+                            <Icon className="h-3 w-3 ml-1" />
                             {config.label}
                           </Badge>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(note.created_at), 'dd/MM/yyyy - HH:mm', { locale: ar })}
-                        </span>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {format(new Date(note.created_at), 'dd MMMM yyyy - HH:mm', { locale: ar })}
+                        </p>
                       </div>
-                      <p className="text-sm whitespace-pre-wrap">{note.content}</p>
-                      
-                      {/* Reply button for admins on agent notes */}
-                      {isAdmin && note.note_type === 'agent' && (
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="mt-3 mr-13">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
+                        {note.content}
+                      </p>
+                    </div>
+                    
+                    {/* Reply button for admins on agent notes */}
+                    {isAdmin && note.note_type === 'agent' && (
+                      <div className="mt-3 mr-13">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="mt-2 text-xs"
-                          onClick={() => setNewNote(`رداً على ملاحظة ${note.author_name}: `)}
+                          className="h-7 text-xs text-muted-foreground hover:text-primary"
+                          onClick={() => setNewNote(`رداً على ${note.author_name}: `)}
                         >
-                          <MessageSquarePlus className="h-3 w-3 ml-1" />
+                          <Reply className="h-3 w-3 ml-1" />
                           رد على الملاحظة
                         </Button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          )}
-        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        )}
       </CardContent>
     </Card>
   );
