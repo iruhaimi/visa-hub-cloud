@@ -70,6 +70,7 @@ import { StaffUsersTable } from '@/components/admin/StaffUsersTable';
 import { CustomersTable } from '@/components/admin/CustomersTable';
 import { CreateStaffDialog } from '@/components/admin/CreateStaffDialog';
 import { DeleteStaffDialog } from '@/components/admin/DeleteStaffDialog';
+import { AddRoleDialog } from '@/components/admin/AddRoleDialog';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AppRole } from '@/types/database';
 
@@ -999,65 +1000,16 @@ export default function UsersManagement() {
       </Tabs>
 
       {/* Add Role Dialog */}
-      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              إضافة صلاحية لـ {selectedUser?.full_name || 'المستخدم'}
-            </DialogTitle>
-            <DialogDescription>
-              اختر الصلاحية التي تريد منحها لهذا المستخدم
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>الصلاحية</Label>
-              <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الصلاحية" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.filter(r => !selectedUser?.roles.includes(r.value)).length > 0 ? (
-                    ROLE_OPTIONS.filter(r => !selectedUser?.roles.includes(r.value)).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className="flex flex-col">
-                          <span>{option.label}</span>
-                          <span className="text-xs text-muted-foreground">{option.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="py-2 px-3 text-sm text-muted-foreground">
-                      لا توجد صلاحيات متاحة للإضافة
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {selectedUser && selectedUser.roles.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">الصلاحيات الحالية</Label>
-                <div className="flex flex-wrap gap-2">
-                  {selectedUser.roles.map(role => (
-                    <span key={role}>{getRoleBadge(role)}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
-              إلغاء
-            </Button>
-            <Button onClick={handleAddRole} disabled={!newRole || updating}>
-              {updating && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-              إضافة الصلاحية
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddRoleDialog
+        open={showRoleDialog}
+        onOpenChange={setShowRoleDialog}
+        selectedUser={selectedUser}
+        newRole={newRole}
+        onNewRoleChange={(v) => setNewRole(v as AppRole)}
+        onAddRole={handleAddRole}
+        updating={updating}
+        roleOptions={ROLE_OPTIONS}
+      />
 
       {/* User Profile Dialog (View + Edit combined) */}
       <UserProfileDialog

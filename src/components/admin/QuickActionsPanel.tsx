@@ -1038,14 +1038,14 @@ export function QuickActionsPanel() {
         </DialogContent>
       </Dialog>
 
-      {/* Work Review Dialog */}
+      {/* Work Review Dialog - Enhanced */}
       <Dialog open={workReviewOpen} onOpenChange={(open) => !open && handleCloseWorkDialog()}>
-        <DialogContent dir="rtl" className="max-w-md p-0 overflow-hidden data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out">
-          {/* Header */}
-          <div className="bg-gradient-to-l from-primary/10 to-primary/5 px-6 py-4 border-b">
+        <DialogContent dir="rtl" className="max-w-lg p-0 overflow-hidden data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out">
+          {/* Header with gradient */}
+          <div className="bg-gradient-to-l from-primary/10 to-primary/5 px-6 py-5 border-b">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 rounded-lg bg-primary/10">
+                <div className="p-2.5 rounded-xl bg-primary/10 shadow-sm">
                   <FileCheck className="h-5 w-5 text-primary" />
                 </div>
                 مراجعة ملف إتمام العمل
@@ -1053,47 +1053,65 @@ export function QuickActionsPanel() {
             </DialogHeader>
           </div>
 
-          <ScrollArea className="max-h-[60vh]">
-            <div className="p-6 space-y-5">
+          <ScrollArea className="max-h-[65vh]">
+            <div className="p-6 space-y-6">
               {selectedWork && (
                 <>
-                  {/* Agent & Application Info */}
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="font-semibold text-foreground">{selectedWork.agent?.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
-                      </p>
+                  {/* Agent & Application Info Card */}
+                  <div className="rounded-xl border-2 border-dashed border-primary/20 bg-primary/5 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 border-2 border-primary/20">
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                            {selectedWork.agent?.full_name?.charAt(0) || 'و'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                          <p className="font-bold text-foreground text-base">{selectedWork.agent?.full_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedWork.application?.profile?.full_name} - {selectedWork.application?.visa_type?.country?.name}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="shrink-0 text-xs bg-background">
+                        <Clock className="h-3 w-3 ml-1" />
+                        {formatDistanceToNow(new Date(selectedWork.created_at), { locale: ar, addSuffix: true })}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="shrink-0 text-xs">
-                      <Clock className="h-3 w-3 ml-1" />
-                      {formatDistanceToNow(new Date(selectedWork.created_at), { locale: ar, addSuffix: true })}
-                    </Badge>
                   </div>
                   
-                  {/* File Preview Component */}
-                  <FilePreview 
-                    fileName={selectedWork.file_name}
-                    filePath={selectedWork.file_path}
-                  />
+                  {/* File Preview Section */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Download className="h-4 w-4 text-primary" />
+                      ملف إتمام العمل
+                    </label>
+                    <FilePreview 
+                      fileName={selectedWork.file_name}
+                      filePath={selectedWork.file_path}
+                    />
+                  </div>
 
                   {/* Agent Notes */}
                   {selectedWork.notes && (
-                    <div className="rounded-lg bg-muted/50 border p-4">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">ملاحظات الوكيل:</p>
-                      <p className="text-sm leading-relaxed">{selectedWork.notes}</p>
+                    <div className="rounded-xl bg-muted/50 border p-4 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        ملاحظات الوكيل:
+                      </p>
+                      <p className="text-sm leading-relaxed bg-background rounded-lg p-3 border">{selectedWork.notes}</p>
                     </div>
                   )}
 
                   {/* Admin Notes Input */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">ملاحظات المشرف (اختياري)</label>
+                    <label className="text-sm font-semibold text-foreground">ملاحظات المشرف (اختياري)</label>
                     <Textarea
                       placeholder="أضف ملاحظاتك هنا..."
                       value={workNotes}
                       onChange={(e) => setWorkNotes(e.target.value)}
                       rows={3}
-                      className="resize-none bg-background"
+                      className="resize-none bg-background border-2 focus:border-primary/50 transition-colors"
                     />
                   </div>
                 </>
@@ -1101,32 +1119,38 @@ export function QuickActionsPanel() {
             </div>
           </ScrollArea>
 
-          {/* Footer Actions */}
-          <div className="px-6 py-4 bg-muted/30 border-t flex items-center justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={handleCloseWorkDialog}
-              className="px-6"
-            >
-              إلغاء
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => handleWorkAction('reject')}
-              disabled={actionLoading === 'reject'}
-              className="px-6 gap-2"
-            >
-              {actionLoading === 'reject' && <Loader2 className="h-4 w-4 animate-spin" />}
-              إعادة للمراجعة
-            </Button>
-            <Button
-              onClick={() => handleWorkAction('approve')}
-              disabled={actionLoading === 'approve'}
-              className="px-6 gap-2 bg-success hover:bg-success/90 text-success-foreground"
-            >
-              {actionLoading === 'approve' && <Loader2 className="h-4 w-4 animate-spin" />}
-              قبول وإتمام الطلب
-            </Button>
+          {/* Footer Actions - Improved Layout */}
+          <div className="px-6 py-4 bg-muted/30 border-t">
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleCloseWorkDialog}
+                className="flex-1 sm:flex-none sm:px-6"
+              >
+                إلغاء
+              </Button>
+              <div className="flex-1 flex items-center gap-2 justify-end">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleWorkAction('reject')}
+                  disabled={actionLoading === 'reject'}
+                  className="flex-1 sm:flex-none sm:px-6 gap-2"
+                >
+                  {actionLoading === 'reject' && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <X className="h-4 w-4" />
+                  إعادة للمراجعة
+                </Button>
+                <Button
+                  onClick={() => handleWorkAction('approve')}
+                  disabled={actionLoading === 'approve'}
+                  className="flex-1 sm:flex-none sm:px-6 gap-2 bg-success hover:bg-success/90 text-success-foreground"
+                >
+                  {actionLoading === 'approve' && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <Check className="h-4 w-4" />
+                  قبول وإتمام الطلب
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
