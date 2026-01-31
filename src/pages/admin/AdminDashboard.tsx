@@ -20,7 +20,8 @@ import {
   Activity,
   ArrowUpRight,
   Calendar,
-  Zap
+  Zap,
+  Settings2
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -40,6 +41,8 @@ import PerformanceMetricsCard from '@/components/admin/charts/PerformanceMetrics
 import AgentPerformanceCard from '@/components/admin/charts/AgentPerformanceCard';
 import AgentNotesPerformance from '@/components/admin/charts/AgentNotesPerformance';
 import AgentPerformanceChart from '@/components/admin/charts/AgentPerformanceChart';
+import { QuickActionsPanel } from '@/components/admin/QuickActionsPanel';
+import { UrgentTasksDashboard } from '@/components/admin/UrgentTasksDashboard';
 
 interface DashboardStats {
   totalApplications: number;
@@ -404,17 +407,29 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs for different views */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="control-center" className="space-y-4">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="control-center" className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            مركز التحكم
+          </TabsTrigger>
           <TabsTrigger value="overview" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             نظرة عامة
+          </TabsTrigger>
+          <TabsTrigger value="urgent" className="gap-2">
+            <Zap className="h-4 w-4" />
+            المهام العاجلة
           </TabsTrigger>
           <TabsTrigger value="analytics" className="gap-2">
             <TrendingUp className="h-4 w-4" />
             التحليلات
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="control-center" className="space-y-4">
+          <QuickActionsPanel />
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -474,6 +489,10 @@ export default function AdminDashboard() {
               <AgentNotesPerformance />
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="urgent" className="space-y-4">
+          <UrgentTasksDashboard />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
