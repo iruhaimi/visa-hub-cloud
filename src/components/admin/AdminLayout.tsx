@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -35,6 +35,7 @@ export default function AdminLayout() {
   const { profile, isAdmin, isAgent, signOut } = useAuth();
   const { hasPermission, isSuperAdmin } = usePermissions();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const menuItems = [
@@ -102,6 +103,8 @@ export default function AdminLayout() {
 
   const handleSignOut = async () => {
     await signOut();
+    // Redirect staff to staff portal instead of customer auth
+    navigate('/portal-x7k9m2');
   };
 
   return (
