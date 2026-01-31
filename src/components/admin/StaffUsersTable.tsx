@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { User as UserIcon, Shield, MoreHorizontal, UserCog, Trash2, UserX, Mail, Copy } from 'lucide-react';
+import { User as UserIcon, Shield, MoreHorizontal, UserCog, Trash2, UserX, Mail, Copy, Settings2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import type { AppRole } from '@/types/database';
+import { EditPermissionsDialog } from './EditPermissionsDialog';
 
 interface UserWithRole {
   id: string;
@@ -46,6 +48,7 @@ interface StaffUsersTableProps {
   onRemoveRole: (userId: string, role: AppRole) => void;
   onDeleteStaff: (user: UserWithRole) => void;
   isAdmin: boolean;
+  onRefresh?: () => void;
 }
 
 const getRoleBadge = (role: AppRole) => {
@@ -69,7 +72,10 @@ export function StaffUsersTable({
   onRemoveRole,
   onDeleteStaff,
   isAdmin,
+  onRefresh,
 }: StaffUsersTableProps) {
+  const [editPermissionsUser, setEditPermissionsUser] = useState<UserWithRole | null>(null);
+
   const copyEmail = (email: string) => {
     navigator.clipboard.writeText(email);
     toast.success('تم نسخ البريد الإلكتروني');
@@ -94,7 +100,7 @@ export function StaffUsersTable({
               <TableHead className="text-right font-semibold">البريد الإلكتروني</TableHead>
               <TableHead className="text-right font-semibold">رقم الجوال</TableHead>
               <TableHead className="text-right font-semibold">تاريخ التسجيل</TableHead>
-              <TableHead className="text-right font-semibold">الصلاحيات</TableHead>
+              <TableHead className="text-right font-semibold">الدور</TableHead>
               <TableHead className="text-right w-[80px] font-semibold">إجراءات</TableHead>
             </TableRow>
           </TableHeader>
@@ -181,14 +187,14 @@ export function StaffUsersTable({
                                 {getRoleBadge(role)}
                               </button>
                             </TooltipTrigger>
-                            <TooltipContent>اضغط لحذف الصلاحية</TooltipContent>
+                            <TooltipContent>اضغط لحذف الدور</TooltipContent>
                           </Tooltip>
                         ) : (
                           <span key={role}>{getRoleBadge(role)}</span>
                         )
                       ))
                     ) : (
-                      <span className="text-xs text-muted-foreground">لا توجد</span>
+                      <span className="text-xs text-muted-foreground">لا يوجد</span>
                     )}
                   </div>
                 </TableCell>
@@ -199,24 +205,28 @@ export function StaffUsersTable({
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onClick={() => onViewProfile(userItem)}>
                         <UserCog className="h-4 w-4 ml-2" />
                         عرض وتعديل الملف
                       </DropdownMenuItem>
                       {isAdmin && (
                         <>
+                          <DropdownMenuItem onClick={() => setEditPermissionsUser(userItem)}>
+                            <Settings2 className="h-4 w-4 ml-2" />
+                            تعديل الصلاحيات المفصلة
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onAddRole(userItem)}>
                             <Shield className="h-4 w-4 ml-2" />
-                            إضافة صلاحية
+                            إضافة/تغيير الدور
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={() => onDeleteRoles(userItem)}
-                            className="text-amber-600 focus:text-amber-600 focus:bg-accent"
+                            className="text-warning focus:text-warning focus:bg-accent"
                           >
                             <Trash2 className="h-4 w-4 ml-2" />
-                            إلغاء الصلاحيات
+                            إلغاء جميع الأدوار
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => onDeleteStaff(userItem)}
@@ -235,6 +245,18 @@ export function StaffUsersTable({
           </TableBody>
         </Table>
       </div>
+
+      {/* Edit Permissions Dialog */}
+      <EditPermissionsDialog
+        open={!!editPermissionsUser}
+        onOpenChange={(open) => !open && setEditPermissionsUser(null)}
+        userId={editPermissionsUser?.user_id || ''}
+        userName={editPermissionsUser?.full_name || ''}
+        onSuccess={() => {
+          setEditPermissionsUser(null);
+          onRefresh?.();
+        }}
+      />
     </TooltipProvider>
   );
 }
