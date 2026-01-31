@@ -116,22 +116,57 @@ export function WorkSubmissionDialog({
     setNotes('');
   };
 
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (['pdf'].includes(ext || '')) return 'pdf';
+    if (['doc', 'docx'].includes(ext || '')) return 'doc';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) return 'image';
+    if (['zip', 'rar'].includes(ext || '')) return 'zip';
+    return 'file';
+  };
+
+  const getFileIconColor = (type: string) => {
+    switch (type) {
+      case 'pdf': return 'text-red-500 bg-red-50';
+      case 'doc': return 'text-blue-500 bg-blue-50';
+      case 'image': return 'text-green-500 bg-green-50';
+      case 'zip': return 'text-amber-500 bg-amber-50';
+      default: return 'text-gray-500 bg-gray-50';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileCheck className="h-5 w-5" />
+      <DialogContent className="max-w-lg">
+        <DialogHeader className="text-right pb-2">
+          <DialogTitle className="flex items-center justify-end gap-3 text-xl">
             تأكيد إتمام العمل
+            <div className="p-2 rounded-full bg-primary/10">
+              <FileCheck className="h-6 w-6 text-primary" />
+            </div>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <p className="text-sm text-muted-foreground">
-            ارفق الملفات التي تثبت إتمام العمل على هذا الطلب ليتم مراجعتها من قبل المشرف.
-          </p>
+        
+        <div className="space-y-5 py-2">
+          <div className="bg-muted/30 rounded-lg p-4 border border-dashed">
+            <p className="text-sm text-muted-foreground text-center leading-relaxed">
+              ارفق الملفات التي تثبت إتمام العمل على هذا الطلب ليتم مراجعتها من قبل المشرف
+            </p>
+          </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">الملفات المرفقة ({selectedFiles.length})</label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                PDF, DOC, صور (حد أقصى 10MB للملف)
+              </span>
+              <label className="text-sm font-semibold flex items-center gap-2">
+                <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-bold">
+                  {selectedFiles.length}
+                </span>
+                الملفات المرفقة
+              </label>
+            </div>
+            
             <Input
               type="file"
               ref={fileInputRef}
@@ -143,75 +178,101 @@ export function WorkSubmissionDialog({
             
             {/* File List */}
             {selectedFiles.length > 0 && (
-              <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                {selectedFiles.map(({ file, id }) => (
-                  <div 
-                    key={id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileCheck className="h-5 w-5 text-primary shrink-0" />
-                      <span className="text-sm truncate">{file.name}</span>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => handleRemoveFile(id)}
+              <div className="space-y-2 max-h-[180px] overflow-y-auto scrollbar-thin">
+                {selectedFiles.map(({ file, id }) => {
+                  const fileType = getFileIcon(file.name);
+                  const iconColor = getFileIconColor(fileType);
+                  return (
+                    <div 
+                      key={id}
+                      className="flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent/50 transition-colors group"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                      <div className={`p-2.5 rounded-lg ${iconColor}`}>
+                        <FileCheck className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-right">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => handleRemoveFile(id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {/* Add More Button */}
-            <Button
+            {/* Upload Area */}
+            <button
               type="button"
-              variant="outline"
-              className={selectedFiles.length === 0 ? "w-full h-24 border-dashed" : "w-full"}
               onClick={() => fileInputRef.current?.click()}
+              className={`w-full rounded-xl border-2 border-dashed transition-all duration-200 hover:border-primary hover:bg-primary/5 ${
+                selectedFiles.length === 0 
+                  ? 'py-10 border-muted-foreground/30' 
+                  : 'py-4 border-primary/30 bg-primary/5'
+              }`}
             >
               {selectedFiles.length === 0 ? (
-                <div className="flex flex-col items-center gap-2">
-                  <Upload className="h-6 w-6 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    اضغط لاختيار الملفات (PDF, DOC, صور)
-                  </span>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="p-4 rounded-full bg-primary/10">
+                    <Upload className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      اضغط لاختيار الملفات
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      أو اسحب الملفات وأفلتها هنا
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <>
-                  <Plus className="h-4 w-4 ml-2" />
+                <div className="flex items-center justify-center gap-2 text-primary font-medium">
+                  <Plus className="h-5 w-5" />
                   إضافة ملفات أخرى
-                </>
+                </div>
               )}
-            </Button>
+            </button>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">ملاحظات (اختياري)</label>
+            <label className="text-sm font-semibold block text-right">
+              ملاحظات <span className="text-muted-foreground font-normal">(اختياري)</span>
+            </label>
             <Textarea
               placeholder="أضف أي ملاحظات توضيحية حول العمل المنجز..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
+              className="resize-none text-right"
+              dir="rtl"
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+        
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={handleClose} className="flex-1 sm:flex-none">
             إلغاء
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={selectedFiles.length === 0 || loading}
+            className="flex-1 sm:flex-none min-w-[180px]"
           >
-            {loading && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+            {loading ? (
+              <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4 ml-2" />
+            )}
             رفع {selectedFiles.length > 0 ? `(${selectedFiles.length})` : ''} وإرسال للمراجعة
           </Button>
         </DialogFooter>
