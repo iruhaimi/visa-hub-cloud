@@ -78,26 +78,44 @@ export function CreateStaffDialog({ open, onOpenChange, onSuccess }: CreateStaff
         }
       });
 
-      // Handle edge function error response
+      // Helper function to translate error messages
+      const translateError = (errorMessage: string): string => {
+        if (errorMessage.includes('already registered') || errorMessage.includes('email_exists')) {
+          return 'هذا البريد الإلكتروني مسجل مسبقاً';
+        } else if (errorMessage.includes('Invalid email')) {
+          return 'البريد الإلكتروني غير صالح';
+        } else if (errorMessage.includes('weak password') || errorMessage.includes('Password')) {
+          return 'كلمة المرور ضعيفة جداً';
+        }
+        return errorMessage;
+      };
+
+      // Handle edge function error response (non-2xx status codes)
       if (error) {
         console.error('Edge function error:', error);
-        throw new Error(error.message || 'حدث خطأ في الاتصال');
+        
+        // Try to extract detailed error from response context
+        if (error.context && typeof error.context.json === 'function') {
+          try {
+            const responseBody = await error.context.json();
+            if (responseBody?.error) {
+              throw new Error(translateError(responseBody.error));
+            }
+          } catch (parseError) {
+            // If it's already our translated error, rethrow it
+            if (parseError instanceof Error && !parseError.message.includes('Edge Function')) {
+              throw parseError;
+            }
+            // Otherwise fall through to generic error
+          }
+        }
+        
+        throw new Error('حدث خطأ في الاتصال بالخادم');
       }
 
-      // Handle application-level error in response
+      // Handle application-level error in response (2xx status but success: false)
       if (data && !data.success) {
-        const errorMessage = data.error || 'فشل في إنشاء الحساب';
-        
-        // Translate common error messages
-        if (errorMessage.includes('already registered') || errorMessage.includes('email_exists')) {
-          throw new Error('هذا البريد الإلكتروني مسجل مسبقاً');
-        } else if (errorMessage.includes('Invalid email')) {
-          throw new Error('البريد الإلكتروني غير صالح');
-        } else if (errorMessage.includes('weak password') || errorMessage.includes('Password')) {
-          throw new Error('كلمة المرور ضعيفة جداً');
-        } else {
-          throw new Error(errorMessage);
-        }
+        throw new Error(translateError(data.error || 'فشل في إنشاء الحساب'));
       }
 
       toast.success('تم إنشاء حساب الموظف بنجاح');
