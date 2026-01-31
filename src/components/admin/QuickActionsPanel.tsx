@@ -316,9 +316,7 @@ export function QuickActionsPanel() {
       }
       
       toast.success(action === 'approve' ? 'تمت الموافقة على التحويل' : 'تم رفض طلب التحويل');
-      setTransferActionOpen(false);
-      setSelectedTransfer(null);
-      setTransferNotes('');
+      handleCloseTransferDialog();
       fetchPendingTransfers();
     } catch (error) {
       console.error('Error handling transfer:', error);
@@ -333,10 +331,12 @@ export function QuickActionsPanel() {
     
     setActionLoading(action);
     try {
+      const status = action === 'approve' ? 'approved' : 'returned';
+      
       const { error } = await supabase
         .from('agent_work_submissions')
         .update({
-          status: action === 'approve' ? 'approved' : 'rejected',
+          status: status,
           reviewed_at: new Date().toISOString(),
           reviewed_by: profile?.id,
           admin_notes: workNotes || null,
@@ -353,10 +353,8 @@ export function QuickActionsPanel() {
           .eq('id', selectedWork.application_id);
       }
       
-      toast.success(action === 'approve' ? 'تم قبول ملف الإتمام' : 'تم رفض ملف الإتمام');
-      setWorkReviewOpen(false);
-      setSelectedWork(null);
-      setWorkNotes('');
+      toast.success(action === 'approve' ? 'تم قبول ملف الإتمام' : 'تم إعادة الطلب للمراجعة');
+      handleCloseWorkDialog();
       fetchPendingWork();
     } catch (error) {
       console.error('Error handling work:', error);
@@ -364,6 +362,36 @@ export function QuickActionsPanel() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleCloseWorkDialog = () => {
+    setWorkReviewOpen(false);
+    setSelectedWork(null);
+    setWorkNotes('');
+  };
+
+  const handleOpenWorkDialog = (work: PendingWork) => {
+    setSelectedWork(work);
+    setWorkNotes(''); // تفريغ الملاحظات عند فتح حوار جديد
+    setWorkReviewOpen(true);
+  };
+
+  const handleCloseTransferDialog = () => {
+    setTransferActionOpen(false);
+    setSelectedTransfer(null);
+    setTransferNotes('');
+  };
+
+  const handleOpenTransferDialog = (transfer: PendingTransfer) => {
+    setSelectedTransfer(transfer);
+    setTransferNotes(''); // تفريغ الملاحظات عند فتح حوار جديد
+    setTransferActionOpen(true);
+  };
+
+  const handleCloseReplyDialog = () => {
+    setReplyDialogOpen(false);
+    setSelectedNote(null);
+    setReplyContent('');
   };
 
   const handleReplyNote = async () => {
@@ -384,9 +412,7 @@ export function QuickActionsPanel() {
       if (error) throw error;
       
       toast.success('تم إرسال الرد بنجاح');
-      setReplyDialogOpen(false);
-      setSelectedNote(null);
-      setReplyContent('');
+      handleCloseReplyDialog();
     } catch (error) {
       console.error('Error replying to note:', error);
       toast.error('حدث خطأ في إرسال الرد');
@@ -597,10 +623,7 @@ export function QuickActionsPanel() {
                           size="sm"
                           variant="default"
                           className="flex-1"
-                          onClick={() => {
-                            setSelectedTransfer(transfer);
-                            setTransferActionOpen(true);
-                          }}
+                          onClick={() => handleOpenTransferDialog(transfer)}
                         >
                           <Check className="h-3 w-3 ml-1" />
                           قبول
@@ -609,10 +632,7 @@ export function QuickActionsPanel() {
                           size="sm"
                           variant="outline"
                           className="flex-1"
-                          onClick={() => {
-                            setSelectedTransfer(transfer);
-                            setTransferActionOpen(true);
-                          }}
+                          onClick={() => handleOpenTransferDialog(transfer)}
                         >
                           <X className="h-3 w-3 ml-1" />
                           رفض
@@ -681,10 +701,7 @@ export function QuickActionsPanel() {
                           size="sm"
                           variant="default"
                           className="flex-1"
-                          onClick={() => {
-                            setSelectedWork(work);
-                            setWorkReviewOpen(true);
-                          }}
+                          onClick={() => handleOpenWorkDialog(work)}
                         >
                           <Check className="h-3 w-3 ml-1" />
                           قبول
@@ -693,10 +710,7 @@ export function QuickActionsPanel() {
                           size="sm"
                           variant="outline"
                           className="flex-1"
-                          onClick={() => {
-                            setSelectedWork(work);
-                            setWorkReviewOpen(true);
-                          }}
+                          onClick={() => handleOpenWorkDialog(work)}
                         >
                           <X className="h-3 w-3 ml-1" />
                           إعادة
@@ -761,6 +775,7 @@ export function QuickActionsPanel() {
                           className="flex-1"
                           onClick={() => {
                             setSelectedNote(note);
+                            setReplyContent(''); // تفريغ الرد عند فتح حوار جديد
                             setReplyDialogOpen(true);
                           }}
                         >
@@ -832,7 +847,7 @@ export function QuickActionsPanel() {
       </Dialog>
 
       {/* Transfer Action Dialog */}
-      <Dialog open={transferActionOpen} onOpenChange={setTransferActionOpen}>
+      <Dialog open={transferActionOpen} onOpenChange={(open) => !open && handleCloseTransferDialog()}>
         <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -860,7 +875,7 @@ export function QuickActionsPanel() {
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setTransferActionOpen(false)}>
+            <Button variant="outline" onClick={handleCloseTransferDialog}>
               إلغاء
             </Button>
             <Button
@@ -883,7 +898,7 @@ export function QuickActionsPanel() {
       </Dialog>
 
       {/* Work Review Dialog */}
-      <Dialog open={workReviewOpen} onOpenChange={setWorkReviewOpen}>
+      <Dialog open={workReviewOpen} onOpenChange={(open) => !open && handleCloseWorkDialog()}>
         <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -912,7 +927,7 @@ export function QuickActionsPanel() {
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setWorkReviewOpen(false)}>
+            <Button variant="outline" onClick={handleCloseWorkDialog}>
               إلغاء
             </Button>
             <Button
@@ -935,7 +950,7 @@ export function QuickActionsPanel() {
       </Dialog>
 
       {/* Reply to Note Dialog */}
-      <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
+      <Dialog open={replyDialogOpen} onOpenChange={(open) => !open && handleCloseReplyDialog()}>
         <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -965,7 +980,7 @@ export function QuickActionsPanel() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
+            <Button variant="outline" onClick={handleCloseReplyDialog}>
               إلغاء
             </Button>
             <Button
