@@ -35,6 +35,7 @@ import MyApplicationDetail from "@/pages/MyApplicationDetail";
 import SpecialOffers from "@/pages/SpecialOffers";
 import ResetPassword from "@/pages/ResetPassword";
 import SecureStaffAuth from "@/pages/SecureStaffAuth";
+import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
 
 // Admin Pages
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/portal-x7k9m2" element={<SecureStaffAuth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/install" element={<Install />} />
 
               {/* Admin Routes */}
               <Route 
