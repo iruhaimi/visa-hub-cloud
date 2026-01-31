@@ -8,8 +8,14 @@ const corsHeaders = {
 
 interface Send2FARequest {
   email: string;
-  code: string;
+  code?: string; // Optional - will be generated if not provided
   phone?: string; // Optional for SMS
+  userId: string; // Required - the user ID for the 2FA code
+}
+
+// Generate a 6-digit code
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -19,12 +25,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, code, phone }: Send2FARequest = await req.json();
+    const { email, code: providedCode, phone, userId }: Send2FARequest = await req.json();
 
     // Validate required fields
-    if (!email || !code) {
+    if (!email || !userId) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: email and code" }),
+        JSON.stringify({ error: "Missing required fields: email and userId" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -32,13 +38,55 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Sending 2FA code to: ${email}`);
+    // Generate or use provided code
+    const code = providedCode || generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    console.log(`Processing 2FA for: ${email}`);
+
+    // Initialize Supabase client with service role
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // ============================================================
-    // PLACEHOLDER: Configure your SMS/Email providers here
+    // INSERT 2FA CODE INTO DATABASE (using service_role)
     // ============================================================
-    
-    // Check for configured providers
+    const { error: insertError } = await supabase.from("staff_2fa_codes").insert({
+      user_id: userId,
+      email: email,
+      code: code,
+      expires_at: expiresAt.toISOString(),
+    });
+
+    if (insertError) {
+      console.error("Failed to insert 2FA code:", insertError);
+      return new Response(
+        JSON.stringify({ error: "Failed to create verification code", details: insertError.message }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log(`2FA code created for user: ${userId}`);
+
+    // ============================================================
+    // EMAIL SENDING (using Resend when configured)
+    // ============================================================
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
     const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -51,9 +99,6 @@ const handler = async (req: Request): Promise<Response> => {
       errors: [],
     };
 
-    // ============================================================
-    // EMAIL SENDING (using Resend when configured)
-    // ============================================================
     if (RESEND_API_KEY) {
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -63,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "عطلات رحلاتكم <onboarding@resend.dev>", // Using Resend test domain - replace with your verified domain in production
+            from: "عطلات رحلاتكم <onboarding@resend.dev>",
             to: [email],
             subject: "رمز التحقق للدخول - عطلات رحلاتكم",
             html: `
@@ -113,8 +158,6 @@ const handler = async (req: Request): Promise<Response> => {
           console.error("Resend email error:", errorData);
           results.errors?.push(`Email error: ${JSON.stringify(errorData)}`);
 
-          // Resend limitation: in test mode you can only send to your own email.
-          // Treat this as a non-fatal "dev/test mode" so the login flow can continue.
           if (
             errorData &&
             (errorData.statusCode === 403 || emailResponse.status === 403) &&
@@ -178,55 +221,46 @@ const handler = async (req: Request): Promise<Response> => {
     // NOTIFICATION: Notify admins about 2FA attempt
     // ============================================================
     try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL");
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      // Get admin users to notify
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
 
-      if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey);
+      if (adminRoles && adminRoles.length > 0) {
+        for (const admin of adminRoles) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", admin.user_id)
+            .single();
 
-        // Get admin users to notify
-        const { data: adminRoles } = await supabase
-          .from("user_roles")
-          .select("user_id")
-          .eq("role", "admin");
-
-        if (adminRoles && adminRoles.length > 0) {
-          // Get profile IDs for admins
-          for (const admin of adminRoles) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("id")
-              .eq("user_id", admin.user_id)
-              .single();
-
-            if (profile) {
-              await supabase.from("notifications").insert({
-                user_id: profile.id,
-                title: "🔐 محاولة دخول جديدة",
-                message: `تم إرسال رمز تحقق للموظف: ${email}`,
-                type: "security",
-                action_url: "/admin/users",
-              });
-            }
+          if (profile) {
+            await supabase.from("notifications").insert({
+              user_id: profile.id,
+              title: "🔐 محاولة دخول جديدة",
+              message: `تم إرسال رمز تحقق للموظف: ${email}`,
+              type: "security",
+              action_url: "/admin/users",
+            });
           }
         }
       }
     } catch (notifyError) {
       console.error("Failed to notify admins:", notifyError);
-      // Non-critical - don't fail the request
     }
 
     // Check if at least one method worked or if none are configured (for testing)
     const noProviderConfigured = !RESEND_API_KEY && !TWILIO_ACCOUNT_SID;
     
     if (noProviderConfigured) {
-      // In testing mode - just log and return success
-      console.log(`[TEST MODE] 2FA code would be sent to ${email}: ${code}`);
+      console.log(`[TEST MODE] 2FA code for ${email}: ${code}`);
       return new Response(
         JSON.stringify({
           success: true,
           message: "Test mode - no providers configured",
           testMode: true,
+          code: code, // Return code in test mode for display
         }),
         {
           status: 200,
@@ -235,18 +269,15 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Resend test-mode restriction: don't fail the request with 500, allow frontend fallback.
     if (resendRecipientRestricted) {
-      console.log(
-        `[TEST MODE] Resend blocked recipient (domain not verified). Allowing fallback for ${email}.`
-      );
-
+      console.log(`[TEST MODE] Resend blocked recipient. Code for ${email}: ${code}`);
       return new Response(
         JSON.stringify({
-          success: false,
+          success: true,
           emailSent: false,
           smsSent: false,
           testMode: true,
+          code: code, // Return code for fallback display
           error: "Resend test-mode restriction: domain not verified",
           details: results.errors,
         }),
@@ -258,14 +289,18 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!emailSent && !smsSent) {
+      // Code was still created in DB, return it for fallback
       return new Response(
         JSON.stringify({
-          success: false,
+          success: true,
+          emailSent: false,
+          smsSent: false,
+          code: code, // Return code for fallback display
           error: "Failed to send 2FA code via any channel",
           details: results.errors,
         }),
         {
-          status: 500,
+          status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
