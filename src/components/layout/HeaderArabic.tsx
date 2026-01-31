@@ -130,27 +130,57 @@ export default function HeaderArabic() {
                         <p className="font-medium text-sm">{profile.full_name}</p>
                       )}
                       <p className="text-xs text-muted-foreground">{user.email}</p>
+                      {(isAdmin || isAgent) && (
+                        <p className="text-xs font-medium text-primary">
+                          {isAdmin ? 'مشرف' : 'وكيل'}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to={getDashboardLink()} className="cursor-pointer">
-                      <LayoutDashboard className="h-4 w-4" />
-                      <span className="mr-2">{t('nav.dashboard')}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="cursor-pointer">
-                      <User className="h-4 w-4" />
-                      <span className="mr-2">{t('nav.profile')}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/my-applications" className="cursor-pointer">
-                      <FileText className="h-4 w-4" />
-                      <span className="mr-2">{t('nav.myApplications')}</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  
+                  {/* Staff Menu Items (Admin/Agent) */}
+                  {(isAdmin || isAgent) ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to={getDashboardLink()} className="cursor-pointer">
+                          <LayoutDashboard className="h-4 w-4" />
+                          <span className="mr-2">{t('nav.dashboard')}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={isAdmin ? '/admin/applications' : '/agent/applications'} className="cursor-pointer">
+                          <FileText className="h-4 w-4" />
+                          <span className="mr-2">إدارة الطلبات</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin/users" className="cursor-pointer">
+                            <User className="h-4 w-4" />
+                            <span className="mr-2">إدارة المستخدمين</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  ) : (
+                    /* Customer Menu Items */
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/profile" className="cursor-pointer">
+                          <User className="h-4 w-4" />
+                          <span className="mr-2">{t('nav.profile')}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/my-applications" className="cursor-pointer">
+                          <FileText className="h-4 w-4" />
+                          <span className="mr-2">{t('nav.myApplications')}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
                     <LogOut className="h-4 w-4" />
