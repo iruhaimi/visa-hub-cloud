@@ -53,6 +53,7 @@ interface ApplicationData {
   id: string;
   status: ApplicationStatus;
   created_at: string;
+  submitted_at: string | null;
   travel_date: string | null;
   return_date: string | null;
   purpose_of_travel: string | null;
@@ -435,16 +436,16 @@ export default function AgentApplicationDetail() {
             </CardContent>
           </Card>
 
-          {/* Travel Info */}
+          {/* Visa Info */}
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Plane className="h-5 w-5 text-primary" />
-                معلومات السفر
+                معلومات التأشيرة المطلوبة
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1 p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">الوجهة</p>
                   <p className="font-medium">{application.visa_type?.country?.name || '-'}</p>
@@ -454,6 +455,10 @@ export default function AgentApplicationDetail() {
                   <p className="font-medium">{application.visa_type?.name || '-'}</p>
                 </div>
                 <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">عدد المسافرين</p>
+                  <p className="font-medium">1 مسافر</p>
+                </div>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">تاريخ السفر</p>
                   <p className="font-medium">{application.travel_date ? format(new Date(application.travel_date), 'dd/MM/yyyy') : '-'}</p>
                 </div>
@@ -461,16 +466,18 @@ export default function AgentApplicationDetail() {
                   <p className="text-xs text-muted-foreground">تاريخ العودة</p>
                   <p className="font-medium">{application.return_date ? format(new Date(application.return_date), 'dd/MM/yyyy') : '-'}</p>
                 </div>
-                <div className="space-y-1 p-3 rounded-lg bg-muted/50 sm:col-span-2">
-                  <p className="text-xs text-muted-foreground">الغرض من السفر</p>
-                  <p className="font-medium">{application.purpose_of_travel || '-'}</p>
+                <div className="space-y-1 p-3 rounded-lg bg-muted/50">
+                  <p className="text-xs text-muted-foreground">تاريخ إنشاء الطلب</p>
+                  <p className="font-medium">{format(new Date(application.created_at), 'dd/MM/yyyy - HH:mm', { locale: ar })}</p>
                 </div>
-                {application.accommodation_details && (
-                  <div className="space-y-1 p-3 rounded-lg bg-muted/50 sm:col-span-2">
-                    <p className="text-xs text-muted-foreground">تفاصيل الإقامة</p>
-                    <p className="font-medium">{application.accommodation_details}</p>
-                  </div>
-                )}
+                <div className="space-y-1 p-3 rounded-lg bg-primary/5 border border-primary/20 sm:col-span-2 lg:col-span-3">
+                  <p className="text-xs text-muted-foreground">تاريخ تقديم الطلب</p>
+                  <p className="font-medium text-primary">
+                    {application.submitted_at 
+                      ? format(new Date(application.submitted_at), 'dd MMMM yyyy - HH:mm', { locale: ar })
+                      : 'لم يتم التقديم بعد'}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -573,34 +580,20 @@ export default function AgentApplicationDetail() {
             </Card>
           </div>
 
-          {/* Application Summary */}
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">ملخص الطلب</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-1 p-3 rounded-lg bg-muted/50 text-center">
-                  <p className="text-xs text-muted-foreground">تاريخ الإنشاء</p>
-                  <p className="font-medium">{format(new Date(application.created_at), 'dd MMM yyyy', { locale: ar })}</p>
+          {/* Show rejection reason if rejected */}
+          {application.rejection_reason && (
+            <Card className="border-destructive/50 bg-destructive/5">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-destructive">سبب الرفض:</p>
+                    <p className="text-sm mt-1 text-destructive/80">{application.rejection_reason}</p>
+                  </div>
                 </div>
-                <div className="space-y-1 p-3 rounded-lg bg-muted/50 text-center">
-                  <p className="text-xs text-muted-foreground">السعر</p>
-                  <p className="font-medium">{application.visa_type?.price} ر.س</p>
-                </div>
-                <div className="space-y-1 p-3 rounded-lg bg-muted/50 text-center">
-                  <p className="text-xs text-muted-foreground">مدة المعالجة</p>
-                  <p className="font-medium">{application.visa_type?.processing_days} أيام</p>
-                </div>
-              </div>
-              {application.rejection_reason && (
-                <div className="mt-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
-                  <p className="text-sm font-medium text-red-700 dark:text-red-400">سبب الرفض:</p>
-                  <p className="text-sm mt-1 text-red-600 dark:text-red-300">{application.rejection_reason}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar - Notes */}
