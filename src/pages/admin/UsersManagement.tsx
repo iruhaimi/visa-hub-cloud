@@ -287,6 +287,23 @@ export default function UsersManagement() {
 
     setRemovingRole(true);
     try {
+      // Extra guard (UI-level): prevent removing the last admin role (system lockout)
+      if (roleToRemove.role === 'admin') {
+        const { count: adminCount, error: adminCountError } = await supabase
+          .from('user_roles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'admin');
+
+        if (adminCountError) throw adminCountError;
+
+        if ((adminCount || 0) <= 1) {
+          toast.error('لا يمكن إزالة دور المشرف من آخر مشرف في النظام');
+          setShowRemoveRoleDialog(false);
+          setRoleToRemove(null);
+          return;
+        }
+      }
+
       const { error, count } = await supabase
         .from('user_roles')
         .delete()
@@ -307,7 +324,12 @@ export default function UsersManagement() {
       fetchActivityLog();
     } catch (error: any) {
       console.error('Error removing role:', error);
-      toast.error(`حدث خطأ في حذف الصلاحية: ${error.message || 'خطأ غير معروف'}`);
+      const msg = (error?.message || '').toString();
+      if (msg.includes('cannot_remove_last_admin')) {
+        toast.error('لا يمكن إزالة دور المشرف من آخر مشرف في النظام');
+      } else {
+        toast.error(`حدث خطأ في حذف الصلاحية: ${error.message || 'خطأ غير معروف'}`);
+      }
     } finally {
       setRemovingRole(false);
     }
@@ -318,6 +340,21 @@ export default function UsersManagement() {
     
     setUpdating(true);
     try {
+      // Extra guard (UI-level): prevent removing all roles from the last admin
+      if (selectedUser.roles.includes('admin')) {
+        const { count: adminCount, error: adminCountError } = await supabase
+          .from('user_roles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'admin');
+
+        if (adminCountError) throw adminCountError;
+
+        if ((adminCount || 0) <= 1) {
+          toast.error('لا يمكن إزالة صلاحيات آخر مشرف في النظام');
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('user_roles')
         .delete()
@@ -332,7 +369,12 @@ export default function UsersManagement() {
       fetchActivityLog();
     } catch (error) {
       console.error('Error deleting roles:', error);
-      toast.error('حدث خطأ في إلغاء الصلاحيات');
+      const msg = (error as any)?.message?.toString?.() || '';
+      if (msg.includes('cannot_remove_last_admin')) {
+        toast.error('لا يمكن إزالة صلاحيات آخر مشرف في النظام');
+      } else {
+        toast.error('حدث خطأ في إلغاء الصلاحيات');
+      }
     } finally {
       setUpdating(false);
     }
