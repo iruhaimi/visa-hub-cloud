@@ -53,6 +53,7 @@ import AgentRequestsManagement from "@/pages/admin/AgentRequestsManagement";
 import SensitiveOperations from "@/pages/admin/SensitiveOperations";
 import OwnerSettings from "@/pages/admin/OwnerSettings";
 import DocumentAccessLogs from "@/pages/admin/DocumentAccessLogs";
+import FooterManagement from "@/pages/admin/FooterManagement";
 // Agent Pages
 import AgentDashboard from "@/pages/agent/AgentDashboard";
 import AgentApplicationsList from "@/pages/agent/AgentApplicationsList";
@@ -122,6 +123,7 @@ const App = () => (
                 <Route path="sensitive-operations" element={<SensitiveOperations />} />
                 <Route path="owner-settings" element={<OwnerSettings />} />
                 <Route path="document-logs" element={<DocumentAccessLogs />} />
+                <Route path="footer" element={<FooterManagement />} />
               </Route>
 
               {/* Agent Routes */}
