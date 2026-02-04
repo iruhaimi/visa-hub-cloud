@@ -19,7 +19,8 @@ import {
    ArrowLeftRight,
    Crown,
    Shield,
-   FileSearch
+   FileSearch,
+   PanelBottom
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -105,6 +106,12 @@ export default function AdminLayout() {
       title: 'سجلات وصول المستندات',
       icon: FileSearch,
       href: '/admin/document-logs',
+      show: isAdmin && isSuperAdmin,
+    },
+    {
+      title: 'إدارة الـ Footer',
+      icon: PanelBottom,
+      href: '/admin/footer',
       show: isAdmin && isSuperAdmin,
     },
     {

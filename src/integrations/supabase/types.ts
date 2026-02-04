@@ -674,6 +674,51 @@ export type Database = {
         }
         Relationships: []
       }
+      footer_settings: {
+        Row: {
+          category: string
+          created_at: string
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          key: string
+          label: string
+          updated_at: string
+          url: string | null
+          value: string
+          value_en: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          key: string
+          label: string
+          updated_at?: string
+          url?: string | null
+          value: string
+          value_en?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          key?: string
+          label?: string
+          updated_at?: string
+          url?: string | null
+          value?: string
+          value_en?: string | null
+        }
+        Relationships: []
+      }
       hero_destinations: {
         Row: {
           country: string
