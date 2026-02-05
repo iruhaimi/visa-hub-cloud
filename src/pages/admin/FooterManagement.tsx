@@ -26,8 +26,9 @@ import {
   Building2,
   Link as LinkIcon,
   Share2,
-  FileText,
-  Settings2
+   FileText,
+   ExternalLink,
+   FileCheck
 } from 'lucide-react';
 
 interface FooterSetting {
@@ -59,6 +60,16 @@ const categoryLabels: Record<string, { label: string; icon: React.ReactNode; des
     icon: <Building2 className="h-5 w-5" />,
     description: 'اسم الشركة والوصف والإشعارات القانونية'
   },
+   quick_links: { 
+     label: 'روابط سريعة', 
+     icon: <ExternalLink className="h-5 w-5" />,
+     description: 'روابط التنقل السريع في الموقع'
+   },
+   policies: { 
+     label: 'السياسات', 
+     icon: <FileCheck className="h-5 w-5" />,
+     description: 'روابط صفحات السياسات والشروط'
+   },
 };
 
 const iconOptions = [
@@ -348,8 +359,8 @@ export default function FooterManagement() {
       </div>
 
       {/* Tabs by Category */}
-      <Tabs defaultValue="contact" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+       <Tabs defaultValue="quick_links" className="space-y-4">
+         <TabsList className="grid w-full grid-cols-5">
           {Object.entries(categoryLabels).map(([key, { label, icon }]) => (
             <TabsTrigger key={key} value={key} className="gap-2">
               {icon}

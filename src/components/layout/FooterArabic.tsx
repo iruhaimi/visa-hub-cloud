@@ -32,27 +32,13 @@ export default function FooterArabic() {
   const contactSettings = footerSettings?.filter(s => s.category === 'contact') || [];
   const socialSettings = footerSettings?.filter(s => s.category === 'social') || [];
   const generalSettings = footerSettings?.filter(s => s.category === 'general') || [];
+   const quickLinksSettings = footerSettings?.filter(s => s.category === 'quick_links') || [];
+   const policiesSettings = footerSettings?.filter(s => s.category === 'policies') || [];
 
   // Get specific general settings
   const companyName = generalSettings.find(s => s.key === 'company_name')?.value || 'عطلات رحلاتكم للسياحة والسفر';
   const description = generalSettings.find(s => s.key === 'description')?.value || t('footer.about');
   const legalNotice = generalSettings.find(s => s.key === 'legal_notice')?.value;
-
-  const quickLinks = [
-    { name: t('nav.home'), href: '/' },
-    { name: t('nav.destinations'), href: '/destinations' },
-    { name: t('nav.pricing'), href: '/pricing' },
-    { name: t('nav.track'), href: '/track' },
-    { name: t('nav.faq'), href: '/faq' },
-    { name: t('nav.about'), href: '/about' },
-    { name: t('nav.contact'), href: '/contact' },
-  ];
-
-  const policyLinks = [
-    { name: 'الشروط والأحكام', href: '/terms' },
-    { name: 'سياسة الخصوصية', href: '/privacy' },
-    { name: 'سياسة الاسترجاع', href: '/refund' },
-  ];
 
   return (
     <footer className="border-t border-border bg-card">
@@ -76,13 +62,13 @@ export default function FooterArabic() {
           <div>
             <h3 className="font-semibold text-foreground">{t('footer.quickLinks')}</h3>
             <ul className="mt-4 space-y-3">
-              {quickLinks.map((link) => (
-                <li key={link.name}>
+               {quickLinksSettings.map((link) => (
+                 <li key={link.id}>
                   <Link
-                    to={link.href}
+                     to={link.url || '/'}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {link.name}
+                     {link.value}
                   </Link>
                 </li>
               ))}
@@ -93,13 +79,13 @@ export default function FooterArabic() {
           <div>
             <h3 className="font-semibold text-foreground">{t('footer.policies')}</h3>
             <ul className="mt-4 space-y-3">
-              {policyLinks.map((link) => (
-                <li key={link.name}>
+               {policiesSettings.map((link) => (
+                 <li key={link.id}>
                   <Link
-                    to={link.href}
+                     to={link.url || '/'}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {link.name}
+                     {link.value}
                   </Link>
                 </li>
               ))}
