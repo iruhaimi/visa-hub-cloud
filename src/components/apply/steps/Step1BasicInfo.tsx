@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
 import { User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle, Loader2, LogIn, UserPlus, Eye, EyeOff, KeyRound, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { lovable } from '@/integrations/lovable/index';
+
 import { Separator } from '@/components/ui/separator';
 
 // Helper function to filter Arabic characters
@@ -44,8 +44,9 @@ function GoogleSignInButton() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
       });
       
       if (error) {
