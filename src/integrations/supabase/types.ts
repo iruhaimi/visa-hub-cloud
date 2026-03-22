@@ -721,42 +721,33 @@ export type Database = {
       }
       hero_destinations: {
         Row: {
-          country: string
-          country_en: string | null
+          code: string
           created_at: string
           display_order: number
+          flag_url: string
           id: string
-          image_url: string
           is_active: boolean
-          link_url: string | null
           name: string
-          name_en: string | null
           updated_at: string
         }
         Insert: {
-          country: string
-          country_en?: string | null
+          code: string
           created_at?: string
           display_order?: number
+          flag_url: string
           id?: string
-          image_url: string
           is_active?: boolean
-          link_url?: string | null
           name: string
-          name_en?: string | null
           updated_at?: string
         }
         Update: {
-          country?: string
-          country_en?: string | null
+          code?: string
           created_at?: string
           display_order?: number
+          flag_url?: string
           id?: string
-          image_url?: string
           is_active?: boolean
-          link_url?: string | null
           name?: string
-          name_en?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -765,36 +756,42 @@ export type Database = {
         Row: {
           category: string
           created_at: string
-          display_order: number
+          display_order: number | null
+          icon: string | null
           id: string
-          is_active: boolean
+          is_active: boolean | null
           key: string
-          type: string
+          label: string
           updated_at: string
+          url: string | null
           value: string
           value_en: string | null
         }
         Insert: {
-          category?: string
+          category: string
           created_at?: string
-          display_order?: number
+          display_order?: number | null
+          icon?: string | null
           id?: string
-          is_active?: boolean
+          is_active?: boolean | null
           key: string
-          type?: string
+          label: string
           updated_at?: string
+          url?: string | null
           value: string
           value_en?: string | null
         }
         Update: {
           category?: string
           created_at?: string
-          display_order?: number
+          display_order?: number | null
+          icon?: string | null
           id?: string
-          is_active?: boolean
+          is_active?: boolean | null
           key?: string
-          type?: string
+          label?: string
           updated_at?: string
+          url?: string | null
           value?: string
           value_en?: string | null
         }

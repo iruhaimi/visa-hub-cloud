@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowLeft, ChevronLeft, ChevronRight, Shield, Clock, CheckCircle2, Plane, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, ArrowLeft, Shield, Clock, CheckCircle2, Plane, Loader2, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,22 +10,22 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 import heroBgFallback from '@/assets/hero-bg.jpg';
-// Fallback images
-import destinationDubai from '@/assets/destination-dubai.jpg';
-import destinationParis from '@/assets/destination-paris.jpg';
-import destinationIstanbul from '@/assets/destination-istanbul.jpg';
-import destinationLondon from '@/assets/destination-london.jpg';
+
+// English country names by code
+const countryNamesEn: Record<string, string> = {
+  US: 'United States', AU: 'Australia', DE: 'Germany', AE: 'UAE',
+  SA: 'Saudi Arabia', GB: 'United Kingdom', JP: 'Japan', SG: 'Singapore',
+  FR: 'France', CA: 'Canada', IT: 'Italy', ES: 'Spain', NL: 'Netherlands',
+  TR: 'Turkey', IN: 'India', CN: 'China', BR: 'Brazil', ZA: 'South Africa',
+};
 
 interface HeroDestination {
   id: string;
   name: string;
-  name_en: string | null;
-  country: string;
-  country_en: string | null;
-  image_url: string;
+  code: string;
+  flag_url: string;
   display_order: number;
   is_active: boolean;
-  link_url: string | null;
 }
 
 interface HeroSetting {
@@ -35,17 +35,19 @@ interface HeroSetting {
 }
 
 // Fallback destinations
-const fallbackDestinations = [
-  { id: '1', name: 'دبي', name_en: 'Dubai', image_url: destinationDubai, country: 'الإمارات', country_en: 'UAE', display_order: 1, is_active: true, link_url: '/destinations' },
-  { id: '2', name: 'باريس', name_en: 'Paris', image_url: destinationParis, country: 'فرنسا', country_en: 'France', display_order: 2, is_active: true, link_url: '/destinations' },
-  { id: '3', name: 'إسطنبول', name_en: 'Istanbul', image_url: destinationIstanbul, country: 'تركيا', country_en: 'Turkey', display_order: 3, is_active: true, link_url: '/destinations' },
-  { id: '4', name: 'لندن', name_en: 'London', image_url: destinationLondon, country: 'بريطانيا', country_en: 'UK', display_order: 4, is_active: true, link_url: '/destinations' },
+const fallbackDestinations: HeroDestination[] = [
+  { id: '1', name: 'الولايات المتحدة', code: 'US', flag_url: 'https://flagcdn.com/w160/us.png', display_order: 1, is_active: true },
+  { id: '2', name: 'أستراليا', code: 'AU', flag_url: 'https://flagcdn.com/w160/au.png', display_order: 2, is_active: true },
+  { id: '3', name: 'ألمانيا', code: 'DE', flag_url: 'https://flagcdn.com/w160/de.png', display_order: 3, is_active: true },
+  { id: '4', name: 'الإمارات', code: 'AE', flag_url: 'https://flagcdn.com/w160/ae.png', display_order: 4, is_active: true },
+  { id: '5', name: 'المملكة المتحدة', code: 'GB', flag_url: 'https://flagcdn.com/w160/gb.png', display_order: 5, is_active: true },
+  { id: '6', name: 'اليابان', code: 'JP', flag_url: 'https://flagcdn.com/w160/jp.png', display_order: 6, is_active: true },
 ];
 
 export default function HeroSection() {
   const { direction } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [visibleStart, setVisibleStart] = useState(0);
   const isRTL = direction === 'rtl';
 
   // Fetch destinations
@@ -81,33 +83,36 @@ export default function HeroSection() {
     settings[s.key] = { ar: s.value, en: s.value_en || s.value };
   });
 
-  // Helper to get setting value
   const getSetting = (key: string, fallbackAr: string, fallbackEn?: string) => {
     const s = settings[key];
     if (!s) return isRTL ? fallbackAr : (fallbackEn || fallbackAr);
     return isRTL ? s.ar : s.en;
   };
 
-  // Get background image URL
   const heroBg = settings['background_image']?.ar || heroBgFallback;
-
   const destinations = (dbDestinations && dbDestinations.length > 0) ? dbDestinations : fallbackDestinations;
 
+  // Auto-cycle visible destinations (show 6 at a time)
+  const visibleCount = 6;
   useEffect(() => {
-    if (destinations.length === 0) return;
+    if (destinations.length <= visibleCount) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % destinations.length);
-    }, 5000);
+      setVisibleStart(prev => (prev + visibleCount) % destinations.length);
+    }, 4000);
     return () => clearInterval(timer);
   }, [destinations.length]);
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % destinations.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + destinations.length) % destinations.length);
+  const visibleDestinations = destinations.slice(visibleStart, visibleStart + visibleCount);
+  // Wrap around if needed
+  const remaining = visibleCount - visibleDestinations.length;
+  const displayDestinations = remaining > 0
+    ? [...visibleDestinations, ...destinations.slice(0, remaining)]
+    : visibleDestinations;
 
-  const getDisplayName = (dest: HeroDestination) => isRTL ? dest.name : (dest.name_en || dest.name);
-  const getDisplayCountry = (dest: HeroDestination) => isRTL ? dest.country : (dest.country_en || dest.country);
+  const getDisplayName = (dest: HeroDestination) =>
+    isRTL ? dest.name : (countryNamesEn[dest.code] || dest.code);
 
-  if (destinations.length === 0 && !loadingDestinations) return null;
+  const getLargeFlagUrl = (flagUrl: string) => flagUrl.replace('/w80/', '/w160/');
 
   return (
     <section className="relative min-h-[90vh] overflow-hidden">
@@ -130,16 +135,16 @@ export default function HeroSection() {
                 <Plane className="h-3 w-3 ml-1" />
                 {getSetting('badge_text', 'عطلات رحلاتكم للسياحة والسفر', 'Otolat Rahlatcom Travel & Tourism')}
               </Badge>
-              
+
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
                 {getSetting('main_title_line1', 'رحلتك تبدأ', 'Your Journey')}
                 <span className="block text-primary mt-2">
                   {getSetting('main_title_line2', 'من هنا', 'Starts Here')}
                 </span>
               </h1>
-              
+
               <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-                {getSetting('description', 
+                {getSetting('description',
                   'نقدم لك خدمات التأشيرات والسفر بأعلى جودة وأفضل الأسعار. احصل على تأشيرتك بكل سهولة ويسر مع فريقنا المتخصص.',
                   'We offer you visa and travel services with the highest quality and best prices. Get your visa easily with our specialized team.'
                 )}
@@ -189,7 +194,7 @@ export default function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Right Content - Slider */}
+          {/* Right Content - Destinations Showcase */}
           <div className="flex-1 w-full max-w-lg lg:max-w-xl">
             <motion.div
               initial={{ opacity: 0, x: 50 }}
@@ -197,137 +202,89 @@ export default function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl">
+              <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 shadow-2xl p-6">
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Globe className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-foreground">
+                      {isRTL ? 'وجهاتنا المميزة' : 'Featured Destinations'}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {isRTL ? 'تأشيرات لأكثر من 50 دولة' : 'Visas for 50+ countries'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Destinations Grid */}
                 {loadingDestinations ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                  <div className="flex items-center justify-center h-48">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : (
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentSlide}
-                      initial={{ opacity: 0, scale: 1.1 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.5 }}
-                      className="absolute inset-0"
-                    >
-                      <img 
-                        src={destinations[currentSlide]?.image_url} 
-                        alt={getDisplayName(destinations[currentSlide])}
-                        className="h-full w-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      
-                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                        <motion.div
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.3 }}
+                  <div className="grid grid-cols-3 gap-3">
+                    {displayDestinations.map((dest, index) => (
+                      <motion.div
+                        key={`${dest.id}-${visibleStart}-${index}`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                      >
+                        <Link
+                          to="/destinations"
+                          className="group block bg-background hover:bg-primary/5 border border-border/50 hover:border-primary/30 rounded-xl p-3 text-center transition-all"
                         >
-                          <p className="text-sm opacity-80 mb-1">{getDisplayCountry(destinations[currentSlide])}</p>
-                          <h3 className="text-3xl font-bold mb-3">{getDisplayName(destinations[currentSlide])}</h3>
-                          <Button asChild variant="secondary" size="sm" className="rounded-full">
-                            <Link to={destinations[currentSlide]?.link_url || '/destinations'}>
-                              {isRTL ? 'استكشف الآن' : 'Explore Now'}
-                              <ArrowLeft className="h-4 w-4 mr-2" />
-                            </Link>
-                          </Button>
-                        </motion.div>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
+                          <div className="overflow-hidden rounded-lg mb-2 mx-auto w-full aspect-[3/2]">
+                            <img
+                              src={getLargeFlagUrl(dest.flag_url)}
+                              alt={getDisplayName(dest)}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+                            />
+                          </div>
+                          <p className="text-xs font-medium text-foreground truncate">
+                            {getDisplayName(dest)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{dest.code}</p>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
                 )}
 
-                {/* Navigation */}
-                <button
-                  onClick={prevSlide}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={nextSlide}
-                  className="absolute top-1/2 left-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-
-                {/* Dots */}
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2">
-                  {destinations.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentSlide(index)}
-                      className={`h-2 rounded-full transition-all ${
-                        index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50 hover:bg-white/70'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Floating Cards */}
-              <div className="hidden lg:block absolute -left-12 top-1/4 bg-card rounded-xl p-4 shadow-lg border border-border/50 animate-fade-in">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      {getSetting('card_visas_label', 'تأشيرات مُنجزة', 'Visas Completed')}
-                    </p>
-                    <p className="text-lg font-bold">
+                {/* Footer stats */}
+                <div className="mt-5 pt-4 border-t border-border/50 flex items-center justify-between">
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-primary">
                       {getSetting('card_visas_count', '+10,000', '+10,000')}
                     </p>
+                    <p className="text-xs text-muted-foreground">
+                      {getSetting('card_visas_label', 'تأشيرة مُنجزة', 'Visas Completed')}
+                    </p>
                   </div>
-                </div>
-              </div>
-
-              <div className="hidden lg:block absolute -right-8 bottom-1/4 bg-card rounded-xl p-4 shadow-lg border border-border/50 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
+                  <div className="h-8 w-px bg-border" />
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-green-600">
+                      {getSetting('card_processing_time', '5 أيام', '5 Days')}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {getSetting('card_processing_label', 'متوسط المعالجة', 'Avg. Processing')}
                     </p>
-                    <p className="text-lg font-bold">
-                      {getSetting('card_processing_time', '5 أيام', '5 Days')}
+                  </div>
+                  <div className="h-8 w-px bg-border" />
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-foreground">
+                      {destinations.length}+
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isRTL ? 'وجهة' : 'Destinations'}
                     </p>
                   </div>
                 </div>
               </div>
             </motion.div>
-          </div>
-        </div>
-
-        {/* Thumbnails */}
-        <div className="mt-8 pb-4">
-          <div className="flex items-center justify-center gap-4 overflow-x-auto pb-2">
-            {destinations.map((dest, index) => (
-              <button
-                key={dest.id}
-                onClick={() => setCurrentSlide(index)}
-                className={`flex-shrink-0 group relative overflow-hidden rounded-xl transition-all ${
-                  index === currentSlide 
-                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' 
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <img 
-                  src={dest.image_url} 
-                  alt={getDisplayName(dest)}
-                  className="h-20 w-28 object-cover transition-transform group-hover:scale-110"
-                  onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">{getDisplayName(dest)}</span>
-                </div>
-              </button>
-            ))}
           </div>
         </div>
       </div>
