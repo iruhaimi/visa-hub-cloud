@@ -281,8 +281,9 @@ const MyApplications = () => {
                 ? differenceInDays(new Date(), new Date(app.submitted_at))
                 : 0;
               const daysRemaining = Math.max(0, processingDays - daysElapsed);
-              const isActive = !['approved', 'rejected', 'cancelled', 'draft'].includes(app.status);
+              const isActive = !['approved', 'rejected', 'cancelled', 'draft', 'pending_payment'].includes(app.status);
               const isDraft = app.status === 'draft';
+              const isPendingPayment = app.status === 'pending_payment';
               
               return (
                 <Card key={app.id} className="hover:shadow-md transition-shadow overflow-hidden">
