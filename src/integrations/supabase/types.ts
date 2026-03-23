@@ -453,6 +453,7 @@ export type Database = {
           approved_at: string | null
           assigned_agent_id: string | null
           created_at: string
+          draft_data: Json | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           id: string
@@ -473,6 +474,7 @@ export type Database = {
           approved_at?: string | null
           assigned_agent_id?: string | null
           created_at?: string
+          draft_data?: Json | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           id?: string
@@ -493,6 +495,7 @@ export type Database = {
           approved_at?: string | null
           assigned_agent_id?: string | null
           created_at?: string
+          draft_data?: Json | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           id?: string
