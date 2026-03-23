@@ -79,7 +79,11 @@ export default function MyApplicationDetail() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (applicationId && user) {
+    if (!applicationId) {
+      navigate('/my-applications', { replace: true });
+      return;
+    }
+    if (user) {
       fetchApplication();
     }
   }, [applicationId, user]);
