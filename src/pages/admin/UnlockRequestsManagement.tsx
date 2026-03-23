@@ -53,6 +53,14 @@ interface UnlockRequest {
 
 export default function UnlockRequestsManagement() {
   const queryClient = useQueryClient();
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [permLoading, isSuperAdmin, navigate]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<UnlockRequest | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
