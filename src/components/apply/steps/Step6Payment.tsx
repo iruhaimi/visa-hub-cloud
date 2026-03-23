@@ -3,6 +3,8 @@ import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
