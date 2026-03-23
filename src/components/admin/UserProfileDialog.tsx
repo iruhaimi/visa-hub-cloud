@@ -76,6 +76,7 @@ export function UserProfileDialog({
   useEffect(() => {
     if (user && open) {
       fetchUserStats();
+      fetchOwnerStatus();
       setFormData({
         full_name: user.full_name || '',
         phone: user.phone || '',
@@ -84,6 +85,17 @@ export function UserProfileDialog({
       setIsEditing(false);
     }
   }, [user, open]);
+
+  const fetchOwnerStatus = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('staff_permissions')
+      .select('id')
+      .eq('user_id', user.user_id)
+      .eq('permission', 'manage_staff')
+      .maybeSingle();
+    setIsOwner(!!data);
+  };
 
   const fetchUserStats = async () => {
     if (!user) return;
