@@ -210,15 +210,16 @@ export default function AdminLayout() {
               <div className="mb-3 text-sm">
                 <p className="font-medium flex items-center gap-2">
                   {profile?.full_name || 'المستخدم'}
-                  {isSuperAdmin && (
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                  {isSuperAdmin ? (
+                    <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
                       <Crown className="h-2.5 w-2.5 mr-0.5" />
-                      مدير عام
+                      مالك
                     </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">
+                      {isAdmin ? 'مشرف' : 'وكيل'}
+                    </span>
                   )}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {isAdmin ? 'مشرف' : 'وكيل'}
                 </p>
               </div>
             )}
