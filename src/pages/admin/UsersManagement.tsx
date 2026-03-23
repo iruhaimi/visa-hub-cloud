@@ -146,9 +146,13 @@ export default function UsersManagement() {
   const itemsPerPage = 10;
 
   useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     fetchUsers();
     fetchActivityLog();
-  }, []);
+  }, [permLoading, isSuperAdmin]);
 
   const fetchUsers = async () => {
     setLoading(true);
