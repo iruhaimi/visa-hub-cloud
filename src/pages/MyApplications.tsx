@@ -281,8 +281,9 @@ const MyApplications = () => {
                 ? differenceInDays(new Date(), new Date(app.submitted_at))
                 : 0;
               const daysRemaining = Math.max(0, processingDays - daysElapsed);
-              const isActive = !['approved', 'rejected', 'cancelled', 'draft'].includes(app.status);
+              const isActive = !['approved', 'rejected', 'cancelled', 'draft', 'pending_payment'].includes(app.status);
               const isDraft = app.status === 'draft';
+              const isPendingPayment = app.status === 'pending_payment';
               
               return (
                 <Card key={app.id} className="hover:shadow-md transition-shadow overflow-hidden">
@@ -375,6 +376,14 @@ const MyApplications = () => {
                           <Link to={`/apply?draft=${app.id}`}>
                             <Edit3 className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                             {isRTL ? 'استكمال الطلب' : 'Continue'}
+                          </Link>
+                        </Button>
+                      )}
+                      {isPendingPayment && (
+                        <Button asChild variant="default" size="sm">
+                          <Link to={`/apply?draft=${app.id}`}>
+                            <RefreshCw className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {isRTL ? 'إعادة الدفع' : 'Retry Payment'}
                           </Link>
                         </Button>
                       )}
