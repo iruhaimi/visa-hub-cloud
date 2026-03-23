@@ -80,6 +80,9 @@ const App = () => (
                 <Route path="/" element={<HomeArabic />} />
                 <Route path="/destinations" element={<Destinations />} />
                 <Route path="/country/:countryCode" element={<CountryDetail />} />
+                <Route path="/visa-services" element={<VisaServices />} />
+                <Route path="/visa/:id" element={<VisaDetail />} />
+                <Route path="/schengen/:country" element={<SchengenDetail />} />
                 <Route path="/apply" element={<Apply />} />
                 <Route path="/apply/:countryCode" element={<Apply />} />
                 <Route path="/pricing" element={<Pricing />} />
