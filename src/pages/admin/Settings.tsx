@@ -34,6 +34,7 @@ interface VisaType {
 export default function Settings() {
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
+  const { isSuperAdmin } = usePermissions();
 
   // Countries
   const { data: countries, isLoading: loadingCountries } = useQuery({
