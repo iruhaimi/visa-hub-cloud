@@ -103,7 +103,7 @@ export default function Step6Payment() {
       setIsProcessing(false);
       
       // Navigate to success page
-      navigate(`/payment-success?app=${appNumber}`);
+      navigate(`/payment-success?app=${appNumber}&id=${draftId}`);
       
       // Reset application
       setTimeout(() => resetApplication(), 1000);
