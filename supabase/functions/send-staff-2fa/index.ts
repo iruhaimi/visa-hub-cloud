@@ -8,62 +8,102 @@ const corsHeaders = {
 
 interface Send2FARequest {
   email: string;
-  code?: string; // Optional - will be generated if not provided
-  phone?: string; // Optional for SMS
-  userId: string; // Required - the user ID for the 2FA code
+  phone?: string;
+  userId: string;
 }
 
-// Generate a 6-digit code
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, code: providedCode, phone, userId }: Send2FARequest = await req.json();
+    // ============================================================
+    // AUTHENTICATION: Verify the caller is authenticated
+    // ============================================================
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+      console.error("Missing Supabase configuration");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Verify JWT using the caller's token
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user: callingUser }, error: userError } = await userClient.auth.getUser();
+    if (userError || !callingUser) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { email, phone, userId }: Send2FARequest = await req.json();
 
     // Validate required fields
     if (!email || !userId) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: email and userId" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Generate or use provided code
-    const code = providedCode || generateCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    // Verify that the calling user matches the requested userId
+    if (callingUser.id !== userId) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Verify the user is staff (admin or agent)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: isStaff } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: isAgent } = await supabase.rpc("has_role", { _user_id: userId, _role: "agent" });
+
+    if (!isStaff && !isAgent) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden - staff only" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Check rate limit
+    const { data: canProceed } = await supabase.rpc("check_2fa_rate_limit", { check_user_id: userId });
+    if (!canProceed) {
+      return new Response(
+        JSON.stringify({ error: "Too many attempts. Please wait before requesting another code." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     console.log(`Processing 2FA for: ${email}`);
 
-    // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase configuration");
-      return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // ============================================================
-    // INSERT 2FA CODE INTO DATABASE (using service_role)
-    // ============================================================
+    // Insert 2FA code
     const { error: insertError } = await supabase.from("staff_2fa_codes").insert({
       user_id: userId,
       email: email,
@@ -74,18 +114,13 @@ const handler = async (req: Request): Promise<Response> => {
     if (insertError) {
       console.error("Failed to insert 2FA code:", insertError);
       return new Response(
-        JSON.stringify({ error: "Failed to create verification code", details: insertError.message }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ error: "Failed to create verification code" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`2FA code created for user: ${userId}`);
-
     // ============================================================
-    // EMAIL SENDING (using Resend when configured)
+    // EMAIL SENDING
     // ============================================================
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -94,10 +129,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     let emailSent = false;
     let smsSent = false;
-    let resendRecipientRestricted = false;
-    const results: { email?: boolean; sms?: boolean; errors?: string[] } = {
-      errors: [],
-    };
 
     if (RESEND_API_KEY) {
       try {
@@ -151,35 +182,20 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (emailResponse.ok) {
           emailSent = true;
-          results.email = true;
           console.log("2FA email sent successfully");
         } else {
           const errorData = await emailResponse.json();
           console.error("Resend email error:", errorData);
-          results.errors?.push(`Email error: ${JSON.stringify(errorData)}`);
-
-          if (
-            errorData &&
-            (errorData.statusCode === 403 || emailResponse.status === 403) &&
-            errorData.name === "validation_error" &&
-            typeof errorData.message === "string" &&
-            errorData.message.includes("You can only send testing emails")
-          ) {
-            resendRecipientRestricted = true;
-          }
         }
       } catch (emailError: unknown) {
         console.error("Email sending failed:", emailError);
-        const errorMessage = emailError instanceof Error ? emailError.message : "Unknown error";
-        results.errors?.push(`Email error: ${errorMessage}`);
       }
     } else {
       console.log("RESEND_API_KEY not configured - skipping email");
-      results.errors?.push("Email provider not configured");
     }
 
     // ============================================================
-    // SMS SENDING (using Twilio when configured)
+    // SMS SENDING
     // ============================================================
     if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_PHONE_NUMBER && phone) {
       try {
@@ -200,28 +216,20 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (smsResponse.ok) {
           smsSent = true;
-          results.sms = true;
           console.log("2FA SMS sent successfully");
         } else {
           const errorData = await smsResponse.json();
           console.error("Twilio SMS error:", errorData);
-          results.errors?.push(`SMS error: ${JSON.stringify(errorData)}`);
         }
       } catch (smsError: unknown) {
         console.error("SMS sending failed:", smsError);
-        const errorMessage = smsError instanceof Error ? smsError.message : "Unknown error";
-        results.errors?.push(`SMS error: ${errorMessage}`);
       }
-    } else if (phone) {
-      console.log("Twilio credentials not configured - skipping SMS");
-      results.errors?.push("SMS provider not configured");
     }
 
     // ============================================================
     // NOTIFICATION: Notify admins about 2FA attempt
     // ============================================================
     try {
-      // Get admin users to notify
       const { data: adminRoles } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -250,62 +258,9 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Failed to notify admins:", notifyError);
     }
 
-    // Check if at least one method worked or if none are configured (for testing)
-    const noProviderConfigured = !RESEND_API_KEY && !TWILIO_ACCOUNT_SID;
-    
-    if (noProviderConfigured) {
-      console.log(`[TEST MODE] 2FA code for ${email}: ${code}`);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Test mode - no providers configured",
-          testMode: true,
-          code: code, // Return code in test mode for display
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    if (resendRecipientRestricted) {
-      console.log(`[TEST MODE] Resend blocked recipient. Code for ${email}: ${code}`);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          emailSent: false,
-          smsSent: false,
-          testMode: true,
-          code: code, // Return code for fallback display
-          error: "Resend test-mode restriction: domain not verified",
-          details: results.errors,
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
-    if (!emailSent && !smsSent) {
-      // Code was still created in DB, return it for fallback
-      return new Response(
-        JSON.stringify({
-          success: true,
-          emailSent: false,
-          smsSent: false,
-          code: code, // Return code for fallback display
-          error: "Failed to send 2FA code via any channel",
-          details: results.errors,
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
+    // ============================================================
+    // RESPONSE: Never return the code - only confirm send status
+    // ============================================================
     return new Response(
       JSON.stringify({
         success: true,
@@ -320,7 +275,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-staff-2fa function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

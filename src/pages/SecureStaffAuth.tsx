@@ -92,7 +92,7 @@ export default function SecureStaffAuth() {
   };
 
   // Generate 2FA code via Edge Function (uses service_role for DB insert)
-  const generate2FACode = async (userId: string, userEmail: string): Promise<{ code: string; emailSent: boolean }> => {
+  const generate2FACode = async (userId: string, userEmail: string): Promise<{ emailSent: boolean }> => {
     try {
       const { data, error: sendError } = await supabase.functions.invoke('send-staff-2fa', {
         body: { 
@@ -111,10 +111,9 @@ export default function SecureStaffAuth() {
         throw new Error(data.error);
       }
       
-      const emailSent = data?.emailSent === true;
-      const code = data?.code || ''; // Code returned in test/fallback mode
+      const emailSent = data?.emailSent === true || data?.smsSent === true;
       
-      return { code, emailSent };
+      return { emailSent };
     } catch (err) {
       console.error('Error in generate2FACode:', err);
       throw err;
@@ -205,15 +204,13 @@ export default function SecureStaffAuth() {
         
         // Generate and send 2FA code
         try {
-          const { code, emailSent } = await generate2FACode(data.user.id, data.user.email!);
+          const { emailSent } = await generate2FACode(data.user.id, data.user.email!);
           
           if (emailSent) {
             toast.success('تم إرسال رمز التحقق إلى بريدك الإلكتروني');
           } else {
-            // DEV MODE: Show code in toast when email is not configured
-            toast.info(`وضع التطوير - رمز التحقق: ${code}`, {
-              duration: 30000,
-              description: 'لم يتم إعداد البريد الإلكتروني بعد'
+            toast.info('تم إنشاء رمز التحقق. يرجى التحقق من بريدك الإلكتروني أو التواصل مع المسؤول.', {
+              duration: 10000,
             });
           }
         } catch (sendError) {
@@ -306,15 +303,14 @@ export default function SecureStaffAuth() {
     });
     
     if (data.user) {
-      const { code, emailSent } = await generate2FACode(data.user.id, data.user.email!);
+      const { emailSent } = await generate2FACode(data.user.id, data.user.email!);
       await supabase.auth.signOut();
       
       if (emailSent) {
         toast.success('تم إعادة إرسال رمز التحقق');
       } else {
-        toast.info(`وضع التطوير - رمز التحقق: ${code}`, {
-          duration: 30000,
-          description: 'لم يتم إعداد البريد الإلكتروني بعد'
+        toast.info('تم إنشاء رمز التحقق. يرجى التحقق من بريدك الإلكتروني أو التواصل مع المسؤول.', {
+          duration: 10000,
         });
       }
     }

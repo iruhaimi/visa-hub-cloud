@@ -185,10 +185,6 @@ Deno.serve(async (req) => {
                         <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: bold;" dir="ltr">${email}</td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">كلمة المرور:</td>
-                        <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: bold;" dir="ltr">${password}</td>
-                      </tr>
-                      <tr>
                         <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">الصلاحية:</td>
                         <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: bold;">${roleLabel}</td>
                       </tr>
@@ -198,7 +194,7 @@ Deno.serve(async (req) => {
                   <!-- Warning -->
                   <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 15px; margin: 20px 0;">
                     <p style="color: #92400e; font-size: 14px; margin: 0; line-height: 1.6;">
-                      ⚠️ <strong>هام:</strong> يرجى تغيير كلمة المرور فور تسجيل الدخول للمرة الأولى. احتفظ ببيانات الدخول في مكان آمن ولا تشاركها مع أي شخص.
+                      ⚠️ <strong>هام:</strong> يرجى التواصل مع مدير النظام للحصول على كلمة المرور الخاصة بك. قم بتغييرها فور تسجيل الدخول للمرة الأولى.
                     </p>
                   </div>
                   
