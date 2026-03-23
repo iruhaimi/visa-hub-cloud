@@ -150,7 +150,7 @@ export function useDraftApplication() {
           id,
           visa_type_id,
           travel_date,
-          purpose_of_travel,
+          draft_data,
           visa_type:visa_types(
             id,
             name,
