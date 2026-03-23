@@ -454,6 +454,7 @@ export default function Auth() {
                     {isRTL ? 'إنشاء الحساب' : 'Create Account'}
                   </Button>
                 </form>
+                )
               ) : (
                 <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                   <div className="space-y-2">
