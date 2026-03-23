@@ -70,7 +70,7 @@ export default function Install() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <HeaderArabic />
       <main className="flex-1">
         <div className={cn(
           "min-h-screen py-12 px-4",

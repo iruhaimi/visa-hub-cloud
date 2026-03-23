@@ -135,7 +135,7 @@ export default function TrackRefund() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <HeaderArabic />
       <main className="flex-1">
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12">
           <div className="container max-w-2xl mx-auto px-4">
