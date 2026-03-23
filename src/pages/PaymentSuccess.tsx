@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -16,7 +18,33 @@ import { motion } from 'framer-motion';
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const applicationNumber = searchParams.get('app') || 'VISA-XXXXXX';
+  const applicationId = searchParams.get('id');
   const { direction } = useLanguage();
+  const hasUpdated = useRef(false);
+
+  // Move application from pending_payment → submitted
+  useEffect(() => {
+    if (!applicationId || hasUpdated.current) return;
+    hasUpdated.current = true;
+
+    const finalizeApplication = async () => {
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          status: 'submitted' as const,
+          submitted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', applicationId)
+        .eq('status', 'pending_payment' as const);
+
+      if (error) {
+        console.error('Error finalizing application:', error);
+      }
+    };
+
+    finalizeApplication();
+  }, [applicationId]);
 
   const content = direction === 'rtl' ? {
     title: 'تم الدفع بنجاح!',
