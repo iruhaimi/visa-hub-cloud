@@ -66,6 +66,7 @@ export function UserProfileDialog({
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
