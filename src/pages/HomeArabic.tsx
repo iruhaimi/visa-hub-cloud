@@ -24,19 +24,6 @@ export default function HomeArabic() {
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect staff (admin/agent) to their dashboard
-  useEffect(() => {
-    if (!authLoading && user) {
-      if (isAdmin) {
-        navigate('/admin', { replace: true });
-        return;
-      }
-      if (isAgent) {
-        navigate('/agent', { replace: true });
-        return;
-      }
-    }
-  }, [user, isAdmin, isAgent, authLoading, navigate]);
 
   useEffect(() => {
     async function fetchData() {
