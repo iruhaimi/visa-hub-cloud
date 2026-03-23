@@ -136,9 +136,11 @@ export default function PaymentFailed() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <Button className="w-full h-12 gap-2">
-                <RefreshCw className="w-4 h-4" />
-                {content.tryAgain}
+              <Button asChild className="w-full h-12 gap-2">
+                <Link to={applicationId ? `/apply?draft=${applicationId}` : '/destinations'}>
+                  <RefreshCw className="w-4 h-4" />
+                  {content.tryAgain}
+                </Link>
               </Button>
               
               <div className="grid grid-cols-2 gap-3">
