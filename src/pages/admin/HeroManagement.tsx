@@ -48,25 +48,24 @@ import { SortableDestinationRow } from '@/components/admin/SortableDestinationRo
 interface HeroDestination {
   id: string;
   name: string;
-  name_en: string | null;
-  country: string;
-  country_en: string | null;
-  image_url: string;
+  code: string;
+  flag_url: string;
   display_order: number;
   is_active: boolean;
-  link_url: string | null;
   created_at: string;
 }
 
 interface HeroSetting {
   id: string;
   key: string;
+  label: string;
   value: string;
   value_en: string | null;
-  type: string;
+  icon: string | null;
+  url: string | null;
   category: string;
-  display_order: number;
-  is_active: boolean;
+  display_order: number | null;
+  is_active: boolean | null;
 }
 
 export default function HeroManagement() {
@@ -131,13 +130,10 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
 
   const [formData, setFormData] = useState({
     name: '',
-    name_en: '',
-    country: '',
-    country_en: '',
-    image_url: '',
+    code: '',
+    flag_url: '',
     display_order: 0,
     is_active: true,
-    link_url: '/destinations',
   });
 
   const { data: destinations, isLoading } = useQuery({
@@ -155,13 +151,10 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
   const resetForm = () => {
     setFormData({
       name: '',
-      name_en: '',
-      country: '',
-      country_en: '',
-      image_url: '',
+      code: '',
+      flag_url: '',
       display_order: destinations?.length || 0,
       is_active: true,
-      link_url: '/destinations',
     });
     setEditingDestination(null);
     setImageFile(null);
@@ -172,15 +165,12 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
     setEditingDestination(destination);
     setFormData({
       name: destination.name,
-      name_en: destination.name_en || '',
-      country: destination.country,
-      country_en: destination.country_en || '',
-      image_url: destination.image_url,
+      code: destination.code,
+      flag_url: destination.flag_url,
       display_order: destination.display_order,
       is_active: destination.is_active,
-      link_url: destination.link_url || '/destinations',
     });
-    setImagePreview(destination.image_url);
+    setImagePreview(destination.flag_url);
     setIsOpen(true);
   };
 
@@ -221,21 +211,18 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
   const saveMutation = useMutation({
     mutationFn: async () => {
       setIsUploading(true);
-      let finalImageUrl = formData.image_url;
+      let finalFlagUrl = formData.flag_url;
 
       if (imageFile) {
-        finalImageUrl = await uploadImage(imageFile);
+        finalFlagUrl = await uploadImage(imageFile);
       }
 
       const payload = {
         name: formData.name,
-        name_en: formData.name_en || null,
-        country: formData.country,
-        country_en: formData.country_en || null,
-        image_url: finalImageUrl,
+        code: formData.code.toUpperCase(),
+        flag_url: finalFlagUrl,
         display_order: formData.display_order,
         is_active: formData.is_active,
-        link_url: formData.link_url || '/destinations',
       };
 
       if (editingDestination) {
@@ -369,109 +356,65 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
               <DialogTitle>{editingDestination ? 'تعديل الوجهة' : 'إضافة وجهة جديدة'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
-              {/* Image Upload */}
-              <div className="space-y-2">
-                <Label>صورة الوجهة</Label>
-                <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                  {imagePreview ? (
-                    <div className="relative">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="h-40 w-full object-cover rounded-lg mx-auto"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 left-2"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview(null);
-                          setFormData({ ...formData, image_url: '' });
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer block py-8">
-                      <Image className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">اضغط لرفع صورة</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                      />
-                    </label>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">الحد الأقصى: 5MB - يُفضل أبعاد 800x1000</p>
-              </div>
-
-              {/* Or URL */}
-              <div className="space-y-2">
-                <Label>أو رابط الصورة</Label>
-                <Input
-                  value={formData.image_url}
-                  onChange={(e) => {
-                    setFormData({ ...formData, image_url: e.target.value });
-                    setImagePreview(e.target.value);
-                    setImageFile(null);
-                  }}
-                  placeholder="https://..."
-                  dir="ltr"
-                />
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>اسم الوجهة (عربي)</Label>
+                  <Label>اسم الدولة (عربي)</Label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="مثال: دبي"
+                    placeholder="مثال: الولايات المتحدة"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>اسم الوجهة (إنجليزي)</Label>
+                  <Label>رمز الدولة (ISO)</Label>
                   <Input
-                    value={formData.name_en}
-                    onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
-                    placeholder="e.g., Dubai"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    placeholder="مثال: US"
                     dir="ltr"
+                    maxLength={3}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>الدولة (عربي)</Label>
-                  <Input
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    placeholder="مثال: الإمارات"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>الدولة (إنجليزي)</Label>
-                  <Input
-                    value={formData.country_en}
-                    onChange={(e) => setFormData({ ...formData, country_en: e.target.value })}
-                    placeholder="e.g., UAE"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
+              {/* Flag URL */}
               <div className="space-y-2">
-                <Label>رابط الوجهة</Label>
+                <Label>رابط صورة العلم</Label>
                 <Input
-                  value={formData.link_url}
-                  onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
-                  placeholder="/destinations"
+                  value={formData.flag_url}
+                  onChange={(e) => {
+                    setFormData({ ...formData, flag_url: e.target.value });
+                    setImagePreview(e.target.value);
+                    setImageFile(null);
+                  }}
+                  placeholder="https://flagcdn.com/w80/us.png"
                   dir="ltr"
                 />
+                {formData.code && !formData.flag_url && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const url = `https://flagcdn.com/w80/${formData.code.toLowerCase()}.png`;
+                      setFormData({ ...formData, flag_url: url });
+                      setImagePreview(url);
+                    }}
+                  >
+                    توليد رابط العلم تلقائياً
+                  </Button>
+                )}
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="Flag preview"
+                    className="h-10 rounded border"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                <p className="text-xs text-muted-foreground">
+                  يمكن استخدام: https://flagcdn.com/w80/[code].png
+                </p>
               </div>
 
               <div className="flex items-center gap-3">
@@ -482,10 +425,10 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
                 <Label>عرض الوجهة</Label>
               </div>
 
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending || isUploading || !formData.name || !formData.country || (!formData.image_url && !imageFile)}
+                disabled={saveMutation.isPending || isUploading || !formData.name || !formData.code || !formData.flag_url}
               >
                 {(saveMutation.isPending || isUploading) ? (
                   <>
@@ -510,9 +453,9 @@ function DestinationsManagement({ isRTL }: { isRTL: boolean }) {
             <TableHeader>
               <TableRow>
                 <TableHead className={isRTL ? "text-right" : ""}>الترتيب</TableHead>
-                <TableHead className={isRTL ? "text-right" : ""}>الصورة</TableHead>
-                <TableHead className={isRTL ? "text-right" : ""}>الوجهة</TableHead>
+                <TableHead className={isRTL ? "text-right" : ""}>العلم</TableHead>
                 <TableHead className={isRTL ? "text-right" : ""}>الدولة</TableHead>
+                <TableHead className={isRTL ? "text-right" : ""}>الرمز</TableHead>
                 <TableHead className={isRTL ? "text-right" : ""}>الحالة</TableHead>
                 <TableHead className={isRTL ? "text-right" : ""}>الإجراءات</TableHead>
               </TableRow>
@@ -782,9 +725,9 @@ function BackgroundManagement({ isRTL }: { isRTL: boolean }) {
           .from('hero_settings')
           .insert({
             key: 'background_image',
+            label: 'صورة الخلفية',
             value: imageUrl,
             value_en: imageUrl,
-            type: 'image',
             category: 'background',
             display_order: 0,
             is_active: true,
