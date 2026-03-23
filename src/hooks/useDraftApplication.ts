@@ -80,7 +80,7 @@ export function useDraftApplication() {
         visa_type_id: applicationData.visaTypeId,
         travel_date: applicationData.travelDate ? applicationData.travelDate.toISOString().split('T')[0] : null,
         status: 'draft' as const,
-        draft_data: {
+        draft_data: JSON.parse(JSON.stringify({
           fullName: applicationData.fullName,
           email: applicationData.email,
           phone: applicationData.phone,
@@ -88,7 +88,7 @@ export function useDraftApplication() {
           travelers: applicationData.travelers,
           checkedRequirements: applicationData.checkedRequirements,
           currentStep,
-        },
+        })),
       };
 
       let result;

@@ -175,7 +175,7 @@ function ApplyContent() {
           travelers: applicationData.travelers,
           checkedRequirements: applicationData.checkedRequirements,
           currentStep,
-        },
+        })),
       };
 
       let result;
