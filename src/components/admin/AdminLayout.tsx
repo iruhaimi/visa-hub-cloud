@@ -9,28 +9,20 @@ import {
   Users, 
   Settings,
   LogOut,
-  Menu,
-  ChevronLeft,
   Gift,
   RotateCcw,
   Image,
-   ShieldAlert,
-   UserCheck,
-   ArrowLeftRight,
-   Crown,
-   Shield,
-   FileSearch,
-   PanelBottom
+  ShieldAlert,
+  UserCheck,
+  ArrowLeftRight,
+  Crown,
+  Shield,
+  FileSearch,
+  PanelBottom
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 export default function AdminLayout() {
   const { direction } = useLanguage();
@@ -39,17 +31,6 @@ export default function AdminLayout() {
   const { hasPermission, isSuperAdmin } = usePermissions();
   const location = useLocation();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1280);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1280) {
-        setSidebarOpen(false);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const menuItems = [
     {
@@ -83,45 +64,45 @@ export default function AdminLayout() {
       show: isAdmin && hasPermission('process_refunds'),
     },
     {
-      title: 'إدارة Hero',
+      title: 'إدارة الهيرو',
       icon: Image,
       href: '/admin/hero',
       show: isAdmin && hasPermission('manage_hero'),
     },
     {
-      title: 'سجل محاولات الدخول',
-      icon: ShieldAlert,
-      href: '/admin/login-attempts',
-      show: isAdmin && hasPermission('manage_staff'),
+      title: 'إدارة الفوتر',
+      icon: PanelBottom,
+      href: '/admin/footer',
+      show: isAdmin && hasPermission('manage_settings'),
     },
     {
-      title: 'طلبات فك القفل',
+      title: 'طلبات فتح الحساب',
       icon: UserCheck,
       href: '/admin/unlock-requests',
       show: isAdmin && hasPermission('manage_unlock_requests'),
     },
     {
-      title: 'طلبات الوكلاء',
+      title: 'سجل محاولات الدخول',
+      icon: Shield,
+      href: '/admin/login-attempts',
+      show: isAdmin && hasPermission('manage_users'),
+    },
+    {
+      title: 'سجل الوصول للمستندات',
+      icon: FileSearch,
+      href: '/admin/document-access-logs',
+      show: isAdmin && hasPermission('manage_applications'),
+    },
+    {
+      title: 'طلبات نقل الطلبات',
       icon: ArrowLeftRight,
       href: '/admin/agent-requests',
       show: isAdmin && hasPermission('manage_applications'),
     },
     {
       title: 'العمليات الحساسة',
-      icon: Shield,
+      icon: ShieldAlert,
       href: '/admin/sensitive-operations',
-      show: isAdmin && isSuperAdmin,
-    },
-    {
-      title: 'سجلات وصول المستندات',
-      icon: FileSearch,
-      href: '/admin/document-logs',
-      show: isAdmin && isSuperAdmin,
-    },
-    {
-      title: 'إدارة الـ Footer',
-      icon: PanelBottom,
-      href: '/admin/footer',
       show: isAdmin && isSuperAdmin,
     },
     {
@@ -139,142 +120,94 @@ export default function AdminLayout() {
   ];
 
   const handleSignOut = async () => {
-    await signOut(true); // Pass true to redirect to staff portal
+    await signOut(true);
   };
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <div className={cn("flex min-h-screen bg-muted/30", isRTL && "flex-row-reverse")}>
-        {/* Sidebar */}
-        <aside
-          className={cn(
-            "fixed top-0 z-40 h-screen bg-card border-e transition-all duration-300",
-            isRTL ? "right-0" : "left-0",
-            sidebarOpen ? "w-64" : "w-16"
-          )}
-        >
-          {/* Logo */}
-          <div className="flex h-16 items-center justify-between border-b px-4">
-            {sidebarOpen && (
-            <Link to="/" className="text-xl font-bold text-primary">
-              عطلات رحلاتكم
-            </Link>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
-                  {sidebarOpen ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side={isRTL ? "left" : "right"}>
-                {sidebarOpen ? 'تصغير القائمة' : 'توسيع القائمة'}
-              </TooltipContent>
-            </Tooltip>
-          </div>
+    <div className={cn("flex min-h-screen bg-muted/30", isRTL && "flex-row-reverse")}>
+      {/* Sidebar - always visible */}
+      <aside
+        className={cn(
+          "fixed top-0 z-40 h-screen bg-card border-e w-64",
+          isRTL ? "right-0" : "left-0"
+        )}
+      >
+        {/* Logo */}
+        <div className="flex h-16 items-center border-b px-4">
+          <Link to="/" className="text-xl font-bold text-primary">
+            عطلات رحلاتكم
+          </Link>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex flex-col gap-2 p-4">
-            {menuItems.filter(item => item.show).map((item) => {
-              const isActive = location.pathname === item.href;
-              
-              const linkContent = (
-                <Link
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                    isActive 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  {sidebarOpen && <span>{item.title}</span>}
-                </Link>
-              );
+        {/* Navigation */}
+        <nav className="flex flex-col gap-2 p-4">
+          {menuItems.filter(item => item.show).map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                  isActive 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+                <span>{item.title}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
-              // Show tooltip only when sidebar is collapsed
-              if (!sidebarOpen) {
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>
-                      {linkContent}
-                    </TooltipTrigger>
-                    <TooltipContent side={isRTL ? "left" : "right"}>
-                      {item.title}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
-
-              return <div key={item.href}>{linkContent}</div>;
-            })}
-          </nav>
-
-          {/* User & Logout */}
-          <div className="absolute bottom-0 left-0 right-0 border-t p-4">
-            {sidebarOpen && (
-              <div className="mb-3 text-sm">
-                <p className="font-medium flex items-center gap-2">
-                  {profile?.full_name || 'المستخدم'}
-                  {isSuperAdmin ? (
-                    <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                      <Crown className="h-2.5 w-2.5 mr-0.5" />
-                      مالك
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">
-                      {isAdmin ? 'مشرف' : 'وكيل'}
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={cn("w-full justify-start gap-3", !sidebarOpen && "justify-center")}
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="h-5 w-5" />
-                  {sidebarOpen && <span>تسجيل الخروج</span>}
-                </Button>
-              </TooltipTrigger>
-              {!sidebarOpen && (
-                <TooltipContent side={isRTL ? "left" : "right"}>
-                  تسجيل الخروج
-                </TooltipContent>
+        {/* User & Logout */}
+        <div className="absolute bottom-0 left-0 right-0 border-t p-4">
+          <div className="mb-3 text-sm">
+            <p className="font-medium flex items-center gap-2">
+              {profile?.full_name || 'المستخدم'}
+              {isSuperAdmin ? (
+                <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                  <Crown className="h-2.5 w-2.5 mr-0.5" />
+                  مالك
+                </Badge>
+              ) : (
+                <span className="text-muted-foreground text-xs">
+                  {isAdmin ? 'مشرف' : 'وكيل'}
+                </span>
               )}
-            </Tooltip>
+            </p>
           </div>
-        </aside>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-5 w-5" />
+            <span>تسجيل الخروج</span>
+          </Button>
+        </div>
+      </aside>
 
-        {/* Main Content */}
-        <main
-          className={cn(
-            "flex-1 transition-all duration-300",
-            isRTL 
-              ? (sidebarOpen ? "mr-64" : "mr-16")
-              : (sidebarOpen ? "ml-64" : "ml-16")
-          )}
-        >
-          {/* Top Bar */}
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
-            <h1 className="text-lg font-semibold">
-              {isAdmin ? 'لوحة تحكم المشرف' : 'لوحة تحكم الوكيل'}
-            </h1>
-          </header>
+      {/* Main Content */}
+      <main
+        className={cn(
+          "flex-1",
+          isRTL ? "mr-64" : "ml-64"
+        )}
+      >
+        {/* Top Bar */}
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
+          <h1 className="text-lg font-semibold">
+            {isAdmin ? 'لوحة تحكم المشرف' : 'لوحة تحكم الوكيل'}
+          </h1>
+        </header>
 
-          {/* Page Content */}
-          <div className="p-6">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </TooltipProvider>
+        {/* Page Content */}
+        <div className="p-6">
+          <Outlet />
+        </div>
+      </main>
+    </div>
   );
 }
