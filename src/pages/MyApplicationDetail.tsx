@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -77,6 +77,11 @@ export default function MyApplicationDetail() {
   const [application, setApplication] = useState<ApplicationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Redirect immediately when there is no application ID in the URL
+  if (!applicationId) {
+    return <Navigate to="/my-applications" replace />;
+  }
 
   useEffect(() => {
     if (applicationId && user) {

@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -37,7 +37,8 @@ function ApplyContent() {
   } = useApplication();
   
   const lastSavedStep = useRef(0);
-  const isSaving = useRef(false);
+  const isSavingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Pre-fill country if coming from country page
   const { data: country, isLoading: countryLoading } = useQuery({
@@ -163,11 +164,12 @@ function ApplyContent() {
 
   // Auto-save draft when step changes
   const saveDraft = useCallback(async () => {
-    if (!profile || !applicationData.visaTypeId || isSaving.current) return;
+    if (!profile || !applicationData.visaTypeId || isSavingRef.current) return;
     if (currentStep === lastSavedStep.current) return;
-    
-    isSaving.current = true;
-    
+
+    isSavingRef.current = true;
+    setIsSaving(true);
+
     try {
       const draftPayload = {
         user_id: profile.id,
@@ -216,7 +218,8 @@ function ApplyContent() {
     } catch (error) {
       console.error('Error saving draft:', error);
     } finally {
-      isSaving.current = false;
+      isSavingRef.current = false;
+      setIsSaving(false);
     }
   }, [profile, applicationData, currentStep, draftId, setDraftId]);
 
@@ -301,7 +304,7 @@ function ApplyContent() {
             {/* Draft Save Indicator */}
             {draftId && profile && (
               <Badge variant="secondary" className="gap-1 text-xs">
-                {isSaving.current ? (
+                {isSaving ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
                   <Save className="w-3 h-3" />
