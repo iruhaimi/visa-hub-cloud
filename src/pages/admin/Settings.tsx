@@ -134,7 +134,7 @@ export default function Settings() {
 
         {/* Tabs */}
         <Tabs defaultValue="countries" className="w-full">
-          <TabsList className="w-full max-w-xl grid grid-cols-3 p-1 bg-muted/50">
+          <TabsList className={cn("w-full max-w-xl p-1 bg-muted/50 grid", isSuperAdmin ? "grid-cols-3" : "grid-cols-2")}>
             <TabsTrigger 
               value="countries" 
               className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -155,13 +155,15 @@ export default function Settings() {
                 {visaTypes?.length || 0}
               </span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="permissions" 
-              className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <Shield className="h-4 w-4" />
-              <span>الصلاحيات</span>
-            </TabsTrigger>
+            {isSuperAdmin && (
+              <TabsTrigger 
+                value="permissions" 
+                className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              >
+                <Shield className="h-4 w-4" />
+                <span>الصلاحيات</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="countries" className="mt-6">
