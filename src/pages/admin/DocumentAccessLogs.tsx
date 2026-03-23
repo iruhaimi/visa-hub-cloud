@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -56,9 +57,16 @@ interface DocumentAccessLog {
 
 export default function DocumentAccessLogs() {
   const { direction } = useLanguage();
-  const { isSuperAdmin, hasPermission } = usePermissions();
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
   const { isAdmin } = useAuth();
   const isRTL = direction === 'rtl';
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [permLoading, isSuperAdmin, navigate]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [accessTypeFilter, setAccessTypeFilter] = useState<string>('all');

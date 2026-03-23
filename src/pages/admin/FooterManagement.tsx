@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -85,6 +87,14 @@ const iconOptions = [
 
 export default function FooterManagement() {
   const queryClient = useQueryClient();
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [permLoading, isSuperAdmin, navigate]);
   const [editingItem, setEditingItem] = useState<FooterSetting | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('contact');

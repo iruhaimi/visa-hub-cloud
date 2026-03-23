@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -105,6 +107,8 @@ const ROLE_OPTIONS: { value: AppRole; label: string; description: string }[] = [
 
 export default function UsersManagement() {
   const { user, isAdmin } = useAuth();
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -142,9 +146,13 @@ export default function UsersManagement() {
   const itemsPerPage = 10;
 
   useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+      return;
+    }
     fetchUsers();
     fetchActivityLog();
-  }, []);
+  }, [permLoading, isSuperAdmin]);
 
   const fetchUsers = async () => {
     setLoading(true);
