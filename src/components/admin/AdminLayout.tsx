@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
   Settings,
   LogOut,
   Gift,
@@ -18,7 +17,7 @@ import {
   Crown,
   Shield,
   FileSearch,
-  PanelBottom
+  PanelBottom,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -27,10 +26,9 @@ import { Badge } from '@/components/ui/badge';
 export default function AdminLayout() {
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
-  const { profile, isAdmin, isAgent, signOut } = useAuth();
+  const { profile, isAdmin, signOut } = useAuth();
   const { hasPermission, isSuperAdmin } = usePermissions();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const menuItems = [
     {
@@ -124,86 +122,65 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className={cn("flex min-h-screen bg-muted/30", isRTL && "flex-row-reverse")}>
-      {/* Sidebar - always visible */}
-      <aside
-        className={cn(
-          "fixed top-0 z-40 h-screen bg-card border-e w-64",
-          isRTL ? "right-0" : "left-0"
-        )}
-      >
-        {/* Logo */}
+    <div className={cn('flex min-h-screen w-full bg-muted/30', isRTL && 'flex-row-reverse')}>
+      <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-e bg-card">
         <div className="flex h-16 items-center border-b px-4">
           <Link to="/" className="text-xl font-bold text-primary">
             عطلات رحلاتكم
           </Link>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex flex-col gap-2 p-4">
-          {menuItems.filter(item => item.show).map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                  isActive 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <item.icon className="h-5 w-5 shrink-0" />
-                <span>{item.title}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-2 overflow-y-auto p-4">
+          {menuItems
+            .filter((item) => item.show)
+            .map((item) => {
+              const isActive = location.pathname === item.href;
+
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  <span>{item.title}</span>
+                </Link>
+              );
+            })}
         </nav>
 
-        {/* User & Logout */}
-        <div className="absolute bottom-0 left-0 right-0 border-t p-4">
+        <div className="border-t p-4">
           <div className="mb-3 text-sm">
-            <p className="font-medium flex items-center gap-2">
+            <p className="flex items-center gap-2 font-medium">
               {profile?.full_name || 'المستخدم'}
               {isSuperAdmin ? (
-                <Badge className="text-[10px] px-1.5 py-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                  <Crown className="h-2.5 w-2.5 mr-0.5" />
+                <Badge className="border-0 bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
+                  <Crown className="mr-0.5 h-2.5 w-2.5" />
                   مالك
                 </Badge>
               ) : (
-                <span className="text-muted-foreground text-xs">
-                  {isAdmin ? 'مشرف' : 'وكيل'}
-                </span>
+                <span className="text-xs text-muted-foreground">{isAdmin ? 'مشرف' : 'وكيل'}</span>
               )}
             </p>
           </div>
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3"
-            onClick={handleSignOut}
-          >
+
+          <Button variant="ghost" className="w-full justify-start gap-3" onClick={handleSignOut}>
             <LogOut className="h-5 w-5" />
             <span>تسجيل الخروج</span>
           </Button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main
-        className={cn(
-          "flex-1",
-          isRTL ? "mr-64" : "ml-64"
-        )}
-      >
-        {/* Top Bar */}
+      <main className="min-w-0 flex-1">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
-          <h1 className="text-lg font-semibold">
-            {isAdmin ? 'لوحة تحكم المشرف' : 'لوحة تحكم الوكيل'}
-          </h1>
+          <h1 className="text-lg font-semibold">{isAdmin ? 'لوحة تحكم المشرف' : 'لوحة تحكم الوكيل'}</h1>
         </header>
 
-        {/* Page Content */}
         <div className="p-6">
           <Outlet />
         </div>
