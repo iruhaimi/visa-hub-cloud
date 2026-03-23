@@ -32,6 +32,7 @@ export default function PaymentSuccess() {
         .from('applications')
         .update({
           status: 'submitted' as const,
+          draft_data: null,
           submitted_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
