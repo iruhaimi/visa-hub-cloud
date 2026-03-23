@@ -338,7 +338,7 @@ export default function TrackRefund() {
           </div>
         </div>
       </main>
-      <Footer />
+      <FooterArabic />
       <FloatingWhatsApp />
     </div>
   );

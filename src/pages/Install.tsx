@@ -234,7 +234,7 @@ export default function Install() {
         </div>
       </div>
       </main>
-      <Footer />
+      <FooterArabic />
     </div>
   );
 }
