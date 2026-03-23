@@ -92,7 +92,7 @@ export default function SecureStaffAuth() {
   };
 
   // Generate 2FA code via Edge Function (uses service_role for DB insert)
-  const generate2FACode = async (userId: string, userEmail: string): Promise<{ code: string; emailSent: boolean }> => {
+  const generate2FACode = async (userId: string, userEmail: string): Promise<{ emailSent: boolean }> => {
     try {
       const { data, error: sendError } = await supabase.functions.invoke('send-staff-2fa', {
         body: { 
@@ -111,10 +111,9 @@ export default function SecureStaffAuth() {
         throw new Error(data.error);
       }
       
-      const emailSent = data?.emailSent === true;
-      const code = data?.code || ''; // Code returned in test/fallback mode
+      const emailSent = data?.emailSent === true || data?.smsSent === true;
       
-      return { code, emailSent };
+      return { emailSent };
     } catch (err) {
       console.error('Error in generate2FACode:', err);
       throw err;
