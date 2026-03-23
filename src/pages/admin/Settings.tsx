@@ -183,9 +183,11 @@ export default function Settings() {
             />
           </TabsContent>
 
-          <TabsContent value="permissions" className="mt-6">
-            <PermissionsSettings />
-          </TabsContent>
+          {isSuperAdmin && (
+            <TabsContent value="permissions" className="mt-6">
+              <PermissionsSettings />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </TooltipProvider>
