@@ -3,6 +3,8 @@ import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -55,7 +57,7 @@ const paymentMethods = [
 
 export default function Step6Payment() {
   const { t, direction, language } = useLanguage();
-  const { applicationData, updateApplicationData, calculateTotal, goToPreviousStep, resetApplication } = useApplication();
+  const { applicationData, updateApplicationData, calculateTotal, goToPreviousStep, resetApplication, draftId } = useApplication();
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -76,19 +78,44 @@ export default function Step6Payment() {
 
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    // Generate application number
-    const appNumber = `VISA-${Date.now().toString(36).toUpperCase()}`;
-    
-    setIsProcessing(false);
-    
-    // Navigate to success page
-    navigate(`/payment-success?app=${appNumber}`);
-    
-    // Reset application
-    setTimeout(() => resetApplication(), 1000);
+    try {
+      // Update application status in database
+      if (draftId) {
+        const { error } = await supabase
+          .from('applications')
+          .update({
+            status: 'pending_payment' as const,
+            draft_data: null as unknown as Json,
+            submitted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', draftId);
+
+        if (error) throw error;
+      }
+
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      // Generate application number
+      const appNumber = `VISA-${Date.now().toString(36).toUpperCase()}`;
+      
+      setIsProcessing(false);
+      
+      // Navigate to success page
+      navigate(`/payment-success?app=${appNumber}`);
+      
+      // Reset application
+      setTimeout(() => resetApplication(), 1000);
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      setIsProcessing(false);
+      toast({
+        title: direction === 'rtl' ? 'خطأ' : 'Error',
+        description: direction === 'rtl' ? 'حدث خطأ أثناء تقديم الطلب' : 'An error occurred while submitting the application',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
