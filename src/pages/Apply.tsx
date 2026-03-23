@@ -216,7 +216,7 @@ function ApplyContent() {
     } catch (error) {
       console.error('Error saving draft:', error);
     } finally {
-      isSaving.current = false;
+      setIsSaving(false);
     }
   }, [profile, applicationData, currentStep, draftId, setDraftId]);
 
