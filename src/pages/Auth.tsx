@@ -314,6 +314,40 @@ export default function Auth() {
                   </form>
                 )
               ) : isSignUp ? (
+                signUpSuccess ? (
+                  <div className="text-center space-y-4">
+                    <div className="flex justify-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                        <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold">
+                      {isRTL ? 'تم إنشاء الحساب بنجاح!' : 'Account Created!'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {isRTL 
+                        ? 'تم إرسال رابط التفعيل إلى بريدك الإلكتروني. يرجى فتح البريد والنقر على رابط التأكيد لتفعيل حسابك.'
+                        : 'A verification link has been sent to your email. Please open your email and click the confirmation link to activate your account.'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {isRTL 
+                        ? 'بعد التفعيل يمكنك تسجيل الدخول والبدء بالتقديم.'
+                        : 'After verification, you can sign in and start applying.'}
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setSignUpSuccess(false);
+                        setIsSignUp(false);
+                      }}
+                    >
+                      {isRTL ? 'العودة لتسجيل الدخول' : 'Back to Sign In'}
+                    </Button>
+                  </div>
+                ) : (
                 <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                   <div className="space-y-2">
                     <Label>{isRTL ? 'الاسم الكامل' : 'Full Name'}</Label>
