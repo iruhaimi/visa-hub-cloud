@@ -379,6 +379,14 @@ const MyApplications = () => {
                           </Link>
                         </Button>
                       )}
+                      {isPendingPayment && (
+                        <Button asChild variant="default" size="sm">
+                          <Link to={`/apply?draft=${app.id}`}>
+                            <RefreshCw className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {isRTL ? 'إعادة الدفع' : 'Retry Payment'}
+                          </Link>
+                        </Button>
+                      )}
                       <Button asChild variant="outline" size="sm">
                         <Link to={`/application?id=${app.id}`}>
                           <Eye className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
