@@ -78,19 +78,48 @@ export default function Step6Payment() {
 
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    // Generate application number
-    const appNumber = `VISA-${Date.now().toString(36).toUpperCase()}`;
-    
-    setIsProcessing(false);
-    
-    // Navigate to success page
-    navigate(`/payment-success?app=${appNumber}`);
-    
-    // Reset application
-    setTimeout(() => resetApplication(), 1000);
+    try {
+      // Update application status in database
+      if (applicationData.draftId) {
+        const { error } = await supabase
+          .from('applications')
+          .update({
+            status: 'pending_payment' as const,
+            purpose_of_travel: applicationData.purposeOfTravel || null,
+            accommodation_details: applicationData.accommodationDetails || null,
+            emergency_contact_name: applicationData.emergencyContactName || null,
+            emergency_contact_phone: applicationData.emergencyContactPhone || null,
+            draft_data: null as unknown as Json,
+            submitted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', applicationData.draftId);
+
+        if (error) throw error;
+      }
+
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      // Generate application number
+      const appNumber = `VISA-${Date.now().toString(36).toUpperCase()}`;
+      
+      setIsProcessing(false);
+      
+      // Navigate to success page
+      navigate(`/payment-success?app=${appNumber}`);
+      
+      // Reset application
+      setTimeout(() => resetApplication(), 1000);
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      setIsProcessing(false);
+      toast({
+        title: direction === 'rtl' ? 'خطأ' : 'Error',
+        description: direction === 'rtl' ? 'حدث خطأ أثناء تقديم الطلب' : 'An error occurred while submitting the application',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
