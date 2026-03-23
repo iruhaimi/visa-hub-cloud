@@ -175,22 +175,7 @@ export default function Auth() {
         description: message,
       });
     } else {
-      toast({
-        title: 'تم إنشاء الحساب!',
-        description: 'مرحباً بك في عطلات رحلاتكم! يرجى استكمال بياناتك الشخصية.',
-      });
-
-      // Show profile completion reminder for new users
-      setTimeout(() => {
-        toast({
-          title: isRTL ? 'أكمل ملفك الشخصي' : 'Complete Your Profile',
-          description: isRTL 
-            ? 'يرجى استكمال بياناتك الشخصية وبيانات جواز السفر لتسهيل عملية التقديم على التأشيرة.'
-            : 'Please complete your personal and passport details to facilitate your visa application.',
-        });
-      }, 1500);
-
-      navigate('/profile');
+      setSignUpSuccess(true);
     }
   };
 
