@@ -80,20 +80,16 @@ export default function Step6Payment() {
     
     try {
       // Update application status in database
-      if (applicationData.draftId) {
+      if (draftId) {
         const { error } = await supabase
           .from('applications')
           .update({
             status: 'pending_payment' as const,
-            purpose_of_travel: applicationData.purposeOfTravel || null,
-            accommodation_details: applicationData.accommodationDetails || null,
-            emergency_contact_name: applicationData.emergencyContactName || null,
-            emergency_contact_phone: applicationData.emergencyContactPhone || null,
             draft_data: null as unknown as Json,
             submitted_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
-          .eq('id', applicationData.draftId);
+          .eq('id', draftId);
 
         if (error) throw error;
       }
