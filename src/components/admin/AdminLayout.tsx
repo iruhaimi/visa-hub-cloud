@@ -156,7 +156,7 @@ export default function AdminLayout() {
 
         <div className="border-t p-4">
           <div className="mb-3 text-sm">
-            <p className="flex items-center gap-2 font-medium">
+            <div className="flex items-center gap-2 font-medium">
               {profile?.full_name || 'المستخدم'}
               {isSuperAdmin ? (
                 <Badge className="border-0 bg-primary text-primary-foreground text-[10px] px-1.5 py-0">
@@ -166,7 +166,7 @@ export default function AdminLayout() {
               ) : (
                 <span className="text-xs text-muted-foreground">{isAdmin ? 'مشرف' : 'وكيل'}</span>
               )}
-            </p>
+            </div>
           </div>
 
           <Button variant="ghost" className="w-full justify-start gap-3" onClick={handleSignOut}>
