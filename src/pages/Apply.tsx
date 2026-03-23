@@ -163,10 +163,10 @@ function ApplyContent() {
 
   // Auto-save draft when step changes
   const saveDraft = useCallback(async () => {
-    if (!profile || !applicationData.visaTypeId || isSaving.current) return;
+    if (!profile || !applicationData.visaTypeId || isSaving) return;
     if (currentStep === lastSavedStep.current) return;
     
-    isSaving.current = true;
+    setIsSaving(true);
     
     try {
       const draftPayload = {
