@@ -257,10 +257,14 @@ export default function SecureStaffAuth() {
         .eq('id', codeData.id);
 
       // Re-authenticate
+      const savedPassword = password;
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
-        password,
+        password: savedPassword,
       });
+
+      // Clear password from state immediately after use
+      setPassword('');
 
       if (signInError) {
         return false;
