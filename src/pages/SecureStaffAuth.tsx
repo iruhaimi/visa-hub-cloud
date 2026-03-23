@@ -269,6 +269,9 @@ export default function SecureStaffAuth() {
       // Log successful attempt
       await logLoginAttempt(true);
 
+      // Clear password from state now that authentication is complete
+      setPassword('');
+
       // Check if this is first login (needs recovery codes)
       if (pendingSession.needsRecoveryCodes) {
         const codes = await generateAndSaveRecoveryCodes(pendingUserId);
@@ -279,7 +282,7 @@ export default function SecureStaffAuth() {
       }
 
       toast.success('تم تسجيل الدخول بنجاح');
-      
+
       if (pendingSession.isAdmin) {
         navigate('/admin');
       } else {
