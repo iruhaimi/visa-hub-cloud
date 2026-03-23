@@ -85,7 +85,7 @@ export default function MobileNavDrawer({ isOpen, onClose }: MobileNavDrawerProp
   const getDashboardLink = () => {
     if (isAdmin) return '/admin';
     if (isAgent) return '/agent';
-    return '/dashboard';
+    return '/my-applications';
   };
 
   const handleSignOut = async () => {

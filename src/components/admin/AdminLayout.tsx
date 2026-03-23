@@ -88,7 +88,7 @@ export default function AdminLayout() {
     {
       title: 'سجل الوصول للمستندات',
       icon: FileSearch,
-      href: '/admin/document-access-logs',
+      href: '/admin/document-logs',
       show: isAdmin && isSuperAdmin,
     },
     {
