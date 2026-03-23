@@ -172,14 +172,7 @@ export function useDraftApplication() {
       setCurrentDraftId(draftId);
       
       // Parse stored draft data
-      let storedData: any = {};
-      if (data.purpose_of_travel) {
-        try {
-          storedData = JSON.parse(data.purpose_of_travel);
-        } catch {
-          storedData = {};
-        }
-      }
+      const storedData: any = data.draft_data ?? {};
       
       const visa = data.visa_type as any;
       const country = visa?.country;

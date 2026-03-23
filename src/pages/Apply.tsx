@@ -167,7 +167,7 @@ function ApplyContent() {
         visa_type_id: applicationData.visaTypeId,
         travel_date: applicationData.travelDate ? applicationData.travelDate.toISOString().split('T')[0] : null,
         status: 'draft' as const,
-        purpose_of_travel: JSON.stringify({
+        draft_data: {
           fullName: applicationData.fullName,
           email: applicationData.email,
           phone: applicationData.phone,
@@ -175,7 +175,7 @@ function ApplyContent() {
           travelers: applicationData.travelers,
           checkedRequirements: applicationData.checkedRequirements,
           currentStep,
-        }),
+        },
       };
 
       let result;
