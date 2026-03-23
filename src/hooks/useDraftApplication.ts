@@ -80,7 +80,7 @@ export function useDraftApplication() {
         visa_type_id: applicationData.visaTypeId,
         travel_date: applicationData.travelDate ? applicationData.travelDate.toISOString().split('T')[0] : null,
         status: 'draft' as const,
-        purpose_of_travel: JSON.stringify({
+        draft_data: JSON.parse(JSON.stringify({
           fullName: applicationData.fullName,
           email: applicationData.email,
           phone: applicationData.phone,
@@ -88,7 +88,7 @@ export function useDraftApplication() {
           travelers: applicationData.travelers,
           checkedRequirements: applicationData.checkedRequirements,
           currentStep,
-        }),
+        })),
       };
 
       let result;
@@ -150,7 +150,7 @@ export function useDraftApplication() {
           id,
           visa_type_id,
           travel_date,
-          purpose_of_travel,
+          draft_data,
           visa_type:visa_types(
             id,
             name,
@@ -172,14 +172,7 @@ export function useDraftApplication() {
       setCurrentDraftId(draftId);
       
       // Parse stored draft data
-      let storedData: any = {};
-      if (data.purpose_of_travel) {
-        try {
-          storedData = JSON.parse(data.purpose_of_travel);
-        } catch {
-          storedData = {};
-        }
-      }
+      const storedData: any = data.draft_data ?? {};
       
       const visa = data.visa_type as any;
       const country = visa?.country;
