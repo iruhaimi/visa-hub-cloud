@@ -205,15 +205,13 @@ export default function SecureStaffAuth() {
         
         // Generate and send 2FA code
         try {
-          const { code, emailSent } = await generate2FACode(data.user.id, data.user.email!);
+          const { emailSent } = await generate2FACode(data.user.id, data.user.email!);
           
           if (emailSent) {
             toast.success('تم إرسال رمز التحقق إلى بريدك الإلكتروني');
           } else {
-            // DEV MODE: Show code in toast when email is not configured
-            toast.info(`وضع التطوير - رمز التحقق: ${code}`, {
-              duration: 30000,
-              description: 'لم يتم إعداد البريد الإلكتروني بعد'
+            toast.info('تم إنشاء رمز التحقق. يرجى التحقق من بريدك الإلكتروني أو التواصل مع المسؤول.', {
+              duration: 10000,
             });
           }
         } catch (sendError) {
