@@ -107,6 +107,8 @@ const ROLE_OPTIONS: { value: AppRole; label: string; description: string }[] = [
 
 export default function UsersManagement() {
   const { user, isAdmin } = useAuth();
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   
