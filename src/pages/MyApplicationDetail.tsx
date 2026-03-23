@@ -73,6 +73,7 @@ export default function MyApplicationDetail() {
   const { user, profile } = useAuth();
   const { language } = useLanguage();
   const isRTL = language === 'ar';
+  const navigate = useNavigate();
 
   const [application, setApplication] = useState<ApplicationData | null>(null);
   const [loading, setLoading] = useState(true);
