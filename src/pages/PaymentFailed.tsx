@@ -1,5 +1,7 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -14,6 +16,33 @@ import { motion } from 'framer-motion';
 
 export default function PaymentFailed() {
   const { direction } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const applicationId = searchParams.get('id');
+  const hasReset = useRef(false);
+
+  // Reset application from pending_payment back to draft so user can retry
+  useEffect(() => {
+    if (!applicationId || hasReset.current) return;
+    hasReset.current = true;
+
+    const resetApplication = async () => {
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          status: 'draft' as const,
+          submitted_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', applicationId)
+        .eq('status', 'pending_payment' as const);
+
+      if (error) {
+        console.error('Error resetting application:', error);
+      }
+    };
+
+    resetApplication();
+  }, [applicationId]);
 
   const content = direction === 'rtl' ? {
     title: 'فشل الدفع',
@@ -107,9 +136,11 @@ export default function PaymentFailed() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <Button className="w-full h-12 gap-2">
-                <RefreshCw className="w-4 h-4" />
-                {content.tryAgain}
+              <Button asChild className="w-full h-12 gap-2">
+                <Link to={applicationId ? `/apply?draft=${applicationId}` : '/destinations'}>
+                  <RefreshCw className="w-4 h-4" />
+                  {content.tryAgain}
+                </Link>
               </Button>
               
               <div className="grid grid-cols-2 gap-3">
