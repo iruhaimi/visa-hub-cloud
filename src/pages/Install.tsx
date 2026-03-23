@@ -12,8 +12,8 @@ import {
   Chrome,
   Apple
 } from 'lucide-react';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+import HeaderArabic from '@/components/layout/HeaderArabic';
+import FooterArabic from '@/components/layout/FooterArabic';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
