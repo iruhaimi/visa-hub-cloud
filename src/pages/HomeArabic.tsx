@@ -16,8 +16,6 @@ import CTASection from '@/components/home/CTASection';
 
 export default function HomeArabic() {
   const { t } = useLanguage();
-  const { user, isAdmin, isAgent, isLoading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [countries, setCountries] = useState<Country[]>([]);
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
