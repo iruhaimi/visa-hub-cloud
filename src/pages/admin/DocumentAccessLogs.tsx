@@ -56,9 +56,16 @@ interface DocumentAccessLog {
 
 export default function DocumentAccessLogs() {
   const { direction } = useLanguage();
-  const { isSuperAdmin, hasPermission } = usePermissions();
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
   const { isAdmin } = useAuth();
   const isRTL = direction === 'rtl';
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [permLoading, isSuperAdmin, navigate]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [accessTypeFilter, setAccessTypeFilter] = useState<string>('all');

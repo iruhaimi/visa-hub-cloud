@@ -74,6 +74,14 @@ interface HeroSetting {
 export default function HeroManagement() {
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [permLoading, isSuperAdmin, navigate]);
 
   return (
     <div className={cn("space-y-6", isRTL && "text-right")}>

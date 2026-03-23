@@ -87,6 +87,14 @@ const iconOptions = [
 
 export default function FooterManagement() {
   const queryClient = useQueryClient();
+  const { isSuperAdmin, loading: permLoading } = usePermissions();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!permLoading && !isSuperAdmin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [permLoading, isSuperAdmin, navigate]);
   const [editingItem, setEditingItem] = useState<FooterSetting | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('contact');
