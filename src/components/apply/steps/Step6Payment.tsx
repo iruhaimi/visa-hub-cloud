@@ -85,7 +85,6 @@ export default function Step6Payment() {
           .from('applications')
           .update({
             status: 'pending_payment' as const,
-            draft_data: null as unknown as Json,
             submitted_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
