@@ -12,8 +12,8 @@ import {
   Chrome,
   Apple
 } from 'lucide-react';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+import HeaderArabic from '@/components/layout/HeaderArabic';
+import FooterArabic from '@/components/layout/FooterArabic';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -70,7 +70,7 @@ export default function Install() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <HeaderArabic />
       <main className="flex-1">
         <div className={cn(
           "min-h-screen py-12 px-4",
@@ -234,7 +234,7 @@ export default function Install() {
         </div>
       </div>
       </main>
-      <Footer />
+      <FooterArabic />
     </div>
   );
 }

@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+import HeaderArabic from '@/components/layout/HeaderArabic';
+import FooterArabic from '@/components/layout/FooterArabic';
 import FloatingWhatsApp from '@/components/layout/FloatingWhatsApp';
 import { filterArabicChars } from '@/lib/inputFilters';
 import {
@@ -135,7 +135,7 @@ export default function TrackRefund() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <HeaderArabic />
       <main className="flex-1">
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12">
           <div className="container max-w-2xl mx-auto px-4">
@@ -338,7 +338,7 @@ export default function TrackRefund() {
           </div>
         </div>
       </main>
-      <Footer />
+      <FooterArabic />
       <FloatingWhatsApp />
     </div>
   );
