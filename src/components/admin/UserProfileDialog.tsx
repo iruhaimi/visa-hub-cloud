@@ -20,7 +20,8 @@ import {
   Check,
   X,
   Mail,
-  Copy
+  Copy,
+  Crown
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -65,6 +66,7 @@ export function UserProfileDialog({
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -74,6 +76,7 @@ export function UserProfileDialog({
   useEffect(() => {
     if (user && open) {
       fetchUserStats();
+      fetchOwnerStatus();
       setFormData({
         full_name: user.full_name || '',
         phone: user.phone || '',
@@ -82,6 +85,17 @@ export function UserProfileDialog({
       setIsEditing(false);
     }
   }, [user, open]);
+
+  const fetchOwnerStatus = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('staff_permissions')
+      .select('id')
+      .eq('user_id', user.user_id)
+      .eq('permission', 'manage_staff')
+      .maybeSingle();
+    setIsOwner(!!data);
+  };
 
   const fetchUserStats = async () => {
     if (!user) return;
@@ -317,11 +331,21 @@ export function UserProfileDialog({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {user.roles.length > 0 ? (
-                    user.roles.map((role) => (
-                      <Badge key={role} variant={ROLE_LABELS[role].variant}>
-                        {ROLE_LABELS[role].label}
-                      </Badge>
-                    ))
+                    user.roles.map((role) => {
+                      if (role === 'admin' && isOwner) {
+                        return (
+                          <Badge key={role} className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                            <Crown className="h-3 w-3 ml-1" />
+                            مالك
+                          </Badge>
+                        );
+                      }
+                      return (
+                        <Badge key={role} variant={ROLE_LABELS[role].variant}>
+                          {ROLE_LABELS[role].label}
+                        </Badge>
+                      );
+                    })
                   ) : (
                     <span className="text-muted-foreground text-sm">لا توجد صلاحيات</span>
                   )}
