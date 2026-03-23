@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -73,13 +73,18 @@ export default function MyApplicationDetail() {
   const { user, profile } = useAuth();
   const { language } = useLanguage();
   const isRTL = language === 'ar';
+  const navigate = useNavigate();
 
   const [application, setApplication] = useState<ApplicationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (applicationId && user) {
+    if (!applicationId) {
+      navigate('/my-applications', { replace: true });
+      return;
+    }
+    if (user) {
       fetchApplication();
     }
   }, [applicationId, user]);
