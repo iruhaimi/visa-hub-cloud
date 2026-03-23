@@ -37,7 +37,7 @@ function ApplyContent() {
   } = useApplication();
   
   const lastSavedStep = useRef(0);
-  const isSaving = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Pre-fill country if coming from country page
   const { data: country, isLoading: countryLoading } = useQuery({
