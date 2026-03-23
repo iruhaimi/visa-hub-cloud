@@ -57,7 +57,7 @@ const paymentMethods = [
 
 export default function Step6Payment() {
   const { t, direction, language } = useLanguage();
-  const { applicationData, updateApplicationData, calculateTotal, goToPreviousStep, resetApplication } = useApplication();
+  const { applicationData, updateApplicationData, calculateTotal, goToPreviousStep, resetApplication, draftId } = useApplication();
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
