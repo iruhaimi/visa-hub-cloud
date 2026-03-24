@@ -113,9 +113,19 @@ Deno.serve(async (req) => {
     try {
       switch (operation.operation_type) {
         case 'delete_staff': {
-          const { error } = await adminClient.functions.invoke('delete-staff-user', {
-            body: { user_id: operation.target_user_id }
+          // NEW-2 FIX: Cannot call delete-staff-user via functions.invoke — that function
+          // uses auth.getUser() to identify the caller, but adminClient sends the service_role
+          // JWT which getUser() rejects (it is not a user token). Perform the deletion
+          // directly here; adminClient already has service_role access.
+          await adminClient.from('staff_permissions').delete().eq('user_id', operation.target_user_id)
+          await adminClient.from('user_roles').delete().eq('user_id', operation.target_user_id)
+          await adminClient.from('role_activity_log').insert({
+            target_user_id: operation.target_user_id,
+            performed_by: callingUser.id,
+            action: 'delete_staff',
+            role: 'admin',
           })
+          const { error } = await adminClient.auth.admin.deleteUser(operation.target_user_id)
           if (error) throw error
           break
         }

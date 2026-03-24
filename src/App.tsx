@@ -148,7 +148,11 @@ const App = () => (
                   <Route path="login-attempts" element={<LoginAttemptsManagement />} />
                   <Route path="unlock-requests" element={<UnlockRequestsManagement />} />
                   <Route path="agent-requests" element={<AgentRequestsManagement />} />
-                  <Route path="sensitive-operations" element={<SensitiveOperations />} />
+                  <Route path="sensitive-operations" element={
+                    <ProtectedRoute allowedRoles={['admin']} requireSuperAdmin>
+                      <SensitiveOperations />
+                    </ProtectedRoute>
+                  } />
                   <Route path="owner-settings" element={<OwnerSettings />} />
                   <Route path="document-logs" element={<DocumentAccessLogs />} />
                   <Route path="footer" element={<FooterManagement />} />

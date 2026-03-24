@@ -201,10 +201,9 @@ export default function SecureStaffAuth() {
         setPendingUserId(data.user.id);
         setPendingSession({ user: data.user, roles: userRoles, isAdmin, isAgent, needsRecoveryCodes: !hasRecoveryCodes });
         
-        // Sign out temporarily until 2FA is verified
-        await supabase.auth.signOut();
-        
-        // Generate and send 2FA code
+        // NEW-1 FIX: Generate 2FA code BEFORE signOut.
+        // send-staff-2fa requires a valid user JWT; after signOut the client
+        // falls back to the anon key which getUser() rejects with 401.
         try {
           const { emailSent } = await generate2FACode(data.user.id, data.user.email!);
           
@@ -220,7 +219,11 @@ export default function SecureStaffAuth() {
           setError('حدث خطأ في إنشاء رمز التحقق. يرجى المحاولة مرة أخرى.');
           return;
         }
-        
+
+        // Sign out after the code has been sent successfully.
+        // Must happen AFTER generate2FACode — the Edge Function requires a valid user JWT.
+        await supabase.auth.signOut();
+
         setShow2FA(true);
       }
     } catch (err) {
@@ -352,6 +355,14 @@ export default function SecureStaffAuth() {
     if (!pendingUserId || !pendingSession) return false;
 
     try {
+      // MED-3: Server-side rate limit — 5 failed attempts per 15 min window
+      const { data: withinLimit } = await supabase.rpc('check_recovery_rate_limit', {
+        check_user_id: pendingUserId,
+      });
+      if (!withinLimit) {
+        return false;
+      }
+
       // Get all unused codes for user
       const { data: codes } = await supabase
         .from('staff_recovery_codes')
