@@ -348,6 +348,15 @@ export default function SecureStaffAuth() {
     if (!pendingUserId || !pendingSession) return false;
 
     try {
+      // Server-side rate limit check
+      const { data: withinLimit } = await supabase.rpc('check_recovery_rate_limit', {
+        check_user_id: pendingUserId
+      });
+
+      if (!withinLimit) {
+        return false;
+      }
+
       // Get all unused codes for user
       const { data: codes } = await supabase
         .from('staff_recovery_codes')
