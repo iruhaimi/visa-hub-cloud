@@ -120,10 +120,33 @@ Deno.serve(async (req) => {
 
     switch (operation.operation_type) {
       case 'delete_staff': {
-        const { error } = await adminClient.functions.invoke('delete-staff-user', {
-          body: { user_id: operation.target_user_id }
-        })
-        if (error) executionError = `Failed to delete staff: ${error.message}`
+        // Perform deletion directly — delete-staff-user cannot be called with
+        // service_role JWT because auth.getUser() returns null for service keys
+        const { error: permError } = await adminClient
+          .from('staff_permissions')
+          .delete()
+          .eq('user_id', operation.target_user_id)
+        if (permError) console.error('Failed to delete staff permissions:', permError.message)
+
+        const { error: roleError } = await adminClient
+          .from('user_roles')
+          .delete()
+          .eq('user_id', operation.target_user_id)
+        if (roleError) {
+          executionError = `Failed to remove user roles: ${roleError.message}`
+          break
+        }
+
+        const { error: profileError } = await adminClient
+          .from('profiles')
+          .delete()
+          .eq('user_id', operation.target_user_id)
+        if (profileError) console.error('Failed to delete profile:', profileError.message)
+
+        const { error: deleteError } = await adminClient.auth.admin.deleteUser(
+          operation.target_user_id
+        )
+        if (deleteError) executionError = `Failed to delete staff user: ${deleteError.message}`
         break
       }
 
