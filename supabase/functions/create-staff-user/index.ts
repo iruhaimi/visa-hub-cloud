@@ -53,6 +53,20 @@ Deno.serve(async (req) => {
     // Parse request body
     const { email, password, full_name, phone, role, sendEmail = true, grantSuperAdmin = false } = await req.json()
 
+    // CRIT-1 FIX: Verify caller has manage_staff permission before granting super admin
+    if (grantSuperAdmin) {
+      const { data: hasSuperAdmin } = await adminClient.rpc('has_permission', { 
+        _user_id: callingUser.id, 
+        _permission: 'manage_staff' 
+      })
+      if (!hasSuperAdmin) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Only super admins can grant super admin role' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
     // Validate required fields
     if (!email || !password || !role) {
       return new Response(
