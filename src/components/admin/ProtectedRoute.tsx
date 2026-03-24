@@ -1,17 +1,20 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles: ('admin' | 'agent' | 'customer')[];
+  requireSuperAdmin?: boolean;
 }
 
-export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, allowedRoles, requireSuperAdmin = false }: ProtectedRouteProps) {
   const { user, isLoading, isAdmin, isAgent, isCustomer } = useAuth();
+  const { isSuperAdmin, loading: permissionsLoading } = usePermissions();
   const location = useLocation();
 
-  if (isLoading) {
+  if (isLoading || (requireSuperAdmin && permissionsLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -32,6 +35,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   if (!hasAccess) {
     return <Navigate to="/" replace />;
+  }
+
+  if (requireSuperAdmin && !isSuperAdmin) {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;

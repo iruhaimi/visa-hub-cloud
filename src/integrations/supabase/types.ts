@@ -1585,6 +1585,10 @@ export type Database = {
         Args: { check_user_id: string }
         Returns: boolean
       }
+      check_recovery_rate_limit: {
+        Args: { check_user_id: string }
+        Returns: boolean
+      }
       clear_failed_login_attempts: {
         Args: { target_email: string }
         Returns: undefined
