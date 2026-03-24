@@ -234,27 +234,15 @@ export default function SecureStaffAuth() {
     if (!pendingUserId || !pendingSession) return false;
 
     try {
-      // Verify code
-      const { data: codeData, error: codeError } = await supabase
-        .from('staff_2fa_codes')
-        .select('*')
-        .eq('user_id', pendingUserId)
-        .eq('code', code)
-        .eq('used', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // CRIT-3 FIX: Use SECURITY DEFINER RPC for verification (works post-signout)
+      const { data: isValid, error: verifyError } = await supabase.rpc('verify_staff_2fa', {
+        p_user_id: pendingUserId,
+        p_code: code,
+      });
 
-      if (codeError || !codeData) {
+      if (verifyError || !isValid) {
         return false;
       }
-
-      // Mark code as used
-      await supabase
-        .from('staff_2fa_codes')
-        .update({ used: true })
-        .eq('id', codeData.id);
 
       // Re-authenticate
       const savedPassword = password;
@@ -263,7 +251,7 @@ export default function SecureStaffAuth() {
         password: savedPassword,
       });
 
-      // Clear password from state immediately after use
+      // HIGH-4 FIX: Clear password from state immediately after use
       setPassword('');
 
       if (signInError) {
