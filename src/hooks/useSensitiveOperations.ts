@@ -136,31 +136,7 @@ export function useSensitiveOperations() {
     }
   };
 
-  const executeApprovedOperation = async (operation: any) => {
-    switch (operation.operation_type) {
-      case 'delete_staff':
-        await supabase.functions.invoke('delete-staff-user', {
-          body: { user_id: operation.target_user_id }
-        });
-        break;
-
-      case 'remove_admin_role':
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', operation.target_user_id)
-          .eq('role', 'admin');
-        break;
-
-      case 'remove_manage_staff_permission':
-        await supabase
-          .from('staff_permissions')
-          .delete()
-          .eq('user_id', operation.target_user_id)
-          .eq('permission', 'manage_staff');
-        break;
-    }
-  };
+  // executeApprovedOperation removed - now handled by execute-sensitive-operation Edge Function
 
   return {
     operations,
