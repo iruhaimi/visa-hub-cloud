@@ -80,11 +80,11 @@ export default function SecureStaffAuth() {
 
   const logLoginAttempt = async (success: boolean, reason?: string) => {
     try {
-      await supabase.from('staff_login_attempts').insert({
-        email: email.trim().toLowerCase(),
-        success,
-        failure_reason: reason || null,
-        user_agent: navigator.userAgent,
+      await supabase.rpc('record_login_attempt', {
+        p_email: email.trim().toLowerCase(),
+        p_success: success,
+        p_failure_reason: reason || null,
+        p_user_agent: navigator.userAgent,
       });
     } catch (err) {
       console.error('Error logging attempt:', err);
