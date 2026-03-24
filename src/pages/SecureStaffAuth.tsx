@@ -187,7 +187,8 @@ export default function SecureStaffAuth() {
 
         if (!isAdmin && !isAgent) {
           await logLoginAttempt(false, 'Not staff user');
-          setError('ليس لديك صلاحية الوصول لهذه اللوحة');
+          // HIGH-3 FIX: Same error message as invalid credentials
+          setError('بيانات الدخول غير صحيحة أو غير مصرح لك بالوصول');
           await supabase.auth.signOut();
           return;
         }
