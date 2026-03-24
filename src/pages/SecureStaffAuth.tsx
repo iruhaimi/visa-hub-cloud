@@ -199,10 +199,7 @@ export default function SecureStaffAuth() {
         setPendingUserId(data.user.id);
         setPendingSession({ user: data.user, roles: userRoles, isAdmin, isAgent, needsRecoveryCodes: !hasRecoveryCodes });
         
-        // Sign out temporarily until 2FA is verified
-        await supabase.auth.signOut();
-        
-        // Generate and send 2FA code
+        // Generate and send 2FA code FIRST (while still authenticated)
         try {
           const { emailSent } = await generate2FACode(data.user.id, data.user.email!);
           
@@ -218,6 +215,9 @@ export default function SecureStaffAuth() {
           setError('حدث خطأ في إنشاء رمز التحقق. يرجى المحاولة مرة أخرى.');
           return;
         }
+        
+        // THEN sign out to force full 2FA before session is active
+        await supabase.auth.signOut();
         
         setShow2FA(true);
       }

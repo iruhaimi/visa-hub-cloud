@@ -97,8 +97,8 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Mark as approved (atomically with FOR UPDATE would be ideal, but use optimistic approach)
-    const { error: updateError } = await adminClient
+    // Mark as approved with optimistic concurrency control
+    const { data: updateData, error: updateError } = await adminClient
       .from('pending_sensitive_operations')
       .update({
         status: 'approved',
@@ -107,11 +107,20 @@ Deno.serve(async (req) => {
       })
       .eq('id', operationId)
       .eq('status', 'pending') // Optimistic concurrency control
+      .select()
 
     if (updateError) {
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to approve operation' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // If 0 rows updated, operation was already approved/rejected by someone else
+    if (!updateData || updateData.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Operation already processed by another admin' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
