@@ -162,8 +162,7 @@ export default function SecureStaffAuth() {
         } else {
           // HIGH-3 FIX: Unified error message to prevent email enumeration
           setError(`بيانات الدخول غير صحيحة أو غير مصرح لك بالوصول (محاولة ${newAttempts}/5)`);
-        } else {
-          setError('حدث خطأ في تسجيل الدخول');
+        }
         }
         return;
       }
