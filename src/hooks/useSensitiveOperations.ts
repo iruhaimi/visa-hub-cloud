@@ -91,38 +91,13 @@ export function useSensitiveOperations() {
 
   const approveOperation = async (operationId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('غير مصرح');
-
-      // Get the operation first
-      const { data: operation, error: fetchError } = await supabase
-        .from('pending_sensitive_operations')
-        .select('*')
-        .eq('id', operationId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Check that approver is not the requester
-      if (operation.requested_by === user.id) {
-        toast.error('لا يمكنك الموافقة على عمليتك الخاصة');
-        return false;
-      }
-
-      // Update the operation status
-      const { error } = await supabase
-        .from('pending_sensitive_operations')
-        .update({
-          status: 'approved',
-          approved_by: user.id,
-          approved_at: new Date().toISOString(),
-        })
-        .eq('id', operationId);
+      // CRIT-2 FIX: Use Edge Function for approval + execution (service_role)
+      const { data, error } = await supabase.functions.invoke('execute-sensitive-operation', {
+        body: { operationId }
+      });
 
       if (error) throw error;
-
-      // Execute the operation
-      await executeApprovedOperation(operation);
+      if (data?.error) throw new Error(data.error);
 
       toast.success('تمت الموافقة وتنفيذ العملية بنجاح');
       fetchOperations();
@@ -161,31 +136,7 @@ export function useSensitiveOperations() {
     }
   };
 
-  const executeApprovedOperation = async (operation: any) => {
-    switch (operation.operation_type) {
-      case 'delete_staff':
-        await supabase.functions.invoke('delete-staff-user', {
-          body: { user_id: operation.target_user_id }
-        });
-        break;
-
-      case 'remove_admin_role':
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', operation.target_user_id)
-          .eq('role', 'admin');
-        break;
-
-      case 'remove_manage_staff_permission':
-        await supabase
-          .from('staff_permissions')
-          .delete()
-          .eq('user_id', operation.target_user_id)
-          .eq('permission', 'manage_staff');
-        break;
-    }
-  };
+  // executeApprovedOperation removed - now handled by execute-sensitive-operation Edge Function
 
   return {
     operations,

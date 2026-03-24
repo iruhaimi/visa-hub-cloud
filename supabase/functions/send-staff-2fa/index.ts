@@ -103,11 +103,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Processing 2FA for: ${email}`);
 
-    // Insert 2FA code
+    // CRIT-4 FIX: Hash the code before storing
+    const encoder = new TextEncoder();
+    const data = encoder.encode(code);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const codeHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+    // Insert hashed 2FA code
     const { error: insertError } = await supabase.from("staff_2fa_codes").insert({
       user_id: userId,
       email: email,
-      code: code,
+      code: codeHash,
       expires_at: expiresAt.toISOString(),
     });
 

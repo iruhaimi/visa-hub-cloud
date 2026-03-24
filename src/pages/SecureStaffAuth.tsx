@@ -80,11 +80,11 @@ export default function SecureStaffAuth() {
 
   const logLoginAttempt = async (success: boolean, reason?: string) => {
     try {
-      await supabase.from('staff_login_attempts').insert({
-        email: email.trim().toLowerCase(),
-        success,
-        failure_reason: reason || null,
-        user_agent: navigator.userAgent,
+      await supabase.rpc('record_login_attempt', {
+        p_email: email.trim().toLowerCase(),
+        p_success: success,
+        p_failure_reason: reason || null,
+        p_user_agent: navigator.userAgent,
       });
     } catch (err) {
       console.error('Error logging attempt:', err);
@@ -159,10 +159,9 @@ export default function SecureStaffAuth() {
           setIsLockedOut(true);
           setLockoutTime(new Date(Date.now() + 15 * 60 * 1000));
           setError('تم قفل الحساب مؤقتاً بسبب كثرة المحاولات الفاشلة. يرجى المحاولة بعد 15 دقيقة.');
-        } else if (signInError.message.includes('Invalid login credentials')) {
-          setError(`بيانات الدخول غير صحيحة (محاولة ${newAttempts}/5)`);
         } else {
-          setError('حدث خطأ في تسجيل الدخول');
+          // HIGH-3 FIX: Unified error message to prevent email enumeration
+          setError(`بيانات الدخول غير صحيحة أو غير مصرح لك بالوصول (محاولة ${newAttempts}/5)`);
         }
         return;
       }
@@ -187,7 +186,8 @@ export default function SecureStaffAuth() {
 
         if (!isAdmin && !isAgent) {
           await logLoginAttempt(false, 'Not staff user');
-          setError('ليس لديك صلاحية الوصول لهذه اللوحة');
+          // HIGH-3 FIX: Same error message as invalid credentials
+          setError('بيانات الدخول غير صحيحة أو غير مصرح لك بالوصول');
           await supabase.auth.signOut();
           return;
         }
@@ -234,27 +234,15 @@ export default function SecureStaffAuth() {
     if (!pendingUserId || !pendingSession) return false;
 
     try {
-      // Verify code
-      const { data: codeData, error: codeError } = await supabase
-        .from('staff_2fa_codes')
-        .select('*')
-        .eq('user_id', pendingUserId)
-        .eq('code', code)
-        .eq('used', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // CRIT-3 FIX: Use SECURITY DEFINER RPC for verification (works post-signout)
+      const { data: isValid, error: verifyError } = await supabase.rpc('verify_staff_2fa', {
+        p_user_id: pendingUserId,
+        p_code: code,
+      });
 
-      if (codeError || !codeData) {
+      if (verifyError || !isValid) {
         return false;
       }
-
-      // Mark code as used
-      await supabase
-        .from('staff_2fa_codes')
-        .update({ used: true })
-        .eq('id', codeData.id);
 
       // Re-authenticate
       const savedPassword = password;
@@ -263,7 +251,7 @@ export default function SecureStaffAuth() {
         password: savedPassword,
       });
 
-      // Clear password from state immediately after use
+      // HIGH-4 FIX: Clear password from state immediately after use
       setPassword('');
 
       if (signInError) {
