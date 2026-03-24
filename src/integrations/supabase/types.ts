@@ -1636,6 +1636,19 @@ export type Database = {
       is_customer: { Args: { _user_id: string }; Returns: boolean }
       is_email_locked_out: { Args: { check_email: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      record_login_attempt: {
+        Args: {
+          p_email: string
+          p_failure_reason?: string
+          p_success: boolean
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
+      verify_staff_2fa: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "customer" | "agent" | "admin"
