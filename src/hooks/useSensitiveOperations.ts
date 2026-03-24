@@ -89,40 +89,20 @@ export function useSensitiveOperations() {
     }
   };
 
+  // CRIT-2: Approval and execution are now handled server-side via the
+  // execute-sensitive-operation Edge Function which:
+  //   1. Re-verifies the caller is a super admin (server-side)
+  //   2. Prevents self-approval (server-side, can't be bypassed)
+  //   3. Uses optimistic concurrency to prevent double-approval races
+  //   4. Rolls back the approval status if execution fails
   const approveOperation = async (operationId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('غير مصرح');
-
-      // Get the operation first
-      const { data: operation, error: fetchError } = await supabase
-        .from('pending_sensitive_operations')
-        .select('*')
-        .eq('id', operationId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Check that approver is not the requester
-      if (operation.requested_by === user.id) {
-        toast.error('لا يمكنك الموافقة على عمليتك الخاصة');
-        return false;
-      }
-
-      // Update the operation status
-      const { error } = await supabase
-        .from('pending_sensitive_operations')
-        .update({
-          status: 'approved',
-          approved_by: user.id,
-          approved_at: new Date().toISOString(),
-        })
-        .eq('id', operationId);
+      const { data, error } = await supabase.functions.invoke('execute-sensitive-operation', {
+        body: { operationId },
+      });
 
       if (error) throw error;
-
-      // Execute the operation
-      await executeApprovedOperation(operation);
+      if (data?.error) throw new Error(data.error);
 
       toast.success('تمت الموافقة وتنفيذ العملية بنجاح');
       fetchOperations();
@@ -158,32 +138,6 @@ export function useSensitiveOperations() {
       console.error('Error rejecting operation:', error);
       toast.error(error.message || 'خطأ في رفض العملية');
       return false;
-    }
-  };
-
-  const executeApprovedOperation = async (operation: any) => {
-    switch (operation.operation_type) {
-      case 'delete_staff':
-        await supabase.functions.invoke('delete-staff-user', {
-          body: { user_id: operation.target_user_id }
-        });
-        break;
-
-      case 'remove_admin_role':
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', operation.target_user_id)
-          .eq('role', 'admin');
-        break;
-
-      case 'remove_manage_staff_permission':
-        await supabase
-          .from('staff_permissions')
-          .delete()
-          .eq('user_id', operation.target_user_id)
-          .eq('permission', 'manage_staff');
-        break;
     }
   };
 

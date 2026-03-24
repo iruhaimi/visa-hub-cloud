@@ -113,6 +113,21 @@ Deno.serve(async (req) => {
       console.error('Error adding role:', roleError)
     }
 
+    // CRIT-1: Verify caller has manage_staff permission before granting super admin.
+    // Without this check any regular admin could escalate a new user to super admin.
+    if (grantSuperAdmin) {
+      const { data: hasManageStaff } = await adminClient.rpc('has_permission', {
+        _user_id: callingUser.id,
+        _permission: 'manage_staff',
+      })
+      if (!hasManageStaff) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Only super admins can grant super admin role' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
     // Grant super admin permission if requested and role is admin
     if (grantSuperAdmin && role === 'admin') {
       const { error: permError } = await adminClient
@@ -145,7 +160,10 @@ Deno.serve(async (req) => {
     if (sendEmail && resend) {
       try {
         const roleLabel = role === 'admin' ? 'مشرف' : 'وكيل'
-        const loginUrl = `${supabaseUrl.replace('.supabase.co', '')}/portal-x7k9m2`
+        // MED-6: Use APP_URL env var; supabaseUrl.replace() produces a broken
+        // project-ref URL (e.g. https://abcdef), not the frontend domain.
+        const appUrl = Deno.env.get('APP_URL') || 'https://visa-hub-cloud.lovable.app'
+        const loginUrl = `${appUrl}/portal-x7k9m2`
         
         const { error: emailError } = await resend.emails.send({
           from: 'رحلات للتأشيرات <onboarding@resend.dev>',

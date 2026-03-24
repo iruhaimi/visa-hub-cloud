@@ -101,13 +101,22 @@ const handler = async (req: Request): Promise<Response> => {
     const code = generateCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+    // CRIT-4: Hash the plaintext code before storing so a DB dump or
+    // service-role leakage cannot be used to replay a valid 2FA code.
+    // The plaintext code is still delivered to the user via email/SMS below.
+    const codeBytes = new TextEncoder().encode(code);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', codeBytes);
+    const codeHash = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
     console.log(`Processing 2FA for: ${email}`);
 
-    // Insert 2FA code
+    // Insert hashed code (never store plaintext)
     const { error: insertError } = await supabase.from("staff_2fa_codes").insert({
       user_id: userId,
       email: email,
-      code: code,
+      code: codeHash,
       expires_at: expiresAt.toISOString(),
     });
 

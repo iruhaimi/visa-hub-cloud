@@ -78,13 +78,15 @@ export default function SecureStaffAuth() {
     return () => clearTimeout(debounce);
   }, [email]);
 
+  // HIGH-1: Use SECURITY DEFINER RPC instead of direct table INSERT.
+  // The open INSERT policy was removed; all logging goes through this function.
   const logLoginAttempt = async (success: boolean, reason?: string) => {
     try {
-      await supabase.from('staff_login_attempts').insert({
-        email: email.trim().toLowerCase(),
-        success,
-        failure_reason: reason || null,
-        user_agent: navigator.userAgent,
+      await supabase.rpc('record_login_attempt', {
+        p_email: email.trim().toLowerCase(),
+        p_success: success,
+        p_failure_reason: reason || null,
+        p_user_agent: navigator.userAgent,
       });
     } catch (err) {
       console.error('Error logging attempt:', err);
@@ -159,10 +161,10 @@ export default function SecureStaffAuth() {
           setIsLockedOut(true);
           setLockoutTime(new Date(Date.now() + 15 * 60 * 1000));
           setError('تم قفل الحساب مؤقتاً بسبب كثرة المحاولات الفاشلة. يرجى المحاولة بعد 15 دقيقة.');
-        } else if (signInError.message.includes('Invalid login credentials')) {
-          setError(`بيانات الدخول غير صحيحة (محاولة ${newAttempts}/5)`);
         } else {
-          setError('حدث خطأ في تسجيل الدخول');
+          // HIGH-3: Unified error message prevents email enumeration.
+          // Do NOT distinguish between "wrong password" and "user not found".
+          setError(`بيانات الدخول غير صحيحة أو غير مصرح لك بالوصول (محاولة ${newAttempts}/5)`);
         }
         return;
       }
@@ -234,27 +236,18 @@ export default function SecureStaffAuth() {
     if (!pendingUserId || !pendingSession) return false;
 
     try {
-      // Verify code
-      const { data: codeData, error: codeError } = await supabase
-        .from('staff_2fa_codes')
-        .select('*')
-        .eq('user_id', pendingUserId)
-        .eq('code', code)
-        .eq('used', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // CRIT-3: Use SECURITY DEFINER RPC so verification works after signOut()
+      // (auth.uid() is NULL post-signout, blocking direct RLS-protected table access).
+      // CRIT-4: The RPC hashes the supplied code before comparing to the stored
+      // SHA-256 hash, so plaintext codes are never exposed via DB queries.
+      const { data: isValid, error: verifyError } = await supabase.rpc('verify_staff_2fa', {
+        p_user_id: pendingUserId,
+        p_code: code,
+      });
 
-      if (codeError || !codeData) {
+      if (verifyError || !isValid) {
         return false;
       }
-
-      // Mark code as used
-      await supabase
-        .from('staff_2fa_codes')
-        .update({ used: true })
-        .eq('id', codeData.id);
 
       // Re-authenticate
       const { error: signInError } = await supabase.auth.signInWithPassword({
