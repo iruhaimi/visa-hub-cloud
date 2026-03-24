@@ -159,8 +159,9 @@ export default function SecureStaffAuth() {
           setIsLockedOut(true);
           setLockoutTime(new Date(Date.now() + 15 * 60 * 1000));
           setError('تم قفل الحساب مؤقتاً بسبب كثرة المحاولات الفاشلة. يرجى المحاولة بعد 15 دقيقة.');
-        } else if (signInError.message.includes('Invalid login credentials')) {
-          setError(`بيانات الدخول غير صحيحة (محاولة ${newAttempts}/5)`);
+        } else {
+          // HIGH-3 FIX: Unified error message to prevent email enumeration
+          setError(`بيانات الدخول غير صحيحة أو غير مصرح لك بالوصول (محاولة ${newAttempts}/5)`);
         } else {
           setError('حدث خطأ في تسجيل الدخول');
         }
