@@ -18,6 +18,7 @@ import {
   Shield,
   FileSearch,
   PanelBottom,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -71,6 +72,12 @@ export default function AdminLayout() {
       title: 'إدارة الفوتر',
       icon: PanelBottom,
       href: '/admin/footer',
+      show: isAdmin && isSuperAdmin,
+    },
+    {
+      title: 'إدارة المحتوى',
+      icon: Pencil,
+      href: '/admin/content',
       show: isAdmin && isSuperAdmin,
     },
     {
