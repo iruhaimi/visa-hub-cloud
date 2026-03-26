@@ -214,6 +214,191 @@ const SECTION_CONFIG: Record<string, SectionDef[]> = {
       { key: 'answer', label: 'الإجابة', type: 'textarea' },
     ]},
   ],
+  install: [
+    { key: 'hero', label: 'القسم الرئيسي', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف', type: 'textarea' },
+    ]},
+    { key: 'installed', label: 'رسالة التطبيق المثبت', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف' },
+    ]},
+    { key: 'quick_install', label: 'التثبيت السريع', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف' },
+      { key: 'button', label: 'نص الزر' },
+    ]},
+    { key: 'ios_steps', label: 'خطوات iOS', fields: [
+      { key: 'title', label: 'عنوان القسم' },
+    ], arrayKey: 'items', arrayLabel: 'خطوة', arrayFields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف' },
+    ]},
+    { key: 'android_steps', label: 'خطوات Android', fields: [
+      { key: 'title', label: 'عنوان القسم' },
+    ], arrayKey: 'items', arrayLabel: 'خطوة', arrayFields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف' },
+    ]},
+    { key: 'features', label: 'مميزات التطبيق', fields: [
+      { key: 'title', label: 'عنوان القسم' },
+    ], arrayKey: 'items', arrayLabel: 'ميزة', arrayFields: [
+      { key: 'text', label: 'النص' },
+    ]},
+  ],
+  not_found: [
+    { key: 'hero', label: 'صفحة 404', fields: [
+      { key: 'title', label: 'العنوان (404)', bilingual: false },
+      { key: 'subtitle', label: 'النص التوضيحي' },
+      { key: 'link_text', label: 'نص رابط العودة' },
+    ]},
+  ],
+  payment_success: [
+    { key: 'content', label: 'محتوى نجاح الدفع', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'subtitle', label: 'العنوان الفرعي' },
+      { key: 'app_number', label: 'نص رقم الطلب' },
+      { key: 'email_sent', label: 'رسالة تأكيد البريد' },
+      { key: 'days', label: 'أيام العمل' },
+      { key: 'processing_time', label: 'نص وقت المعالجة' },
+      { key: 'next_steps', label: 'عنوان الخطوات التالية' },
+      { key: 'step1', label: 'الخطوة 1' },
+      { key: 'step2', label: 'الخطوة 2' },
+      { key: 'step3', label: 'الخطوة 3' },
+      { key: 'track_btn', label: 'زر تتبع الطلب' },
+      { key: 'receipt_btn', label: 'زر تحميل الإيصال' },
+      { key: 'home_btn', label: 'زر العودة للرئيسية' },
+    ]},
+  ],
+  payment_failed: [
+    { key: 'content', label: 'محتوى فشل الدفع', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'subtitle', label: 'العنوان الفرعي' },
+      { key: 'reasons_title', label: 'عنوان الأسباب' },
+      { key: 'support_title', label: 'عنوان الدعم' },
+      { key: 'support_desc', label: 'وصف الدعم' },
+      { key: 'phone', label: 'رقم الهاتف', bilingual: false },
+      { key: 'email', label: 'البريد الإلكتروني', bilingual: false },
+      { key: 'try_again', label: 'زر المحاولة مرة أخرى' },
+      { key: 'contact_support', label: 'زر تواصل مع الدعم' },
+      { key: 'home_btn', label: 'زر العودة للرئيسية' },
+    ], arrayKey: 'reasons', arrayLabel: 'سبب محتمل', arrayFields: [
+      { key: 'text', label: 'النص' },
+    ]},
+  ],
+  schengen: [
+    { key: 'hero', label: 'القسم الرئيسي', fields: [
+      { key: 'back_link', label: 'نص رابط العودة' },
+      { key: 'title', label: 'العنوان' },
+    ]},
+    { key: 'benefits', label: 'المزايا', arrayKey: 'items', arrayLabel: 'ميزة', arrayFields: [
+      { key: 'icon', label: 'الأيقونة (Globe/Clock/Shield/MapPin)', bilingual: false },
+      { key: 'title', label: 'العنوان' },
+      { key: 'desc', label: 'الوصف' },
+    ]},
+    { key: 'sections', label: 'عناوين الأقسام', fields: [
+      { key: 'member_countries', label: 'عنوان الدول المشمولة' },
+      { key: 'no_countries', label: 'رسالة لا توجد دول' },
+      { key: 'visa_types', label: 'عنوان أنواع التأشيرات' },
+      { key: 'requirements_title', label: 'عنوان المتطلبات' },
+      { key: 'disclaimer', label: 'إخلاء المسؤولية' },
+    ]},
+    { key: 'requirements', label: 'المتطلبات', arrayKey: 'items', arrayLabel: 'متطلب', arrayFields: [
+      { key: 'text', label: 'النص' },
+    ]},
+    { key: 'cta', label: 'دعوة للعمل', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف', type: 'textarea' },
+      { key: 'button', label: 'نص الزر' },
+    ]},
+  ],
+  visa_services: [
+    { key: 'hero', label: 'القسم الرئيسي', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف', type: 'textarea' },
+      { key: 'search_placeholder', label: 'نص البحث' },
+      { key: 'search_btn', label: 'زر البحث' },
+    ]},
+    { key: 'filters', label: 'عناوين الفلاتر', fields: [
+      { key: 'filters_title', label: 'عنوان الفلاتر' },
+      { key: 'country_label', label: 'تسمية الدولة' },
+      { key: 'all_countries', label: 'جميع الدول' },
+      { key: 'visa_type_label', label: 'تسمية نوع التأشيرة' },
+      { key: 'processing_label', label: 'تسمية وقت المعالجة' },
+      { key: 'price_label', label: 'تسمية نطاق السعر' },
+      { key: 'clear_filters', label: 'مسح الفلاتر' },
+      { key: 'results_suffix', label: 'نص عدد النتائج' },
+      { key: 'no_results', label: 'لا توجد نتائج' },
+      { key: 'no_results_desc', label: 'وصف لا توجد نتائج' },
+    ]},
+    { key: 'categories', label: 'أنواع التأشيرات', arrayKey: 'items', arrayLabel: 'نوع', arrayFields: [
+      { key: 'value', label: 'القيمة البرمجية', bilingual: false },
+      { key: 'label', label: 'التسمية' },
+    ]},
+    { key: 'processing_ranges', label: 'نطاقات وقت المعالجة', arrayKey: 'items', arrayLabel: 'نطاق', arrayFields: [
+      { key: 'value', label: 'القيمة البرمجية', bilingual: false },
+      { key: 'label', label: 'التسمية' },
+    ]},
+    { key: 'price_ranges', label: 'نطاقات الأسعار', arrayKey: 'items', arrayLabel: 'نطاق', arrayFields: [
+      { key: 'value', label: 'القيمة البرمجية', bilingual: false },
+      { key: 'label', label: 'التسمية' },
+    ]},
+    { key: 'card_labels', label: 'تسميات البطاقات', fields: [
+      { key: 'processing', label: 'المعالجة' },
+      { key: 'days', label: 'يوم' },
+      { key: 'price', label: 'السعر' },
+      { key: 'apply_btn', label: 'زر التقديم' },
+      { key: 'filter_mobile', label: 'زر الفلاتر (جوال)' },
+      { key: 'active', label: 'نشط' },
+      { key: 'filter_sheet_title', label: 'عنوان قائمة الفلاتر' },
+      { key: 'filter_sheet_desc', label: 'وصف قائمة الفلاتر' },
+    ]},
+  ],
+  visa_detail: [
+    { key: 'labels', label: 'تسميات الصفحة', fields: [
+      { key: 'back_link', label: 'نص رابط العودة' },
+      { key: 'overview', label: 'نظرة عامة' },
+      { key: 'processing', label: 'المعالجة' },
+      { key: 'days', label: 'يوم' },
+      { key: 'validity', label: 'الصلاحية' },
+      { key: 'varies', label: 'متنوعة' },
+      { key: 'max_stay', label: 'الحد الأقصى للإقامة' },
+      { key: 'entry_type', label: 'نوع الدخول' },
+      { key: 'requirements', label: 'المتطلبات' },
+      { key: 'requirements_desc', label: 'وصف المتطلبات' },
+      { key: 'no_requirements', label: 'لا توجد متطلبات' },
+      { key: 'not_found', label: 'غير موجودة' },
+      { key: 'not_found_desc', label: 'وصف غير موجودة' },
+      { key: 'browse_btn', label: 'زر التصفح' },
+      { key: 'per_application', label: 'لكل طلب' },
+      { key: 'apply_btn', label: 'زر التقديم' },
+      { key: 'secure_payment', label: 'دفع آمن' },
+      { key: 'fast_processing', label: 'معالجة سريعة' },
+      { key: 'approval_rate', label: 'نسبة القبول' },
+      { key: 'expert_help', label: 'مساعدة متخصصة' },
+      { key: 'price_note', label: 'ملاحظة السعر' },
+      { key: 'ssl', label: 'SSL آمن' },
+      { key: 'trusted', label: 'خدمة موثوقة' },
+    ]},
+    { key: 'faqs', label: 'الأسئلة الشائعة', arrayKey: 'items', arrayLabel: 'سؤال', arrayFields: [
+      { key: 'question', label: 'السؤال' },
+      { key: 'answer', label: 'الإجابة', type: 'textarea' },
+    ]},
+  ],
+  country_detail: [
+    { key: 'labels', label: 'تسميات الصفحة', fields: [
+      { key: 'back_link', label: 'نص رابط العودة' },
+      { key: 'not_found', label: 'غير موجودة' },
+      { key: 'not_found_desc', label: 'وصف غير موجودة' },
+      { key: 'visa_types_title', label: 'عنوان أنواع التأشيرات' },
+      { key: 'no_visas', label: 'لا توجد تأشيرات' },
+      { key: 'requirements_title', label: 'عنوان المتطلبات العامة' },
+      { key: 'requirements_note', label: 'ملاحظة المتطلبات' },
+    ]},
+    { key: 'requirements', label: 'المتطلبات العامة', arrayKey: 'items', arrayLabel: 'متطلب', arrayFields: [
+      { key: 'text', label: 'النص' },
+    ]},
+  ],
 };
 
 function BilField({ field, content, onChange }: {
