@@ -17,7 +17,7 @@ import {
   Edit, Save, Plus, Trash2, Loader2, GripVertical, ImageIcon
 } from 'lucide-react';
 
-import { Home } from 'lucide-react';
+import { Home, Smartphone, FileX, CreditCard, Globe, MapPin, Plane } from 'lucide-react';
 
 const PAGES = [
   { key: 'home', label: 'الصفحة الرئيسية', icon: Home },
@@ -27,6 +27,14 @@ const PAGES = [
   { key: 'terms', label: 'الشروط والأحكام', icon: Scale },
   { key: 'privacy', label: 'سياسة الخصوصية', icon: Shield },
   { key: 'refund', label: 'سياسة الاسترداد', icon: RotateCcw },
+  { key: 'install', label: 'تثبيت التطبيق', icon: Smartphone },
+  { key: 'not_found', label: 'صفحة 404', icon: FileX },
+  { key: 'payment_success', label: 'نجاح الدفع', icon: CreditCard },
+  { key: 'payment_failed', label: 'فشل الدفع', icon: CreditCard },
+  { key: 'schengen', label: 'تفاصيل شنغن', icon: Globe },
+  { key: 'visa_services', label: 'خدمات التأشيرات', icon: Plane },
+  { key: 'visa_detail', label: 'تفاصيل التأشيرة', icon: Plane },
+  { key: 'country_detail', label: 'تفاصيل الدولة', icon: MapPin },
 ];
 
 interface FieldDef {
