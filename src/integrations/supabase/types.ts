@@ -1123,6 +1123,39 @@ export type Database = {
         }
         Relationships: []
       }
+      site_content: {
+        Row: {
+          content: Json
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          page: string
+          section: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          page: string
+          section: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          page?: string
+          section?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       special_offers: {
         Row: {
           badge: string | null
