@@ -47,6 +47,58 @@ interface SectionDef {
 }
 
 const SECTION_CONFIG: Record<string, SectionDef[]> = {
+  home: [
+    { key: 'stats', label: 'الإحصائيات', fields: [
+      { key: 'title', label: 'العنوان' },
+    ], arrayKey: 'items', arrayLabel: 'إحصائية', arrayFields: [
+      { key: 'value', label: 'القيمة', bilingual: false },
+      { key: 'suffix', label: 'اللاحقة', bilingual: false },
+      { key: 'label', label: 'التسمية' },
+      { key: 'icon', label: 'الأيقونة (Users/Globe/Award/Headphones)', bilingual: false },
+    ]},
+    { key: 'testimonials', label: 'آراء العملاء', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'subtitle', label: 'العنوان الفرعي' },
+    ], arrayKey: 'items', arrayLabel: 'تقييم', arrayFields: [
+      { key: 'name', label: 'الاسم' },
+      { key: 'role', label: 'الوظيفة' },
+      { key: 'content', label: 'المحتوى', type: 'textarea' },
+      { key: 'avatar', label: 'الحرف الأول', bilingual: false },
+      { key: 'country', label: 'علم الدولة', bilingual: false },
+      { key: 'visa', label: 'نوع التأشيرة' },
+      { key: 'rating', label: 'التقييم (1-5)', bilingual: false },
+    ]},
+    { key: 'partners', label: 'الشركاء', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'subtitle', label: 'العنوان الفرعي' },
+    ], arrayKey: 'items', arrayLabel: 'شريك', arrayFields: [
+      { key: 'name', label: 'الاسم' },
+      { key: 'icon', label: 'الأيقونة (Plane/Landmark/Factory/Building2/Smartphone/Wifi)', bilingual: false },
+    ]},
+    { key: 'features', label: 'المميزات', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'subtitle', label: 'العنوان الفرعي' },
+    ], arrayKey: 'items', arrayLabel: 'ميزة', arrayFields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف', type: 'textarea' },
+      { key: 'icon', label: 'الأيقونة (Headphones/Clock/Users/Shield)', bilingual: false },
+    ]},
+    { key: 'how_it_works', label: 'كيف نعمل', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'subtitle', label: 'العنوان الفرعي' },
+      { key: 'badge', label: 'الشارة' },
+    ], arrayKey: 'items', arrayLabel: 'خطوة', arrayFields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف' },
+      { key: 'icon', label: 'الأيقونة (Globe/FileText/CreditCard/Plane)', bilingual: false },
+    ]},
+    { key: 'cta', label: 'دعوة للعمل', fields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف', type: 'textarea' },
+      { key: 'primary_button', label: 'الزر الأساسي' },
+      { key: 'secondary_button', label: 'الزر الثانوي' },
+    ]},
+  ],
   about: [
     { key: 'hero', label: 'القسم الرئيسي', fields: [
       { key: 'badge', label: 'الشارة' },
