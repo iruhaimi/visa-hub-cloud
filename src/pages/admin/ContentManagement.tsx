@@ -17,7 +17,10 @@ import {
   Edit, Save, Plus, Trash2, Loader2, GripVertical, ImageIcon
 } from 'lucide-react';
 
+import { Home } from 'lucide-react';
+
 const PAGES = [
+  { key: 'home', label: 'الصفحة الرئيسية', icon: Home },
   { key: 'about', label: 'من نحن', icon: Building2 },
   { key: 'faq', label: 'الأسئلة الشائعة', icon: HelpCircle },
   { key: 'contact', label: 'تواصل معنا', icon: Phone },
