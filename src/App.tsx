@@ -59,6 +59,7 @@ const SensitiveOperations = lazy(() => import("@/pages/admin/SensitiveOperations
 const OwnerSettings = lazy(() => import("@/pages/admin/OwnerSettings"));
 const DocumentAccessLogs = lazy(() => import("@/pages/admin/DocumentAccessLogs"));
 const FooterManagement = lazy(() => import("@/pages/admin/FooterManagement"));
+const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 
 // Agent Pages
 const AgentDashboard = lazy(() => import("@/pages/agent/AgentDashboard"));
@@ -152,6 +153,7 @@ const App = () => (
                   <Route path="owner-settings" element={<OwnerSettings />} />
                   <Route path="document-logs" element={<DocumentAccessLogs />} />
                   <Route path="footer" element={<FooterManagement />} />
+                  <Route path="content" element={<ContentManagement />} />
                 </Route>
 
                 {/* Agent Routes */}
