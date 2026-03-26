@@ -141,6 +141,15 @@ const SECTION_CONFIG: Record<string, SectionDef[]> = {
       { key: 'title', label: 'العنوان' },
       { key: 'description', label: 'الوصف' },
     ]},
+    { key: 'fee_types', label: 'أنواع الرسوم', arrayKey: 'items', arrayLabel: 'نوع رسوم', arrayFields: [
+      { key: 'title', label: 'العنوان' },
+      { key: 'description', label: 'الوصف' },
+      { key: 'refundable', label: 'حالة الاسترداد' },
+    ]},
+    { key: 'faqs', label: 'الأسئلة الشائعة', arrayKey: 'items', arrayLabel: 'سؤال', arrayFields: [
+      { key: 'question', label: 'السؤال' },
+      { key: 'answer', label: 'الإجابة', type: 'textarea' },
+    ]},
   ],
 };
 
