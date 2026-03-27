@@ -334,6 +334,20 @@ export default function ApplicationsList() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={agentFilter} onValueChange={setAgentFilter}>
+              <SelectTrigger className="w-full md:w-44">
+                <Users className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="الوكيل" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الوكلاء</SelectItem>
+                {agents.map((agent) => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    {agent.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
