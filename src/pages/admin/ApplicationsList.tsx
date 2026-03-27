@@ -90,17 +90,31 @@ export default function ApplicationsList() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [assignmentFilter, setAssignmentFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
+  const [countryFilter, setCountryFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
+  const [countries, setCountries] = useState<{ id: string; name: string }[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
 
   useEffect(() => {
     fetchAgents();
+    fetchCountries();
   }, []);
 
   useEffect(() => {
     fetchApplications();
-  }, [statusFilter, assignmentFilter, agentFilter]);
+  }, [statusFilter, assignmentFilter, agentFilter, countryFilter, dateFrom, dateTo]);
+
+  const fetchCountries = async () => {
+    const { data } = await supabase
+      .from('countries')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name');
+    if (data) setCountries(data);
+  };
 
   const fetchAgents = async () => {
     const { data } = await supabase
