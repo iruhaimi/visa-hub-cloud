@@ -218,12 +218,14 @@ function ApplyContent() {
   // Trigger save on step change (after step 2)
   useEffect(() => {
     if (currentStep >= 2 && profile && applicationData.visaTypeId) {
+      // Force save when reaching payment step to ensure draftId exists
+      const forceSave = currentStep >= 5 && !draftId;
       const timer = setTimeout(() => {
-        saveDraft();
-      }, 500);
+        saveDraft(forceSave);
+      }, forceSave ? 0 : 500);
       return () => clearTimeout(timer);
     }
-  }, [currentStep, saveDraft, profile, applicationData.visaTypeId]);
+  }, [currentStep, saveDraft, profile, applicationData.visaTypeId, draftId]);
 
   // Update application data when country/visa is loaded
   useEffect(() => {
