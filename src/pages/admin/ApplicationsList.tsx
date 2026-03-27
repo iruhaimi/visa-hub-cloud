@@ -83,12 +83,37 @@ export default function ApplicationsList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [assignmentFilter, setAssignmentFilter] = useState('all');
+  const [agentFilter, setAgentFilter] = useState('all');
+  const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
 
   useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  useEffect(() => {
     fetchApplications();
-  }, [statusFilter, assignmentFilter]);
+  }, [statusFilter, assignmentFilter, agentFilter]);
+
+  const fetchAgents = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, user_id')
+      .order('full_name');
+    
+    if (data) {
+      // Filter to only agents by checking user_roles
+      const { data: agentRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['agent', 'admin']);
+      
+      const agentUserIds = new Set(agentRoles?.map(r => r.user_id) || []);
+      const agentProfiles = data.filter(p => agentUserIds.has(p.user_id));
+      setAgents(agentProfiles.map(p => ({ id: p.id, full_name: p.full_name || 'بدون اسم' })));
+    }
+  };
 
   const fetchApplications = async () => {
     setLoading(true);
