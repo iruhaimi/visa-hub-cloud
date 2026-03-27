@@ -215,18 +215,36 @@ export default function Auth() {
       const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
       });
+      
+      if (result?.redirected) {
+        // Page is navigating to OAuth provider, don't reset loading
+        return;
+      }
+      
       if (result?.error) {
+        const errorMsg = result.error instanceof Error ? result.error.message : String(result.error);
+        const isPreviewError = errorMsg.includes('Preview mode') || errorMsg.includes('legacy_flow');
+        const isPopupBlocked = errorMsg.includes('Popup was blocked') || errorMsg.includes('cancelled');
+        
         toast({
           variant: 'destructive',
           title: isRTL ? 'فشل تسجيل الدخول' : 'Login Failed',
-          description: result.error instanceof Error ? result.error.message : String(result.error),
+          description: isPreviewError
+            ? (isRTL 
+                ? 'تسجيل الدخول بـ Google غير مدعوم في وضع المعاينة. يرجى فتح الموقع المنشور (rhalat.lovable.app) من المتصفح.'
+                : 'Google sign-in is not supported in preview mode. Please open the published site (rhalat.lovable.app).')
+            : isPopupBlocked
+              ? (isRTL 
+                  ? 'تم حظر نافذة تسجيل الدخول. يرجى السماح بالنوافذ المنبثقة في إعدادات المتصفح.'
+                  : 'Sign-in popup was blocked. Please allow popups in your browser settings.')
+              : errorMsg,
         });
       }
     } catch {
       toast({
         variant: 'destructive',
         title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? `حدث خطأ أثناء تسجيل الدخول بواسطة ${provider}` : `An error occurred during ${provider} sign in`,
+        description: isRTL ? `حدث خطأ أثناء تسجيل الدخول بواسطة ${provider === 'google' ? 'Google' : 'Apple'}` : `An error occurred during ${provider} sign in`,
       });
     } finally {
       setIsLoading(false);
