@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { sendAssignmentEmail } from '@/lib/sendAssignmentEmail';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -140,6 +141,13 @@ export function BulkAssignDialog({
         message: `تم تعيين ${selectedApplications.length} طلب جديد لك للمتابعة`,
         type: 'bulk_assignment',
         action_url: '/agent/applications',
+      });
+
+      // Send email notification for bulk assignment
+      sendAssignmentEmail({
+        agentProfileId: selectedAgent,
+        agentName: agent?.full_name || undefined,
+        countryName: `${selectedApplications.length} طلبات`,
       });
 
       toast.success(`تم تعيين ${selectedApplications.length} طلب إلى ${agent?.full_name || 'الوكيل'}`);
