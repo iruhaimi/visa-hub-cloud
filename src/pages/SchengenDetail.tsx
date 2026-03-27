@@ -19,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSiteContent } from '@/hooks/useSiteContent';
 import SARSymbol from '@/components/ui/SARSymbol';
-import { SCHENGEN_INFO, SCHENGEN_COUNTRY_CODES } from '@/lib/schengenCountries';
+import { SCHENGEN_INFO } from '@/lib/schengenCountries';
 import type { Country, VisaType } from '@/types/database';
 
 const ICON_MAP: Record<string, LucideIcon> = { Globe, Clock, Shield, MapPin };

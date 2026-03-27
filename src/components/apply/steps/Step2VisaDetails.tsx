@@ -220,7 +220,7 @@ export default function Step2VisaDetails() {
             <div className="space-y-2">
               <Label className="text-sm sm:text-base">{t('form.country')}</Label>
               <Select
-                value={selectedRegion || (applicationData.countryId && !isSchengenCountry(countries?.find(c => c.id === applicationData.countryId)?.code || '') ? applicationData.countryId : '')}
+                value={selectedRegion || (applicationData.countryId && !isSchengenCountry(countries?.find(c => c.id === applicationData.countryId) || {}) ? applicationData.countryId : '')}
                 onValueChange={(value) => {
                   if (value === 'schengen') {
                     handleRegionChange('schengen');
