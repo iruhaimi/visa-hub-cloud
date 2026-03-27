@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -141,6 +142,7 @@ const STATUS_ORDER: ApplicationStatus[] = [
 export default function TrackApplication() {
   const { language } = useLanguage();
   const isRTL = language === 'ar';
+  const [searchParams] = useSearchParams();
   
   const [applicationNumber, setApplicationNumber] = useState('');
   const [searchType, setSearchType] = useState<'phone' | 'email'>('phone');
@@ -149,6 +151,14 @@ export default function TrackApplication() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplicationResult | null>(null);
   const [searched, setSearched] = useState(false);
+
+  // Auto-fill application ID from URL params
+  useEffect(() => {
+    const idFromUrl = searchParams.get('id');
+    if (idFromUrl) {
+      setApplicationNumber(idFromUrl);
+    }
+  }, [searchParams]);
 
   // Handle email/phone input based on search type
   const handleSearchValueInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
@@ -194,6 +204,20 @@ export default function TrackApplication() {
     setIsLoading(true);
 
     try {
+      // Check if the input looks like a UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const searchId = applicationNumber.trim();
+      
+      if (!uuidRegex.test(searchId)) {
+        // Not a UUID - show friendly error
+        setError(isRTL 
+          ? 'رقم الطلب غير صحيح. يرجى إدخال رقم الطلب الكامل (UUID) الذي حصلت عليه عند التقديم.'
+          : 'Invalid application number. Please enter the full application ID (UUID) you received when submitting.'
+        );
+        setIsLoading(false);
+        return;
+      }
+
       const { data: application, error: appError } = await supabase
         .from('applications')
         .select(`
@@ -209,7 +233,7 @@ export default function TrackApplication() {
             country:countries(name, flag_url)
           )
         `)
-        .eq('id', applicationNumber.trim())
+        .eq('id', searchId)
         .maybeSingle();
 
       if (appError) throw appError;
@@ -227,7 +251,7 @@ export default function TrackApplication() {
       const { data: history, error: historyError } = await supabase
         .from('application_status_history')
         .select('id, old_status, new_status, created_at, notes')
-        .eq('application_id', applicationNumber.trim())
+        .eq('application_id', searchId)
         .order('created_at', { ascending: true });
 
       if (historyError) throw historyError;

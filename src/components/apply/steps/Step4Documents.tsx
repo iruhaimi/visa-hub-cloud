@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { Button } from '@/components/ui/button';
@@ -16,14 +16,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const documentTypes = [
-  { id: 'passport', label: { ar: 'جواز السفر', en: 'Passport' } },
-  { id: 'photo', label: { ar: 'الصورة الشخصية', en: 'Personal Photo' } },
-  { id: 'bank_statement', label: { ar: 'كشف الحساب البنكي', en: 'Bank Statement' } },
-  { id: 'hotel_booking', label: { ar: 'حجز الفندق', en: 'Hotel Booking' } },
-  { id: 'flight_booking', label: { ar: 'حجز الطيران', en: 'Flight Booking' } },
-  { id: 'travel_insurance', label: { ar: 'تأمين السفر', en: 'Travel Insurance' } },
-];
+const documentTypes: Record<string, { label: { ar: string; en: string } }> = {
+  passport: { label: { ar: 'جواز السفر', en: 'Passport' } },
+  photo: { label: { ar: 'الصورة الشخصية', en: 'Personal Photo' } },
+  bank_statement: { label: { ar: 'كشف الحساب البنكي', en: 'Bank Statement' } },
+  hotel_booking: { label: { ar: 'حجز الفندق', en: 'Hotel Booking' } },
+  flight_booking: { label: { ar: 'حجز الطيران', en: 'Flight Booking' } },
+  travel_insurance: { label: { ar: 'تأمين السفر', en: 'Travel Insurance' } },
+};
 
 interface FileUploadState {
   file: File | null;
@@ -40,6 +40,32 @@ export default function Step4Documents() {
   
   const ArrowNextIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
   const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
+
+  // Derive required document types from checked requirements in Step 3
+  const requiredDocTypes = useMemo(() => {
+    const checkedReqs = applicationData.checkedRequirements;
+    if (!checkedReqs || checkedReqs.length === 0) {
+      // Fallback: show all document types if somehow no requirements were checked
+      return Object.keys(documentTypes);
+    }
+    
+    // Extract unique base document types from checked requirement IDs
+    // Requirement IDs are like "passport_adult_1", "photo_child_2", etc.
+    const baseTypes = new Set<string>();
+    checkedReqs.forEach(reqId => {
+      // Extract the base type (everything before _adult_, _child_, _infant_)
+      const match = reqId.match(/^(.+?)_(adult|child|infant)_\d+$/);
+      if (match) {
+        baseTypes.add(match[1]);
+      } else {
+        // Fallback: use the full ID as the type
+        baseTypes.add(reqId);
+      }
+    });
+    
+    // Only return types that exist in our documentTypes map
+    return Array.from(baseTypes).filter(type => type in documentTypes);
+  }, [applicationData.checkedRequirements]);
 
   const handleFileSelect = useCallback((docType: string, file: File) => {
     // Validate file
@@ -129,8 +155,10 @@ export default function Step4Documents() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const uploadedCount = applicationData.uploadedDocuments.filter(d => d.uploaded).length;
-  const canProceed = uploadedCount >= 2; // At least passport and photo
+  const uploadedCount = applicationData.uploadedDocuments.filter(d => d.uploaded && requiredDocTypes.includes(d.type)).length;
+  const totalRequired = requiredDocTypes.length;
+  // User must upload at least 1 document, and ideally all that match their selected requirements
+  const canProceed = uploadedCount >= 1;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -147,28 +175,31 @@ export default function Step4Documents() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 sm:p-4 bg-muted/30 rounded-xl">
         <span className="font-medium text-sm sm:text-base">
           {direction === 'rtl' 
-            ? `${uploadedCount} مستند تم رفعه`
-            : `${uploadedCount} document${uploadedCount !== 1 ? 's' : ''} uploaded`
+            ? `${uploadedCount} من ${totalRequired} مستند تم رفعه`
+            : `${uploadedCount} of ${totalRequired} document${totalRequired !== 1 ? 's' : ''} uploaded`
           }
         </span>
-        <Badge variant={uploadedCount >= 2 ? 'default' : 'secondary'} className="w-fit">
-          {uploadedCount >= 2 
-            ? (direction === 'rtl' ? 'الحد الأدنى مكتمل' : 'Minimum met')
-            : (direction === 'rtl' ? 'مستندان على الأقل' : 'At least 2 required')
+        <Badge variant={uploadedCount >= totalRequired ? 'default' : 'secondary'} className="w-fit">
+          {uploadedCount >= totalRequired 
+            ? (direction === 'rtl' ? 'جميع المستندات مرفوعة ✓' : 'All documents uploaded ✓')
+            : (direction === 'rtl' ? `${totalRequired - uploadedCount} مستند متبقي` : `${totalRequired - uploadedCount} remaining`)
           }
         </Badge>
       </div>
 
-      {/* File Upload Areas */}
+      {/* File Upload Areas - only show document types matching selected requirements */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {documentTypes.map((docType) => {
-          const upload = uploads[docType.id];
-          const existingDoc = applicationData.uploadedDocuments.find(d => d.type === docType.id);
+        {requiredDocTypes.map((docTypeId) => {
+          const docType = documentTypes[docTypeId];
+          if (!docType) return null;
+          
+          const upload = uploads[docTypeId];
+          const existingDoc = applicationData.uploadedDocuments.find(d => d.type === docTypeId);
           const isUploaded = upload?.status === 'success' || existingDoc?.uploaded;
           
           return (
             <div
-              key={docType.id}
+              key={docTypeId}
               className={cn(
                 "relative p-4 rounded-lg border-2 border-dashed transition-colors",
                 isUploaded && "border-green-500 bg-green-50 dark:bg-green-950/20",
@@ -182,7 +213,7 @@ export default function Step4Documents() {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleFileSelect(docType.id, file);
+                  if (file) handleFileSelect(docTypeId, file);
                 }}
                 disabled={upload?.status === 'uploading'}
               />
@@ -249,7 +280,7 @@ export default function Step4Documents() {
                     className="h-8 w-8 z-20 relative"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRemove(docType.id);
+                      handleRemove(docTypeId);
                     }}
                   >
                     <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
