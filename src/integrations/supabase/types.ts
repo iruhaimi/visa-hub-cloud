@@ -555,6 +555,7 @@ export type Database = {
           flag_url: string | null
           id: string
           is_active: boolean | null
+          is_schengen: boolean
           name: string
           updated_at: string
         }
@@ -565,6 +566,7 @@ export type Database = {
           flag_url?: string | null
           id?: string
           is_active?: boolean | null
+          is_schengen?: boolean
           name: string
           updated_at?: string
         }
@@ -575,6 +577,7 @@ export type Database = {
           flag_url?: string | null
           id?: string
           is_active?: boolean | null
+          is_schengen?: boolean
           name?: string
           updated_at?: string
         }

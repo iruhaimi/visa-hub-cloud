@@ -1,0 +1,1 @@
+ALTER TABLE public.countries ADD COLUMN is_schengen boolean NOT NULL DEFAULT false;
