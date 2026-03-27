@@ -28,12 +28,18 @@ import {
   Loader2,
   RefreshCw,
   Download,
-  Users
+  Users,
+  Globe,
+  CalendarIcon,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { exportToExcel } from '@/lib/exportToExcel';
 import { BulkAssignDialog } from '@/components/admin/BulkAssignDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'جميع الحالات' },
@@ -84,17 +90,31 @@ export default function ApplicationsList() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [assignmentFilter, setAssignmentFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
+  const [countryFilter, setCountryFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
+  const [countries, setCountries] = useState<{ id: string; name: string }[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
 
   useEffect(() => {
     fetchAgents();
+    fetchCountries();
   }, []);
 
   useEffect(() => {
     fetchApplications();
-  }, [statusFilter, assignmentFilter, agentFilter]);
+  }, [statusFilter, assignmentFilter, agentFilter, countryFilter, dateFrom, dateTo]);
+
+  const fetchCountries = async () => {
+    const { data } = await supabase
+      .from('countries')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name');
+    if (data) setCountries(data);
+  };
 
   const fetchAgents = async () => {
     const { data } = await supabase
@@ -155,6 +175,15 @@ export default function ApplicationsList() {
         query = query.eq('assigned_agent_id', agentFilter);
       }
 
+      if (dateFrom) {
+        query = query.gte('created_at', format(dateFrom, 'yyyy-MM-dd'));
+      }
+      if (dateTo) {
+        const nextDay = new Date(dateTo);
+        nextDay.setDate(nextDay.getDate() + 1);
+        query = query.lt('created_at', format(nextDay, 'yyyy-MM-dd'));
+      }
+
       const { data, error } = await query;
 
       if (error) throw error;
@@ -168,6 +197,12 @@ export default function ApplicationsList() {
   };
 
   const filteredApplications = applications.filter(app => {
+    // Country filter
+    if (countryFilter !== 'all') {
+      const countryName = app.visa_type?.country?.name;
+      if (countryName !== countryFilter) return false;
+    }
+
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -348,6 +383,63 @@ export default function ApplicationsList() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={countryFilter} onValueChange={setCountryFilter}>
+              <SelectTrigger className="w-full md:w-44">
+                <Globe className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="الوجهة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الوجهات</SelectItem>
+                {countries.map((country) => (
+                  <SelectItem key={country.id} value={country.name}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Date Range Filters */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center mt-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full md:w-48 justify-start text-right font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="h-4 w-4 ml-2" />
+                  {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'من تاريخ'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full md:w-48 justify-start text-right font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="h-4 w-4 ml-2" />
+                  {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'إلى تاريخ'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                <X className="h-4 w-4 ml-1" />
+                مسح التاريخ
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
