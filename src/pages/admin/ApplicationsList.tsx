@@ -197,6 +197,12 @@ export default function ApplicationsList() {
   };
 
   const filteredApplications = applications.filter(app => {
+    // Country filter
+    if (countryFilter !== 'all') {
+      const countryName = app.visa_type?.country?.name;
+      if (countryName !== countryFilter) return false;
+    }
+
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return (
