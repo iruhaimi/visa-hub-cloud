@@ -251,7 +251,7 @@ const MyApplications = () => {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && applications.length === 0 && (
+        {!isLoading && !authLoading && !error && applications.length === 0 && (
           <Card>
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
