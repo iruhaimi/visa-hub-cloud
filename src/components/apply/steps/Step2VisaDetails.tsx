@@ -69,11 +69,8 @@ export default function Step2VisaDetails() {
         setSelectedRegion('schengen');
         setIsSchengenFromUrl(true); // Mark that user came from Schengen selection
       } else if (countryCode) {
-        const matchedCountry = countries.find(c => c.code === countryCode);
-        if (matchedCountry && !isSchengenCountry(matchedCountry)) {
-        // Find the country by code and set it
         const country = countries.find(c => c.code === countryCode);
-        if (country) {
+        if (country && !isSchengenCountry(country)) {
           setSelectedRegion('');
           updateApplicationData({
             countryId: country.id,
