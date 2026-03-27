@@ -383,6 +383,63 @@ export default function ApplicationsList() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={countryFilter} onValueChange={setCountryFilter}>
+              <SelectTrigger className="w-full md:w-44">
+                <Globe className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="الوجهة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الوجهات</SelectItem>
+                {countries.map((country) => (
+                  <SelectItem key={country.id} value={country.name}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Date Range Filters */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center mt-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full md:w-48 justify-start text-right font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="h-4 w-4 ml-2" />
+                  {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'من تاريخ'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("w-full md:w-48 justify-start text-right font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="h-4 w-4 ml-2" />
+                  {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'إلى تاريخ'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                <X className="h-4 w-4 ml-1" />
+                مسح التاريخ
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
