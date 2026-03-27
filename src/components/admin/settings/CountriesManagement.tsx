@@ -850,7 +850,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
               </div>
             </label>
 
-
+            <Button
               className="w-full" 
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending || !formData.name || !formData.code}
