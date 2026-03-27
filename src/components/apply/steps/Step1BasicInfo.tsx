@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,16 +45,15 @@ function GoogleSignInButton() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
       });
       
-      if (error) {
+      if (result?.error) {
         toast({
           variant: 'destructive',
           title: isRTL ? 'فشل تسجيل الدخول' : 'Login Failed',
-          description: error.message,
+          description: result.error instanceof Error ? result.error.message : String(result.error),
         });
       }
     } catch (err) {
