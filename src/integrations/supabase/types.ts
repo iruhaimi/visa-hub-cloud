@@ -1794,6 +1794,10 @@ export type Database = {
       }
       is_customer: { Args: { _user_id: string }; Returns: boolean }
       is_email_locked_out: { Args: { check_email: string }; Returns: boolean }
+      is_profile_owner: {
+        Args: { _auth_user_id: string; _profile_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
