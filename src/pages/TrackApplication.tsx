@@ -194,6 +194,20 @@ export default function TrackApplication() {
     setIsLoading(true);
 
     try {
+      // Check if the input looks like a UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const searchId = applicationNumber.trim();
+      
+      if (!uuidRegex.test(searchId)) {
+        // Not a UUID - show friendly error
+        setError(isRTL 
+          ? 'رقم الطلب غير صحيح. يرجى إدخال رقم الطلب الكامل (UUID) الذي حصلت عليه عند التقديم.'
+          : 'Invalid application number. Please enter the full application ID (UUID) you received when submitting.'
+        );
+        setIsLoading(false);
+        return;
+      }
+
       const { data: application, error: appError } = await supabase
         .from('applications')
         .select(`
@@ -209,7 +223,7 @@ export default function TrackApplication() {
             country:countries(name, flag_url)
           )
         `)
-        .eq('id', applicationNumber.trim())
+        .eq('id', searchId)
         .maybeSingle();
 
       if (appError) throw appError;
