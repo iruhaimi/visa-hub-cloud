@@ -175,6 +175,15 @@ export default function ApplicationsList() {
         query = query.eq('assigned_agent_id', agentFilter);
       }
 
+      if (dateFrom) {
+        query = query.gte('created_at', format(dateFrom, 'yyyy-MM-dd'));
+      }
+      if (dateTo) {
+        const nextDay = new Date(dateTo);
+        nextDay.setDate(nextDay.getDate() + 1);
+        query = query.lt('created_at', format(nextDay, 'yyyy-MM-dd'));
+      }
+
       const { data, error } = await query;
 
       if (error) throw error;
