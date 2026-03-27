@@ -133,7 +133,6 @@ export default function TrackRefund() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12">
       <div className="container max-w-2xl mx-auto px-4">
-          <div className="container max-w-2xl mx-auto px-4">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
