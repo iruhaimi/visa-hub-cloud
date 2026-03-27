@@ -63,12 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profileData = newProfile;
         }
 
-        // Also ensure customer role exists
-        await supabase
-          .from('user_roles')
-          .insert({ user_id: userId, role: 'customer' as const })
-          .select()
-          .maybeSingle();
+        // Customer role is now auto-assigned via database trigger
       }
 
       if (profileError && profileError.code !== 'PGRST116') {
