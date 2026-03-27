@@ -19,6 +19,7 @@ import {
   FileSearch,
   PanelBottom,
   Pencil,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -114,6 +115,12 @@ export default function AdminLayout() {
       title: 'إعدادات المالك',
       icon: Crown,
       href: '/admin/owner-settings',
+      show: isAdmin && isSuperAdmin,
+    },
+    {
+      title: 'سجل الإيميلات',
+      icon: Mail,
+      href: '/admin/email-logs',
       show: isAdmin && isSuperAdmin,
     },
     {
