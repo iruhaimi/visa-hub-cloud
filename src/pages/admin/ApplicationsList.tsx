@@ -151,6 +151,10 @@ export default function ApplicationsList() {
         query = query.not('assigned_agent_id', 'is', null);
       }
 
+      if (agentFilter !== 'all') {
+        query = query.eq('assigned_agent_id', agentFilter);
+      }
+
       const { data, error } = await query;
 
       if (error) throw error;
