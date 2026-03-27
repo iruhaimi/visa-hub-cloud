@@ -16,6 +16,39 @@ function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+async function getOrCreateUnsubscribeToken(
+  supabase: ReturnType<typeof createClient>,
+  email: string,
+): Promise<string> {
+  const { data: existingToken, error: existingTokenError } = await supabase
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existingTokenError) {
+    throw existingTokenError;
+  }
+
+  if (existingToken?.token) {
+    return existingToken.token;
+  }
+
+  const token = crypto.randomUUID();
+  const { error: insertTokenError } = await supabase
+    .from("email_unsubscribe_tokens")
+    .insert({
+      email,
+      token,
+    });
+
+  if (insertTokenError) {
+    throw insertTokenError;
+  }
+
+  return token;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -172,6 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Use Lovable's built-in email queue system
       const messageId = crypto.randomUUID();
+      const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, email);
       const emailPayload = {
         to: email,
         subject: "رمز التحقق للدخول - عطلات رحلاتكم",
@@ -183,6 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
         idempotency_key: `staff-2fa-${userId}-${Date.now()}`,
         label: "staff-2fa",
         message_id: messageId,
+        unsubscribe_token: unsubscribeToken,
         queued_at: new Date().toISOString(),
       };
 
