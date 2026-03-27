@@ -91,6 +91,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <StaffDomainRedirect />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Public Routes with Main Layout */}
