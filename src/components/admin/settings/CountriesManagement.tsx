@@ -358,10 +358,11 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
     code: '',
     flag_url: '',
     is_active: true,
+    is_schengen: false,
   });
 
   const resetForm = () => {
-    setFormData({ name: '', code: '', flag_url: '', is_active: true });
+    setFormData({ name: '', code: '', flag_url: '', is_active: true, is_schengen: false });
     setEditingCountry(null);
     setUseCustomCountry(false);
   };
@@ -373,6 +374,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
       code: country.code,
       flag_url: country.flag_url || '',
       is_active: country.is_active,
+      is_schengen: (country as any).is_schengen || false,
     });
     setUseCustomCountry(true);
     setIsOpen(true);
