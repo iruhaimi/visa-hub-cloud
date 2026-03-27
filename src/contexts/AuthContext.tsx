@@ -30,18 +30,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data: profileData, error: profileError } = await supabase
+      let { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (profileError) {
+      // Auto-create profile if it doesn't exist (fallback for users created before the trigger)
+      if (!profileData && (!profileError || profileError.code === 'PGRST116')) {
+        const { data: userData } = await supabase.auth.getUser();
+        const fullName = userData?.user?.user_metadata?.full_name || userData?.user?.user_metadata?.name || '';
+        
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: userId,
+            full_name: fullName,
+          })
+          .select('*')
+          .single();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          // Try fetching again in case of race condition
+          const { data: retryData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+          profileData = retryData;
+        } else {
+          profileData = newProfile;
+        }
+
+        // Also ensure customer role exists
+        await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'customer' as const })
+          .select()
+          .maybeSingle();
+      }
+
+      if (profileError && profileError.code !== 'PGRST116') {
         console.error('Error fetching profile:', profileError);
         return;
       }
 
-      setProfile(profileData as Profile);
+      if (profileData) {
+        setProfile(profileData as Profile);
+      }
 
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
