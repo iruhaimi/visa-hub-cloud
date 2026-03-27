@@ -266,7 +266,7 @@ export default function ApplicationDetail() {
           agentName: assignedAgent?.full_name || undefined,
           countryName: application.visa_type?.country?.name,
           visaType: application.visa_type?.name,
-          applicantName: application.user?.full_name || undefined,
+          applicantName: application.profile?.full_name || undefined,
           applicationId: application.id,
         });
       }
