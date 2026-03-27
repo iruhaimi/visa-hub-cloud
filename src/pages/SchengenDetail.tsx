@@ -45,7 +45,7 @@ export default function SchengenDetail() {
       const { data: countriesData } = await supabase
         .from('countries')
         .select('*')
-        .in('code', [...SCHENGEN_COUNTRY_CODES])
+        .eq('is_schengen', true)
         .eq('is_active', true)
         .order('name');
 
