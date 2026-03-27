@@ -155,9 +155,9 @@ function ApplyContent() {
   });
 
   // Auto-save draft when step changes
-  const saveDraft = useCallback(async () => {
-    if (!profile || !applicationData.visaTypeId || isSaving) return;
-    if (currentStep === lastSavedStep.current) return;
+  const saveDraft = useCallback(async (forceSave = false) => {
+    if (!profile || !applicationData.visaTypeId || isSaving) return null;
+    if (!forceSave && currentStep === lastSavedStep.current && draftId) return draftId;
     
     setIsSaving(true);
     
@@ -205,9 +205,11 @@ function ApplyContent() {
       }
       
       lastSavedStep.current = currentStep;
+      return result.data.id;
       
     } catch (error) {
       console.error('Error saving draft:', error);
+      return null;
     } finally {
       setIsSaving(false);
     }
