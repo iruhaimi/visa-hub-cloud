@@ -59,12 +59,12 @@ const STATUS_PROGRESS: Record<ApplicationStatus, number> = {
 };
 
 const MyApplications = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
   
   const [applications, setApplications] = useState<ApplicationWithVisa[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const labels = {

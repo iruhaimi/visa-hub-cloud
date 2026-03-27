@@ -76,23 +76,33 @@ export default function Step6Payment() {
       return;
     }
 
+    // CRITICAL: Ensure we have a draft saved before proceeding with payment
+    if (!draftId) {
+      toast({
+        title: direction === 'rtl' ? 'خطأ' : 'Error',
+        description: direction === 'rtl' ? 'لم يتم حفظ الطلب. يرجى المحاولة مرة أخرى.' : 'Application not saved. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
-      // Update application status to pending_payment (only if currently draft)
-      if (draftId) {
-        await supabase
-          .from('applications')
-          .update({
-            status: 'pending_payment' as const,
-            submitted_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', draftId)
-          .in('status', ['draft', 'pending_payment'] as const);
-        // No error check — if already pending_payment, the draft→pending_payment
-        // update is a no-op (RLS blocks it) but that's fine since we're already
-        // in the right state. PaymentSuccess handles the real transition.
+      // Update application status to pending_payment
+      const { error: updateError } = await supabase
+        .from('applications')
+        .update({
+          status: 'pending_payment' as const,
+          submitted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', draftId)
+        .in('status', ['draft', 'pending_payment'] as const);
+
+      if (updateError) {
+        console.error('Error updating to pending_payment:', updateError);
+        // Don't throw — may already be pending_payment which is fine
       }
 
       // Simulate payment processing
