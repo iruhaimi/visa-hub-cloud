@@ -1737,6 +1737,14 @@ export type Database = {
         Args: { target_email: string }
         Returns: undefined
       }
+      create_application_draft: {
+        Args: {
+          p_draft_data?: Json
+          p_travel_date?: string
+          p_visa_type_id: string
+        }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
