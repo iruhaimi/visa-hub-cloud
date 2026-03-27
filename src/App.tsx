@@ -42,6 +42,7 @@ const SpecialOffers = lazy(() => import("@/pages/SpecialOffers"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const SecureStaffAuth = lazy(() => import("@/pages/SecureStaffAuth"));
 const Install = lazy(() => import("@/pages/Install"));
+const Unsubscribe = lazy(() => import("@/pages/Unsubscribe"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 // Admin Pages
@@ -61,6 +62,7 @@ const OwnerSettings = lazy(() => import("@/pages/admin/OwnerSettings"));
 const DocumentAccessLogs = lazy(() => import("@/pages/admin/DocumentAccessLogs"));
 const FooterManagement = lazy(() => import("@/pages/admin/FooterManagement"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
+const EmailLogs = lazy(() => import("@/pages/admin/EmailLogs"));
 
 // Agent Pages
 const AgentDashboard = lazy(() => import("@/pages/agent/AgentDashboard"));
@@ -156,6 +158,7 @@ const App = () => (
                   <Route path="document-logs" element={<DocumentAccessLogs />} />
                   <Route path="footer" element={<FooterManagement />} />
                   <Route path="content" element={<ContentManagement />} />
+                  <Route path="email-logs" element={<EmailLogs />} />
                 </Route>
 
                 {/* Agent Routes */}
