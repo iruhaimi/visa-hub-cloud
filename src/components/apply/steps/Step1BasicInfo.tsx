@@ -45,12 +45,11 @@ function GoogleSignInButton() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
       });
       
-      if (error) {
+      if (result?.error) {
         toast({
           variant: 'destructive',
           title: isRTL ? 'فشل تسجيل الدخول' : 'Login Failed',
