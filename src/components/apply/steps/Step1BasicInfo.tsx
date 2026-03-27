@@ -53,7 +53,7 @@ function GoogleSignInButton() {
         toast({
           variant: 'destructive',
           title: isRTL ? 'فشل تسجيل الدخول' : 'Login Failed',
-          description: error.message,
+          description: result.error instanceof Error ? result.error.message : String(result.error),
         });
       }
     } catch (err) {
