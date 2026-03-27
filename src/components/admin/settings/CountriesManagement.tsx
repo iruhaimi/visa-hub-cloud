@@ -834,7 +834,23 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
               </div>
             </label>
 
-            <Button 
+            <label className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg cursor-pointer border border-primary/20">
+              <Checkbox
+                checked={formData.is_schengen}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_schengen: checked === true })}
+              />
+              <div className="flex-1">
+                <span className="font-medium flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" />
+                  دولة شنغن
+                </span>
+                <p className="text-xs text-muted-foreground">
+                  ستظهر ضمن مجموعة دول شنغن (الاتحاد الأوروبي)
+                </p>
+              </div>
+            </label>
+
+
               className="w-full" 
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending || !formData.name || !formData.code}
