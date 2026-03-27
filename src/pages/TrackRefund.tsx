@@ -5,9 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import HeaderArabic from '@/components/layout/HeaderArabic';
-import FooterArabic from '@/components/layout/FooterArabic';
-import FloatingWhatsApp from '@/components/layout/FloatingWhatsApp';
 import { filterArabicChars } from '@/lib/inputFilters';
 import {
   Search,
@@ -134,11 +131,8 @@ export default function TrackRefund() {
   const StatusIcon = status?.icon;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <HeaderArabic />
-      <main className="flex-1">
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12">
-          <div className="container max-w-2xl mx-auto px-4">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12">
+      <div className="container max-w-2xl mx-auto px-4">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
@@ -335,11 +329,7 @@ export default function TrackRefund() {
                 <a href="/contact">تواصل معنا</a>
               </Button>
             </div>
-          </div>
-        </div>
-      </main>
-      <FooterArabic />
-      <FloatingWhatsApp />
+      </div>
     </div>
   );
 }
