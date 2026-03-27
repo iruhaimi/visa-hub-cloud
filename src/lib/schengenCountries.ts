@@ -1,11 +1,5 @@
 // Schengen countries configuration
-// These country codes represent EU Schengen zone countries
-
-export const SCHENGEN_COUNTRY_CODES = [
-  'DE', 'FR', 'IT', 'ES', 'NL', 'AT', 'CH', 'BE', 'PT', 'GR',
-  'CZ', 'PL', 'SE', 'DK', 'NO', 'FI', 'HU', 'SK', 'SI', 'LT',
-  'LV', 'EE', 'MT', 'LU', 'IS', 'LI', 'HR', 'BG', 'RO'
-] as const;
+// Countries are now managed dynamically via is_schengen flag in DB
 
 export const SCHENGEN_INFO = {
   id: 'schengen',
@@ -16,14 +10,14 @@ export const SCHENGEN_INFO = {
   is_active: true,
 };
 
-export function isSchengenCountry(countryCode: string): boolean {
-  return SCHENGEN_COUNTRY_CODES.includes(countryCode as typeof SCHENGEN_COUNTRY_CODES[number]);
+export function isSchengenCountry(country: { is_schengen?: boolean; code?: string }): boolean {
+  return country.is_schengen === true;
 }
 
-export function filterOutSchengenCountries<T extends { code: string }>(countries: T[]): T[] {
-  return countries.filter(country => !isSchengenCountry(country.code));
+export function filterOutSchengenCountries<T extends { is_schengen?: boolean }>(countries: T[]): T[] {
+  return countries.filter(country => !country.is_schengen);
 }
 
-export function getSchengenCountries<T extends { code: string }>(countries: T[]): T[] {
-  return countries.filter(country => isSchengenCountry(country.code));
+export function getSchengenCountries<T extends { is_schengen?: boolean }>(countries: T[]): T[] {
+  return countries.filter(country => country.is_schengen);
 }
