@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSiteSection } from '@/hooks/useSiteContent';
@@ -12,9 +12,12 @@ import {
   Home, 
   Mail,
   Clock,
-  FileText
+  FileText,
+  Copy,
+  Check
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -24,6 +27,7 @@ export default function PaymentSuccess() {
   const isRTL = direction === 'rtl';
   const hasUpdated = useRef(false);
   const { data: cmsContent } = useSiteSection('payment_success', 'content');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!applicationId || hasUpdated.current) return;
@@ -45,6 +49,43 @@ export default function PaymentSuccess() {
     };
     finalizeApplication();
   }, [applicationId]);
+
+  const handleCopyId = useCallback(() => {
+    if (applicationId) {
+      navigator.clipboard.writeText(applicationId).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }, [applicationId]);
+
+  const handleDownloadReceipt = useCallback(() => {
+    // Generate a simple receipt as a text file
+    const receiptContent = [
+      '═══════════════════════════════════════',
+      isRTL ? '          إيصال الدفع - رحلات' : '          Payment Receipt - Rihalat',
+      '═══════════════════════════════════════',
+      '',
+      `${isRTL ? 'رقم الطلب' : 'Application Number'}: ${applicationNumber}`,
+      `${isRTL ? 'معرف الطلب' : 'Application ID'}: ${applicationId || 'N/A'}`,
+      `${isRTL ? 'التاريخ' : 'Date'}: ${new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}`,
+      `${isRTL ? 'الحالة' : 'Status'}: ${isRTL ? 'تم الدفع بنجاح' : 'Payment Successful'}`,
+      '',
+      '═══════════════════════════════════════',
+      isRTL ? 'شكراً لاستخدامكم خدماتنا' : 'Thank you for using our services',
+      '═══════════════════════════════════════',
+    ].join('\n');
+
+    const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${applicationNumber}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [applicationNumber, applicationId, isRTL]);
 
   const t = (key: string, fallbackAr: string, fallbackEn: string) => {
     if (cmsContent) {
@@ -70,6 +111,23 @@ export default function PaymentSuccess() {
               <p className="text-sm text-muted-foreground mb-2">{t('app_number', 'رقم طلبك هو', 'Your application number is')}</p>
               <p className="text-2xl font-mono font-bold text-primary tracking-wider">{applicationNumber}</p>
             </div>
+
+            {/* Show copyable Application ID for tracking */}
+            {applicationId && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {isRTL ? 'معرف الطلب (للتتبع)' : 'Application ID (for tracking)'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs font-mono bg-background/50 p-2 rounded truncate" dir="ltr">
+                    {applicationId}
+                  </code>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopyId}>
+                    {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -107,13 +165,13 @@ export default function PaymentSuccess() {
 
             <div className="space-y-3">
               <Button asChild className="w-full h-12 gap-2">
-                <Link to={`/track?app=${applicationNumber}`}>
+                <Link to={applicationId ? `/track?id=${applicationId}` : `/track?app=${applicationNumber}`}>
                   <Search className="w-4 h-4" />
                   {t('track_btn', 'تتبع الطلب', 'Track Application')}
                 </Link>
               </Button>
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2" onClick={handleDownloadReceipt}>
                   <Download className="w-4 h-4" />
                   {t('receipt_btn', 'تحميل الإيصال', 'Download Receipt')}
                 </Button>
