@@ -128,6 +128,7 @@ const App = () => (
                 <Route path="/portal-x7k9m2" element={<SecureStaffAuth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/install" element={<Install />} />
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
 
                 {/* Admin Routes */}
                 <Route 
