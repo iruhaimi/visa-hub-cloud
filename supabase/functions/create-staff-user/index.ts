@@ -1,8 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
-import { Resend } from 'https://esm.sh/resend@4.0.0'
 import { corsHeaders } from '../_shared/cors.ts'
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+let resend: any = null;
+const resendApiKey = Deno.env.get('RESEND_API_KEY');
+if (resendApiKey) {
+  import('https://esm.sh/resend@4.0.0').then(({ Resend }) => {
+    resend = new Resend(resendApiKey);
+  }).catch(() => {
+    console.warn('Resend module not available, emails will be skipped');
+  });
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
