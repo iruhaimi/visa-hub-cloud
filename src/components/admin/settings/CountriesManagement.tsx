@@ -263,6 +263,12 @@ function SortableCountryRow({
       </Badge>
 
       <div className="flex items-center gap-2 flex-shrink-0">
+        {(country as any).is_schengen && (
+          <Badge className="bg-blue-500 hover:bg-blue-600 gap-1 text-white">
+            <Globe className="h-3 w-3" />
+            شنغن
+          </Badge>
+        )}
         {country.is_active ? (
           <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1">
             <Eye className="h-3 w-3" />
