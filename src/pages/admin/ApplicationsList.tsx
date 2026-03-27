@@ -28,12 +28,18 @@ import {
   Loader2,
   RefreshCw,
   Download,
-  Users
+  Users,
+  Globe,
+  CalendarIcon,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { exportToExcel } from '@/lib/exportToExcel';
 import { BulkAssignDialog } from '@/components/admin/BulkAssignDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'جميع الحالات' },
