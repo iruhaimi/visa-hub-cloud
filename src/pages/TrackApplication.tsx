@@ -241,7 +241,7 @@ export default function TrackApplication() {
       const { data: history, error: historyError } = await supabase
         .from('application_status_history')
         .select('id, old_status, new_status, created_at, notes')
-        .eq('application_id', applicationNumber.trim())
+        .eq('application_id', searchId)
         .order('created_at', { ascending: true });
 
       if (historyError) throw historyError;
