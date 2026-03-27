@@ -208,6 +208,31 @@ export default function Auth() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: isRTL ? 'فشل تسجيل الدخول' : 'Login Failed',
+          description: error.message,
+        });
+      }
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: isRTL ? 'خطأ' : 'Error',
+        description: isRTL ? 'حدث خطأ أثناء تسجيل الدخول بواسطة Google' : 'An error occurred during Google sign in',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={`flex min-h-screen ${isRTL ? 'flex-row-reverse' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Left side - Form */}
