@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { sendAssignmentEmail } from '@/lib/sendAssignmentEmail';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -257,6 +258,16 @@ export default function ApplicationDetail() {
           message: `تم تعيين طلب تأشيرة ${application.visa_type?.country?.name} - ${application.visa_type?.name} لك للمتابعة.`,
           type: 'assignment',
           action_url: `/agent/applications/${application.id}`,
+        });
+
+        // Send email notification
+        sendAssignmentEmail({
+          agentProfileId: agentIdToAssign,
+          agentName: assignedAgent?.full_name || undefined,
+          countryName: application.visa_type?.country?.name,
+          visaType: application.visa_type?.name,
+          applicantName: application.profile?.full_name || undefined,
+          applicationId: application.id,
         });
       }
 

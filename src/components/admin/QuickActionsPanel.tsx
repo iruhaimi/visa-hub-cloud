@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { sendAssignmentEmail } from '@/lib/sendAssignmentEmail';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -317,6 +318,17 @@ export function QuickActionsPanel() {
       if (error) throw error;
       
       toast.success('تم تعيين الوكيل بنجاح');
+
+      // Send email notification
+      const agent = agents.find(a => a.id === selectedAgent);
+      sendAssignmentEmail({
+        agentProfileId: selectedAgent,
+        agentName: agent?.full_name || undefined,
+        countryName: selectedApp?.visa_type?.country?.name,
+        visaType: selectedApp?.visa_type?.name,
+        applicationId: selectedApp?.id,
+      });
+
       setAssignDialogOpen(false);
       setSelectedApp(null);
       setSelectedAgent('');
