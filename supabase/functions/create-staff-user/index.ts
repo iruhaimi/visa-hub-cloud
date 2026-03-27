@@ -1,16 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { corsHeaders } from '../_shared/cors.ts'
 
-let resend: any = null;
-const resendApiKey = Deno.env.get('RESEND_API_KEY');
-if (resendApiKey) {
-  import('https://esm.sh/resend@4.0.0').then(({ Resend }) => {
-    resend = new Resend(resendApiKey);
-  }).catch(() => {
-    console.warn('Resend module not available, emails will be skipped');
-  });
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -58,7 +48,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, full_name, phone, role, sendEmail = true, grantSuperAdmin = false } = await req.json()
+    const { email, password, full_name, phone, role, grantSuperAdmin = false } = await req.json()
 
     // CRIT-1 FIX: Verify caller has manage_staff permission before granting super admin
     if (grantSuperAdmin) {
@@ -94,7 +84,7 @@ Deno.serve(async (req) => {
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirm email for staff
+      email_confirm: true,
       user_metadata: { full_name }
     })
 
@@ -115,7 +105,6 @@ Deno.serve(async (req) => {
     }
 
     // Remove the 'customer' role that was automatically added by the trigger
-    // Staff members (admin/agent) should NOT have the customer role
     await adminClient
       .from('user_roles')
       .delete()
@@ -161,98 +150,10 @@ Deno.serve(async (req) => {
         role: role
       })
 
-    // Send welcome email with credentials
-    let emailSent = false
-    if (sendEmail && resend) {
-      try {
-        const roleLabel = role === 'admin' ? 'مشرف' : 'وكيل'
-        const loginUrl = `${supabaseUrl.replace('.supabase.co', '')}/portal-x7k9m2`
-        
-        const { error: emailError } = await resend.emails.send({
-          from: 'رحلات للتأشيرات <onboarding@resend.dev>',
-          to: [email],
-          subject: 'تم إنشاء حسابك في نظام رحلات للتأشيرات',
-          html: `
-            <!DOCTYPE html>
-            <html dir="rtl" lang="ar">
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                
-                <!-- Header -->
-                <div style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 30px; text-align: center;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">مرحباً بك في فريق العمل</h1>
-                  <p style="color: #e0f2fe; margin: 10px 0 0 0; font-size: 14px;">نظام رحلات للتأشيرات</p>
-                </div>
-                
-                <!-- Content -->
-                <div style="padding: 30px;">
-                  <p style="color: #374151; font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
-                    عزيزي/عزيزتي <strong>${full_name || 'الموظف الجديد'}</strong>،
-                  </p>
-                  
-                  <p style="color: #374151; font-size: 16px; line-height: 1.8; margin-bottom: 20px;">
-                    تم إنشاء حسابك بنجاح كـ <strong style="color: #0ea5e9;">${roleLabel}</strong> في نظام رحلات للتأشيرات. يمكنك الآن تسجيل الدخول باستخدام البيانات التالية:
-                  </p>
-                  
-                  <!-- Credentials Box -->
-                  <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 20px; margin: 25px 0;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                      <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">البريد الإلكتروني:</td>
-                        <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: bold;" dir="ltr">${email}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">الصلاحية:</td>
-                        <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: bold;">${roleLabel}</td>
-                      </tr>
-                    </table>
-                  </div>
-                  
-                  <!-- Warning -->
-                  <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                    <p style="color: #92400e; font-size: 14px; margin: 0; line-height: 1.6;">
-                      ⚠️ <strong>هام:</strong> يرجى التواصل مع مدير النظام للحصول على كلمة المرور الخاصة بك. قم بتغييرها فور تسجيل الدخول للمرة الأولى.
-                    </p>
-                  </div>
-                  
-                  <p style="color: #374151; font-size: 14px; line-height: 1.8; margin-top: 25px;">
-                    مع أطيب التحيات،<br/>
-                    <strong>فريق رحلات للتأشيرات</strong>
-                  </p>
-                </div>
-                
-                <!-- Footer -->
-                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                    هذا البريد تم إرساله تلقائياً - يرجى عدم الرد عليه
-                  </p>
-                </div>
-              </div>
-            </body>
-            </html>
-          `,
-        })
-
-        if (emailError) {
-          console.error('Error sending welcome email:', emailError)
-        } else {
-          emailSent = true
-          console.log(`Welcome email sent to ${email}`)
-        }
-      } catch (emailErr) {
-        console.error('Failed to send welcome email:', emailErr)
-      }
-    }
-
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Staff user created successfully',
-        emailSent,
         user: {
           id: newUser.user!.id,
           email: newUser.user!.email
