@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import StaffDomainRedirect from "@/components/layout/StaffDomainRedirect";
 
 // Layouts (kept eager - needed for shell)
 import MainLayout from "@/components/layout/MainLayout";
@@ -90,6 +91,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <StaffDomainRedirect />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Public Routes with Main Layout */}
