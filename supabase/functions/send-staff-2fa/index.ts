@@ -169,11 +169,18 @@ const handler = async (req: Request): Promise<Response> => {
       `;
 
       // Use Lovable's built-in email queue system
+      const messageId = crypto.randomUUID();
       const emailPayload = {
         to: email,
         subject: "رمز التحقق للدخول - عطلات رحلاتكم",
         html: htmlContent,
-        from: "عطلات رحلاتكم <noreply@notify.visafaster.com>",
+        from: "عطلات رحلاتكم <noreply@visafaster.com>",
+        sender_domain: "notify.visafaster.com",
+        purpose: "transactional",
+        idempotency_key: `staff-2fa-${userId}-${Date.now()}`,
+        label: "staff-2fa",
+        message_id: messageId,
+        queued_at: new Date().toISOString(),
       };
 
       const { error: enqueueError } = await supabase.rpc("enqueue_email", {
