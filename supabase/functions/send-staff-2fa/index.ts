@@ -132,6 +132,8 @@ const handler = async (req: Request): Promise<Response> => {
     let emailSent = false;
 
     try {
+      const textContent = `رمز التحقق للدخول إلى بوابة الموظفين: ${code}\n\nهذا الرمز صالح لمدة 10 دقائق فقط.\nإذا لم تطلب هذا الرمز، يرجى تجاهل هذه الرسالة.`;
+
       const htmlContent = `
         <!DOCTYPE html>
         <html dir="rtl" lang="ar">
@@ -174,6 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
         to: email,
         subject: "رمز التحقق للدخول - عطلات رحلاتكم",
         html: htmlContent,
+        text: textContent,
         from: "عطلات رحلاتكم <noreply@visafaster.com>",
         sender_domain: "notify.visafaster.com",
         purpose: "transactional",
