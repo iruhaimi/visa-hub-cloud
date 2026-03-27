@@ -142,6 +142,7 @@ const STATUS_ORDER: ApplicationStatus[] = [
 export default function TrackApplication() {
   const { language } = useLanguage();
   const isRTL = language === 'ar';
+  const [searchParams] = useSearchParams();
   
   const [applicationNumber, setApplicationNumber] = useState('');
   const [searchType, setSearchType] = useState<'phone' | 'email'>('phone');
@@ -150,6 +151,14 @@ export default function TrackApplication() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplicationResult | null>(null);
   const [searched, setSearched] = useState(false);
+
+  // Auto-fill application ID from URL params
+  useEffect(() => {
+    const idFromUrl = searchParams.get('id');
+    if (idFromUrl) {
+      setApplicationNumber(idFromUrl);
+    }
+  }, [searchParams]);
 
   // Handle email/phone input based on search type
   const handleSearchValueInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
