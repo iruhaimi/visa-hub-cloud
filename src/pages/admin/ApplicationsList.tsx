@@ -83,12 +83,37 @@ export default function ApplicationsList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [assignmentFilter, setAssignmentFilter] = useState('all');
+  const [agentFilter, setAgentFilter] = useState('all');
+  const [agents, setAgents] = useState<{ id: string; full_name: string }[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
 
   useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  useEffect(() => {
     fetchApplications();
-  }, [statusFilter, assignmentFilter]);
+  }, [statusFilter, assignmentFilter, agentFilter]);
+
+  const fetchAgents = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, user_id')
+      .order('full_name');
+    
+    if (data) {
+      // Filter to only agents by checking user_roles
+      const { data: agentRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['agent', 'admin']);
+      
+      const agentUserIds = new Set(agentRoles?.map(r => r.user_id) || []);
+      const agentProfiles = data.filter(p => agentUserIds.has(p.user_id));
+      setAgents(agentProfiles.map(p => ({ id: p.id, full_name: p.full_name || 'بدون اسم' })));
+    }
+  };
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -124,6 +149,10 @@ export default function ApplicationsList() {
         query = query.is('assigned_agent_id', null);
       } else if (assignmentFilter === 'assigned') {
         query = query.not('assigned_agent_id', 'is', null);
+      }
+
+      if (agentFilter !== 'all') {
+        query = query.eq('assigned_agent_id', agentFilter);
       }
 
       const { data, error } = await query;
@@ -301,6 +330,20 @@ export default function ApplicationsList() {
                 {ASSIGNMENT_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={agentFilter} onValueChange={setAgentFilter}>
+              <SelectTrigger className="w-full md:w-44">
+                <Users className="h-4 w-4 ml-2" />
+                <SelectValue placeholder="الوكيل" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الوكلاء</SelectItem>
+                {agents.map((agent) => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    {agent.full_name}
                   </SelectItem>
                 ))}
               </SelectContent>
