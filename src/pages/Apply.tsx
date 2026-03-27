@@ -155,9 +155,9 @@ function ApplyContent() {
   });
 
   // Auto-save draft when step changes
-  const saveDraft = useCallback(async () => {
-    if (!profile || !applicationData.visaTypeId || isSaving) return;
-    if (currentStep === lastSavedStep.current) return;
+  const saveDraft = useCallback(async (forceSave = false) => {
+    if (!profile || !applicationData.visaTypeId || isSaving) return null;
+    if (!forceSave && currentStep === lastSavedStep.current && draftId) return draftId;
     
     setIsSaving(true);
     
@@ -205,9 +205,11 @@ function ApplyContent() {
       }
       
       lastSavedStep.current = currentStep;
+      return result.data.id;
       
     } catch (error) {
       console.error('Error saving draft:', error);
+      return null;
     } finally {
       setIsSaving(false);
     }
@@ -216,12 +218,14 @@ function ApplyContent() {
   // Trigger save on step change (after step 2)
   useEffect(() => {
     if (currentStep >= 2 && profile && applicationData.visaTypeId) {
+      // Force save when reaching payment step to ensure draftId exists
+      const forceSave = currentStep >= 5 && !draftId;
       const timer = setTimeout(() => {
-        saveDraft();
-      }, 500);
+        saveDraft(forceSave);
+      }, forceSave ? 0 : 500);
       return () => clearTimeout(timer);
     }
-  }, [currentStep, saveDraft, profile, applicationData.visaTypeId]);
+  }, [currentStep, saveDraft, profile, applicationData.visaTypeId, draftId]);
 
   // Update application data when country/visa is loaded
   useEffect(() => {

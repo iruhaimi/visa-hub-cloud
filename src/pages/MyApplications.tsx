@@ -59,12 +59,12 @@ const STATUS_PROGRESS: Record<ApplicationStatus, number> = {
 };
 
 const MyApplications = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const { direction } = useLanguage();
   const isRTL = direction === 'rtl';
   
   const [applications, setApplications] = useState<ApplicationWithVisa[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const labels = {
@@ -217,7 +217,7 @@ const MyApplications = () => {
         </div>
 
         {/* Loading State */}
-        {isLoading && (
+        {(isLoading || (authLoading && !profile)) && (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
@@ -251,7 +251,7 @@ const MyApplications = () => {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && applications.length === 0 && (
+        {!isLoading && !authLoading && !error && applications.length === 0 && (
           <Card>
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
