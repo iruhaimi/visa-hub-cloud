@@ -209,10 +209,10 @@ export default function Auth() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleOAuthSignIn = async (provider: 'google' | 'apple') => {
     setIsLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth('google', {
+      const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
       });
       if (result?.error) {
@@ -226,7 +226,7 @@ export default function Auth() {
       toast({
         variant: 'destructive',
         title: isRTL ? 'خطأ' : 'Error',
-        description: isRTL ? 'حدث خطأ أثناء تسجيل الدخول بواسطة Google' : 'An error occurred during Google sign in',
+        description: isRTL ? `حدث خطأ أثناء تسجيل الدخول بواسطة ${provider}` : `An error occurred during ${provider} sign in`,
       });
     } finally {
       setIsLoading(false);
