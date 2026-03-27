@@ -191,11 +191,23 @@ function ApplyContent() {
           .select('id')
           .single();
       } else {
-        result = await supabase
-          .from('applications')
-          .insert(draftPayload)
-          .select('id')
-          .single();
+        const { data: createdDraftId, error: createDraftError } = await supabase.rpc('create_application_draft', {
+          p_visa_type_id: applicationData.visaTypeId,
+          p_travel_date: applicationData.travelDate ? applicationData.travelDate.toISOString().split('T')[0] : null,
+          p_draft_data: JSON.parse(JSON.stringify({
+            fullName: applicationData.fullName,
+            email: applicationData.email,
+            phone: applicationData.phone,
+            countryCode: applicationData.countryCode,
+            travelers: applicationData.travelers,
+            checkedRequirements: applicationData.checkedRequirements,
+            currentStep,
+          })),
+        });
+
+        result = createDraftError
+          ? { data: null, error: createDraftError }
+          : { data: { id: createdDraftId }, error: null };
       }
 
       if (result.error) throw result.error;
