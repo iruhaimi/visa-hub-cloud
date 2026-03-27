@@ -217,7 +217,7 @@ const MyApplications = () => {
         </div>
 
         {/* Loading State */}
-        {isLoading && (
+        {(isLoading || (authLoading && !profile)) && (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
