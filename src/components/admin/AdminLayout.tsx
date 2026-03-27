@@ -118,6 +118,12 @@ export default function AdminLayout() {
       show: isAdmin && isSuperAdmin,
     },
     {
+      title: 'سجل الإيميلات',
+      icon: Mail,
+      href: '/admin/email-logs',
+      show: isAdmin && isSuperAdmin,
+    },
+    {
       title: 'الإعدادات',
       icon: Settings,
       href: '/admin/settings',
