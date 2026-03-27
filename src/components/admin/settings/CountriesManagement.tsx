@@ -400,6 +400,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
             code: formData.code.toUpperCase(),
             flag_url: formData.flag_url || null,
             is_active: formData.is_active,
+            is_schengen: formData.is_schengen,
           })
           .eq('id', editingCountry.id);
         if (error) throw error;
@@ -412,6 +413,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
             code: formData.code.toUpperCase(),
             flag_url: formData.flag_url || null,
             is_active: formData.is_active,
+            is_schengen: formData.is_schengen,
             display_order: maxOrder + 1,
           });
         if (error) throw error;
