@@ -68,10 +68,9 @@ export default function Step2VisaDetails() {
       if (countryCode === 'SCHENGEN') {
         setSelectedRegion('schengen');
         setIsSchengenFromUrl(true); // Mark that user came from Schengen selection
-      } else if (countryCode && !isSchengenCountry(countryCode)) {
-        // Find the country by code and set it
+      } else if (countryCode) {
         const country = countries.find(c => c.code === countryCode);
-        if (country) {
+        if (country && !isSchengenCountry(country)) {
           setSelectedRegion('');
           updateApplicationData({
             countryId: country.id,
@@ -221,7 +220,7 @@ export default function Step2VisaDetails() {
             <div className="space-y-2">
               <Label className="text-sm sm:text-base">{t('form.country')}</Label>
               <Select
-                value={selectedRegion || (applicationData.countryId && !isSchengenCountry(countries?.find(c => c.id === applicationData.countryId)?.code || '') ? applicationData.countryId : '')}
+                value={selectedRegion || (applicationData.countryId && !isSchengenCountry(countries?.find(c => c.id === applicationData.countryId) || {}) ? applicationData.countryId : '')}
                 onValueChange={(value) => {
                   if (value === 'schengen') {
                     handleRegionChange('schengen');

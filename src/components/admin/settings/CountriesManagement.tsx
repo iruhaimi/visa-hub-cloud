@@ -263,6 +263,12 @@ function SortableCountryRow({
       </Badge>
 
       <div className="flex items-center gap-2 flex-shrink-0">
+        {(country as any).is_schengen && (
+          <Badge className="bg-blue-500 hover:bg-blue-600 gap-1 text-white">
+            <Globe className="h-3 w-3" />
+            شنغن
+          </Badge>
+        )}
         {country.is_active ? (
           <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1">
             <Eye className="h-3 w-3" />
@@ -352,10 +358,11 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
     code: '',
     flag_url: '',
     is_active: true,
+    is_schengen: false,
   });
 
   const resetForm = () => {
-    setFormData({ name: '', code: '', flag_url: '', is_active: true });
+    setFormData({ name: '', code: '', flag_url: '', is_active: true, is_schengen: false });
     setEditingCountry(null);
     setUseCustomCountry(false);
   };
@@ -367,6 +374,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
       code: country.code,
       flag_url: country.flag_url || '',
       is_active: country.is_active,
+      is_schengen: (country as any).is_schengen || false,
     });
     setUseCustomCountry(true);
     setIsOpen(true);
@@ -392,6 +400,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
             code: formData.code.toUpperCase(),
             flag_url: formData.flag_url || null,
             is_active: formData.is_active,
+            is_schengen: formData.is_schengen,
           })
           .eq('id', editingCountry.id);
         if (error) throw error;
@@ -404,6 +413,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
             code: formData.code.toUpperCase(),
             flag_url: formData.flag_url || null,
             is_active: formData.is_active,
+            is_schengen: formData.is_schengen,
             display_order: maxOrder + 1,
           });
         if (error) throw error;
@@ -824,7 +834,23 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
               </div>
             </label>
 
-            <Button 
+            <label className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg cursor-pointer border border-primary/20">
+              <Checkbox
+                checked={formData.is_schengen}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_schengen: checked === true })}
+              />
+              <div className="flex-1">
+                <span className="font-medium flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" />
+                  دولة شنغن
+                </span>
+                <p className="text-xs text-muted-foreground">
+                  ستظهر ضمن مجموعة دول شنغن (الاتحاد الأوروبي)
+                </p>
+              </div>
+            </label>
+
+            <Button
               className="w-full" 
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending || !formData.name || !formData.code}

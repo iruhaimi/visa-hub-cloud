@@ -71,6 +71,8 @@ export interface Country {
   code: string;
   flag_url: string | null;
   is_active: boolean;
+  is_schengen: boolean;
+  display_order?: number;
   created_at: string;
   updated_at: string;
 }
