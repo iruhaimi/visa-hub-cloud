@@ -344,6 +344,8 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
   const [useCustomCountry, setUseCustomCountry] = useState(false);
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [orderedCountries, setOrderedCountries] = useState<Country[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'hidden'>('all');
+  const [schengenFilter, setSchengenFilter] = useState<'all' | 'schengen' | 'non-schengen'>('all');
   const queryClient = useQueryClient();
 
   const sensors = useSensors(
@@ -516,14 +518,24 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
 
   const sortedCountries = [...countries].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
-  const filteredCountries = searchQuery
-    ? sortedCountries.filter(c => 
-        c.name.includes(searchQuery) || 
-        c.code.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : sortedCountries;
+  const filteredCountries = sortedCountries.filter(c => {
+    // Text search
+    if (searchQuery && !c.name.includes(searchQuery) && !c.code.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    // Status filter
+    if (statusFilter === 'active' && !c.is_active) return false;
+    if (statusFilter === 'hidden' && c.is_active) return false;
+    // Schengen filter
+    if (schengenFilter === 'schengen' && !(c as any).is_schengen) return false;
+    if (schengenFilter === 'non-schengen' && (c as any).is_schengen) return false;
+    return true;
+  });
 
   const displayCountries = isReorderMode ? orderedCountries : filteredCountries;
+
+  const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (schengenFilter !== 'all' ? 1 : 0);
+  const clearAllFilters = () => { setStatusFilter('all'); setSchengenFilter('all'); setSearchQuery(''); };
 
   if (isLoading) {
     return (
@@ -604,14 +616,79 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
           )}
 
           {!isReorderMode && (
-            <div className="relative mt-4">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث عن دولة..."
-                className="pr-10 bg-background"
-              />
+            <div className="mt-4 space-y-3">
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ابحث عن دولة..."
+                  className="pr-10 bg-background"
+                />
+              </div>
+
+              {/* Filter Chips */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground font-medium">الحالة:</span>
+                {([
+                  { value: 'all', label: 'الكل' },
+                  { value: 'active', label: 'نشطة', icon: <Eye className="h-3 w-3" /> },
+                  { value: 'hidden', label: 'مخفية', icon: <EyeOff className="h-3 w-3" /> },
+                ] as const).map(opt => (
+                  <Button
+                    key={opt.value}
+                    variant={statusFilter === opt.value ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn("h-7 text-xs gap-1 rounded-full", statusFilter === opt.value && "shadow-sm")}
+                    onClick={() => setStatusFilter(opt.value)}
+                  >
+                    {'icon' in opt && opt.icon}
+                    {opt.label}
+                  </Button>
+                ))}
+
+                <div className="w-px h-5 bg-border mx-1" />
+
+                <span className="text-xs text-muted-foreground font-medium">النوع:</span>
+                {([
+                  { value: 'all', label: 'الكل' },
+                  { value: 'schengen', label: 'شنغن', icon: <Globe className="h-3 w-3" /> },
+                  { value: 'non-schengen', label: 'غير شنغن' },
+                ] as const).map(opt => (
+                  <Button
+                    key={opt.value}
+                    variant={schengenFilter === opt.value ? 'default' : 'outline'}
+                    size="sm"
+                    className={cn("h-7 text-xs gap-1 rounded-full", schengenFilter === opt.value && "shadow-sm")}
+                    onClick={() => setSchengenFilter(opt.value)}
+                  >
+                    {'icon' in opt && opt.icon}
+                    {opt.label}
+                  </Button>
+                ))}
+
+                {activeFiltersCount > 0 && (
+                  <>
+                    <div className="w-px h-5 bg-border mx-1" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-destructive hover:text-destructive rounded-full"
+                      onClick={clearAllFilters}
+                    >
+                      <XCircle className="h-3 w-3" />
+                      مسح الفلاتر ({activeFiltersCount})
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Results count */}
+              {(searchQuery || statusFilter !== 'all' || schengenFilter !== 'all') && (
+                <p className="text-xs text-muted-foreground">
+                  عرض {filteredCountries.length} من {countries.length} دولة
+                </p>
+              )}
             </div>
           )}
         </CardHeader>
