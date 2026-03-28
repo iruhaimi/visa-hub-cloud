@@ -344,6 +344,8 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
   const [useCustomCountry, setUseCustomCountry] = useState(false);
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [orderedCountries, setOrderedCountries] = useState<Country[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'hidden'>('all');
+  const [schengenFilter, setSchengenFilter] = useState<'all' | 'schengen' | 'non-schengen'>('all');
   const queryClient = useQueryClient();
 
   const sensors = useSensors(
