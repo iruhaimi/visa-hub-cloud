@@ -518,14 +518,24 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
 
   const sortedCountries = [...countries].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
 
-  const filteredCountries = searchQuery
-    ? sortedCountries.filter(c => 
-        c.name.includes(searchQuery) || 
-        c.code.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : sortedCountries;
+  const filteredCountries = sortedCountries.filter(c => {
+    // Text search
+    if (searchQuery && !c.name.includes(searchQuery) && !c.code.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    // Status filter
+    if (statusFilter === 'active' && !c.is_active) return false;
+    if (statusFilter === 'hidden' && c.is_active) return false;
+    // Schengen filter
+    if (schengenFilter === 'schengen' && !(c as any).is_schengen) return false;
+    if (schengenFilter === 'non-schengen' && (c as any).is_schengen) return false;
+    return true;
+  });
 
   const displayCountries = isReorderMode ? orderedCountries : filteredCountries;
+
+  const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (schengenFilter !== 'all' ? 1 : 0);
+  const clearAllFilters = () => { setStatusFilter('all'); setSchengenFilter('all'); setSearchQuery(''); };
 
   if (isLoading) {
     return (
