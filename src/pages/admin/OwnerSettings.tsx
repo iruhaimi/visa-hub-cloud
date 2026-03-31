@@ -60,6 +60,34 @@ export default function OwnerSettings() {
   const [targetUser, setTargetUser] = useState<StaffUser | null>(null);
   const [backupNotes, setBackupNotes] = useState('');
 
+  // Order summary content management
+  const { data: orderSummaryData } = useSiteSection('order_summary', 'service_fees');
+  const [summaryTexts, setSummaryTexts] = useState<Record<string, string>>({});
+  const [summaryTextsLoaded, setSummaryTextsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (orderSummaryData && !summaryTextsLoaded) {
+      setSummaryTexts(orderSummaryData as Record<string, string>);
+      setSummaryTextsLoaded(true);
+    }
+  }, [orderSummaryData, summaryTextsLoaded]);
+
+  const saveSummaryTextsMutation = useMutation({
+    mutationFn: async (texts: Record<string, string>) => {
+      const { error } = await supabase
+        .from('site_content')
+        .update({ content: texts as any, updated_at: new Date().toISOString() })
+        .eq('page', 'order_summary')
+        .eq('section', 'service_fees');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site-content', 'order_summary'] });
+      toast.success('تم حفظ إعدادات ملخص الطلب');
+    },
+    onError: () => toast.error('حدث خطأ أثناء الحفظ'),
+  });
+
   // System backups
   const { backups, loading: loadingBackups, creating, createBackup, downloadBackup, deleteBackup } = useSystemBackups();
 
