@@ -130,8 +130,8 @@ export function VisaCard({ visa, country }: VisaCardProps) {
               {/* Price Notes from Database */}
               <p className="text-xs text-muted-foreground mt-1">
                 {direction === 'rtl' 
-                  ? (visa.price_notes || (visa.fee_type === 'included' ? 'شامل رسوم التأشيرة' : 'غير شامل رسوم التأشيرة الحكومية'))
-                  : (visa.price_notes_en || (visa.fee_type === 'included' ? 'Visa fees included' : 'Government visa fees not included'))
+                  ? (visa.price_notes || (visa.fee_type === 'included' ? 'شامل رسوم التأشيرة' : `رسوم التأشيرة ${visa.government_fees || 0} ريال تُدفع للسفارة مباشرة`))
+                  : (visa.price_notes_en || (visa.fee_type === 'included' ? 'Visa fees included' : `Visa fees ${visa.government_fees || 0} SAR paid directly to embassy`))
                 }
               </p>
             </div>

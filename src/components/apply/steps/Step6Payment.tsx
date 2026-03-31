@@ -253,8 +253,8 @@ export default function Step6Payment() {
                 </div>
                 
                 {!applicationData.visaFeesIncluded && governmentTotal > 0 && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{direction === 'rtl' ? 'رسوم التأشيرة (تُدفع لاحقاً)' : 'Visa Fees (to be paid later)'}</span>
+                  <div className="flex justify-between text-sm text-muted-foreground p-2 rounded-lg bg-warning/10 border border-warning/20">
+                    <span>{direction === 'rtl' ? 'رسوم التأشيرة (تُدفع للسفارة مباشرة)' : 'Visa Fees (paid directly to embassy)'}</span>
                     <span className="flex items-center gap-1">
                       {governmentTotal.toLocaleString()}
                       <SARSymbol size="xs" />
