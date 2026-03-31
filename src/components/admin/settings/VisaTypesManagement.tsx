@@ -751,8 +751,8 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
     total: visaTypes.length,
     active: visaTypes.filter(v => v.is_active).length,
     inactive: visaTypes.filter(v => !v.is_active).length,
-    countriesWithVisas: new Set(visaTypes.map(v => v.country_id)).size,
-  }), [visaTypes]);
+    countriesWithVisas: countries.length,
+  }), [visaTypes, countries]);
 
   const toggleCountry = (countryId: string) => {
     setExpandedCountries(prev => 
