@@ -232,7 +232,7 @@ export default function AIChatWidget() {
                 />
                 <Button
                   size="icon"
-                  onClick={sendMessage}
+                  onClick={() => sendMessage()}
                   disabled={!input.trim() || isLoading}
                   className="rounded-xl h-10 w-10 shrink-0"
                 >
