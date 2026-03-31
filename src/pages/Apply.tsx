@@ -13,6 +13,7 @@ import Step3Requirements from '@/components/apply/steps/Step3Requirements';
 import Step4Documents from '@/components/apply/steps/Step4Documents';
 import Step5Terms from '@/components/apply/steps/Step5Terms';
 import Step6Payment from '@/components/apply/steps/Step6Payment';
+import LetTeamHelpCTA from '@/components/apply/LetTeamHelpCTA';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Save, Loader2 } from 'lucide-react';
