@@ -32,8 +32,8 @@ export default function AIChatWidget() {
     }
   }, [isOpen]);
 
-  const sendMessage = useCallback(async () => {
-    const text = input.trim();
+  const sendMessage = useCallback(async (overrideText?: string) => {
+    const text = (overrideText || input).trim();
     if (!text || isLoading) return;
 
     setInput('');
