@@ -18,10 +18,12 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
   
   const { travelers, visaFeesIncluded, visaTypeName, countryName, priceNotes, priceNotesEn } = applicationData;
   
-  // Get the appropriate price note based on language
+  // Get the appropriate price note based on language, falling back by fee_type
+  const defaultNoteAr = visaFeesIncluded ? 'شامل رسوم التأشيرة' : 'غير شامل رسوم التأشيرة الحكومية';
+  const defaultNoteEn = visaFeesIncluded ? 'Visa fees included' : 'Government visa fees not included';
   const displayPriceNote = direction === 'rtl' 
-    ? (priceNotes || 'شامل رسوم التأشيرة')
-    : (priceNotesEn || 'Visa fees included');
+    ? (priceNotes || defaultNoteAr)
+    : (priceNotesEn || defaultNoteEn);
   
   const totalTravelers = travelers.adults + travelers.children + travelers.infants;
 
