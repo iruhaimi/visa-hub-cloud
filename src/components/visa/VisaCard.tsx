@@ -130,8 +130,8 @@ export function VisaCard({ visa, country }: VisaCardProps) {
               {/* Price Notes from Database */}
               <p className="text-xs text-muted-foreground mt-1">
                 {direction === 'rtl' 
-                  ? (visa.price_notes || 'شامل رسوم التأشيرة')
-                  : (visa.price_notes_en || 'Visa fees included')
+                  ? (visa.price_notes || (visa.fee_type === 'included' ? 'شامل رسوم التأشيرة' : 'غير شامل رسوم التأشيرة الحكومية'))
+                  : (visa.price_notes_en || (visa.fee_type === 'included' ? 'Visa fees included' : 'Government visa fees not included'))
                 }
               </p>
             </div>
