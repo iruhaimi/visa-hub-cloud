@@ -92,11 +92,11 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
           </div>
           
           {!visaFeesIncluded && governmentTotal > 0 && (
-            <div className="flex justify-between text-xs sm:text-sm mb-2">
+            <div className="flex justify-between text-xs sm:text-sm mb-2 p-2 rounded-lg bg-warning/10 border border-warning/20">
               <span className="text-muted-foreground">
-                {direction === 'rtl' ? 'رسوم التأشيرة (تقديرية)' : 'Visa Fees (estimated)'}
+                {direction === 'rtl' ? 'رسوم التأشيرة (تُدفع للسفارة مباشرة)' : 'Visa Fees (paid directly to embassy)'}
               </span>
-              <span className="font-medium flex items-center gap-1">
+              <span className="font-medium flex items-center gap-1 text-muted-foreground">
                 {governmentTotal.toLocaleString()}
                 <SARSymbol size="xs" />
               </span>
