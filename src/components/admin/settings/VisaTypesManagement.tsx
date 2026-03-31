@@ -717,25 +717,28 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
     });
   }, [visaTypes, searchQuery, filterCountry, filterStatus]);
 
-  // تجميع التأشيرات حسب الدولة
+  // تجميع التأشيرات حسب الدولة - مع عرض جميع الدول النشطة حتى بدون تأشيرات
   const groupedByCountry = useMemo(() => {
     const groups: Record<string, { country: Country; visas: VisaType[] }> = {};
     
+    // أولاً: إضافة جميع الدول النشطة
+    countries.forEach(country => {
+      groups[country.id] = { country, visas: [] };
+    });
+    
+    // ثانياً: توزيع التأشيرات على دولها
     filteredVisaTypes.forEach(visa => {
       const countryId = visa.country_id;
-      if (!groups[countryId]) {
-        const country = countries.find(c => c.id === countryId);
-        if (country) {
-          groups[countryId] = { country, visas: [] };
-        }
-      }
       if (groups[countryId]) {
         groups[countryId].visas.push(visa);
       }
     });
 
+    // تصفية حسب فلتر الدولة المختارة
+    let result = Object.values(groups);
+    
     // ترتيب حسب display_order ثم اسم الدولة
-    return Object.values(groups).sort((a, b) => {
+    return result.sort((a, b) => {
       const orderA = a.country.display_order || 999;
       const orderB = b.country.display_order || 999;
       if (orderA !== orderB) return orderA - orderB;
