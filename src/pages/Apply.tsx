@@ -344,6 +344,9 @@ function ApplyContent() {
         <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-sm border p-4 sm:p-6 md:p-8">
           {renderStep()}
         </div>
+        <div className="max-w-4xl mx-auto">
+          <LetTeamHelpCTA />
+        </div>
       </div>
     </div>
   );
