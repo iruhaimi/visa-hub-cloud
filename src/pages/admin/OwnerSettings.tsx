@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Crown, Shield, UserPlus, Trash2, Users, AlertTriangle, Loader2, CheckCircle2, Download, Database, HardDrive, Calendar, FileArchive, Clock, FileText, Save } from 'lucide-react';
+import { Crown, Shield, UserPlus, Trash2, Users, AlertTriangle, Loader2, CheckCircle2, Download, Database, HardDrive, Calendar, FileArchive, Clock, FileText, Save, Bot, MessageCircle, Power } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useSiteSection } from '@/hooks/useSiteContent';
 import { format } from 'date-fns';
