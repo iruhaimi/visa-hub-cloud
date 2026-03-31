@@ -1341,7 +1341,11 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                     />
                     <Select
                       value={formData.fee_type}
-                      onValueChange={(value) => setFormData({ ...formData, fee_type: value })}
+                      onValueChange={(value) => {
+                        const noteAr = value === 'included' ? 'شامل رسوم التأشيرة' : 'غير شامل رسوم التأشيرة الحكومية';
+                        const noteEn = value === 'included' ? 'Visa fees included' : 'Government visa fees not included';
+                        setFormData({ ...formData, fee_type: value, price_notes: noteAr, price_notes_en: noteEn });
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -1353,23 +1357,97 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Price Notes - Predefined Options */}
+                  <div className="space-y-3">
+                    <Label className="font-semibold">ملاحظة السعر</Label>
                     <div className="space-y-2">
-                      <Label>ملاحظة السعر (عربي)</Label>
-                      <Input
-                        value={formData.price_notes}
-                        onChange={(e) => setFormData({ ...formData, price_notes: e.target.value })}
-                        placeholder="شامل رسوم التأشيرة"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>ملاحظة السعر (إنجليزي)</Label>
-                      <Input
-                        value={formData.price_notes_en}
-                        onChange={(e) => setFormData({ ...formData, price_notes_en: e.target.value })}
-                        placeholder="Visa fees included"
-                        dir="ltr"
-                      />
+                      {[
+                        { ar: 'شامل رسوم التأشيرة', en: 'Visa fees included' },
+                        { ar: 'غير شامل رسوم التأشيرة الحكومية', en: 'Government visa fees not included' },
+                        { ar: 'شامل جميع الرسوم والخدمات', en: 'All fees and services included' },
+                        { ar: 'السعر لا يشمل رسوم VFS', en: 'Price does not include VFS fees' },
+                      ].map((option) => (
+                        <label
+                          key={option.ar}
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                            formData.price_notes === option.ar
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="price_note_option"
+                            checked={formData.price_notes === option.ar}
+                            onChange={() => setFormData({
+                              ...formData,
+                              price_notes: option.ar,
+                              price_notes_en: option.en,
+                            })}
+                            className="accent-primary"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{option.ar}</p>
+                            <p className="text-xs text-muted-foreground" dir="ltr">{option.en}</p>
+                          </div>
+                        </label>
+                      ))}
+
+                      {/* Custom option */}
+                      <label
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                          ![
+                            'شامل رسوم التأشيرة',
+                            'غير شامل رسوم التأشيرة الحكومية',
+                            'شامل جميع الرسوم والخدمات',
+                            'السعر لا يشمل رسوم VFS',
+                          ].includes(formData.price_notes || '')
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="price_note_option"
+                          checked={![
+                            'شامل رسوم التأشيرة',
+                            'غير شامل رسوم التأشيرة الحكومية',
+                            'شامل جميع الرسوم والخدمات',
+                            'السعر لا يشمل رسوم VFS',
+                          ].includes(formData.price_notes || '')}
+                          onChange={() => setFormData({
+                            ...formData,
+                            price_notes: '',
+                            price_notes_en: '',
+                          })}
+                          className="accent-primary mt-1"
+                        />
+                        <div className="flex-1 space-y-2">
+                          <p className="text-sm font-medium">أخرى (نص مخصص)</p>
+                          {![
+                            'شامل رسوم التأشيرة',
+                            'غير شامل رسوم التأشيرة الحكومية',
+                            'شامل جميع الرسوم والخدمات',
+                            'السعر لا يشمل رسوم VFS',
+                          ].includes(formData.price_notes || '') && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input
+                                value={formData.price_notes || ''}
+                                onChange={(e) => setFormData({ ...formData, price_notes: e.target.value })}
+                                placeholder="الملاحظة بالعربي"
+                              />
+                              <Input
+                                value={formData.price_notes_en || ''}
+                                onChange={(e) => setFormData({ ...formData, price_notes_en: e.target.value })}
+                                placeholder="Note in English"
+                                dir="ltr"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </label>
                     </div>
                   </div>
                 </AccordionContent>
