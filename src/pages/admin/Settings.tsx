@@ -50,16 +50,22 @@ export default function Settings() {
   });
 
   // Visa Types
+  // Get active country IDs
+  const activeCountryIds = countries?.filter(c => c.is_active).map(c => c.id) || [];
+
   const { data: visaTypes, isLoading: loadingVisaTypes } = useQuery({
-    queryKey: ['admin-visa-types'],
+    queryKey: ['admin-visa-types', activeCountryIds],
     queryFn: async () => {
+      if (activeCountryIds.length === 0) return [];
       const { data, error } = await supabase
         .from('visa_types')
         .select('*, country:countries(*)')
+        .in('country_id', activeCountryIds)
         .order('name');
       if (error) throw error;
       return data as VisaType[];
     },
+    enabled: !loadingCountries,
   });
 
   return (
