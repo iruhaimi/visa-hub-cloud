@@ -44,6 +44,7 @@ import { TransferRequestDialog } from '@/components/agent/TransferRequestDialog'
 import { WorkSubmissionDialog } from '@/components/agent/WorkSubmissionDialog';
 import { AgentRequestsHistory } from '@/components/agent/AgentRequestsHistory';
 import { ApplicationMessages } from '@/components/messages/ApplicationMessages';
+import AgentAIAssistant from '@/components/agent/AgentAIAssistant';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -677,6 +678,14 @@ export default function AgentApplicationDetail() {
               applicationId={application.id}
               customerName={application.profile?.full_name}
             />
+
+            {/* AI Assistant */}
+            <AgentAIAssistant
+              context={application.agent_notes || undefined}
+              customerMessage={undefined}
+              applicationInfo={`الدولة: ${application.visa_type?.country?.name || ''}\nنوع التأشيرة: ${application.visa_type?.name || ''}\nالحالة: ${application.status}\nالعميل: ${application.profile?.full_name || ''}`}
+            />
+
             <NotesHistory applicationId={application.id} />
             <AgentRequestsHistory applicationId={application.id} />
           </div>
