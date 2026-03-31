@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { Crown, Shield, UserPlus, Trash2, Users, AlertTriangle, Loader2, CheckCircle2, Download, Database, HardDrive, Calendar, FileArchive, Clock, FileText, Save, Bot, MessageCircle, Power } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useSiteSection } from '@/hooks/useSiteContent';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
