@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +32,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Crown, Shield, UserPlus, Trash2, Users, AlertTriangle, Loader2, CheckCircle2, Download, Database, HardDrive, Calendar, FileArchive, Clock } from 'lucide-react';
+import { Crown, Shield, UserPlus, Trash2, Users, AlertTriangle, Loader2, CheckCircle2, Download, Database, HardDrive, Calendar, FileArchive, Clock, FileText, Save } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { useSiteSection } from '@/hooks/useSiteContent';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -57,6 +60,34 @@ export default function OwnerSettings() {
   const [confirmRevokeDialog, setConfirmRevokeDialog] = useState(false);
   const [targetUser, setTargetUser] = useState<StaffUser | null>(null);
   const [backupNotes, setBackupNotes] = useState('');
+
+  // Order summary content management
+  const { data: orderSummaryData } = useSiteSection('order_summary', 'service_fees');
+  const [summaryTexts, setSummaryTexts] = useState<Record<string, string>>({});
+  const [summaryTextsLoaded, setSummaryTextsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (orderSummaryData && !summaryTextsLoaded) {
+      setSummaryTexts(orderSummaryData as Record<string, string>);
+      setSummaryTextsLoaded(true);
+    }
+  }, [orderSummaryData, summaryTextsLoaded]);
+
+  const saveSummaryTextsMutation = useMutation({
+    mutationFn: async (texts: Record<string, string>) => {
+      const { error } = await supabase
+        .from('site_content')
+        .update({ content: texts as any, updated_at: new Date().toISOString() })
+        .eq('page', 'order_summary')
+        .eq('section', 'service_fees');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site-content', 'order_summary'] });
+      toast.success('تم حفظ إعدادات ملخص الطلب');
+    },
+    onError: () => toast.error('حدث خطأ أثناء الحفظ'),
+  });
 
   // System backups
   const { backups, loading: loadingBackups, creating, createBackup, downloadBackup, deleteBackup } = useSystemBackups();
@@ -396,6 +427,118 @@ export default function OwnerSettings() {
               <p className="text-sm text-muted-foreground">صلاحيات كاملة</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Order Summary Texts Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            إعدادات ملخص الطلب
+          </CardTitle>
+          <CardDescription>
+            تحكم في النصوص التي تظهر للعميل في ملخص الطلب أثناء التقديم
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Service Fee Label */}
+          <div className="space-y-2">
+            <Label className="font-medium">عنوان رسوم الخدمة (عربي)</Label>
+            <Input
+              value={summaryTexts.title_ar || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, title_ar: e.target.value }))}
+              placeholder="رسوم الخدمة"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="font-medium">Service Fee Label (English)</Label>
+            <Input
+              value={summaryTexts.title_en || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, title_en: e.target.value }))}
+              placeholder="Service Fees"
+              dir="ltr"
+            />
+          </div>
+
+          {/* Service Fee Note */}
+          <div className="space-y-2">
+            <Label className="font-medium">ملاحظة رسوم الخدمة (عربي) — اختياري</Label>
+            <Textarea
+              value={summaryTexts.note_ar || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, note_ar: e.target.value }))}
+              placeholder="مثال: تشمل رسوم تجهيز الملف والمتابعة مع السفارة"
+              rows={2}
+            />
+            <p className="text-xs text-muted-foreground">يظهر كنص توضيحي صغير تحت رسوم الخدمة</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="font-medium">Service Fee Note (English) — Optional</Label>
+            <Textarea
+              value={summaryTexts.note_en || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, note_en: e.target.value }))}
+              placeholder="e.g. Includes file preparation and embassy follow-up"
+              rows={2}
+              dir="ltr"
+            />
+          </div>
+
+          <Separator />
+
+          {/* Visa Fees Label (for separate fees) */}
+          <div className="space-y-2">
+            <Label className="font-medium">عنوان رسوم التأشيرة - غير شامل (عربي)</Label>
+            <Input
+              value={summaryTexts.visa_fees_label_ar || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, visa_fees_label_ar: e.target.value }))}
+              placeholder="رسوم التأشيرة والمركز (تُدفع مباشرة وقت الموعد)"
+            />
+            <p className="text-xs text-muted-foreground">يظهر بجانب مبلغ رسوم التأشيرة عندما تكون الرسوم غير شاملة</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="font-medium">Visa Fees Label - Separate (English)</Label>
+            <Input
+              value={summaryTexts.visa_fees_label_en || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, visa_fees_label_en: e.target.value }))}
+              placeholder="Visa & center fees (paid directly at appointment)"
+              dir="ltr"
+            />
+          </div>
+
+          <Separator />
+
+          {/* Bottom note - fees included */}
+          <div className="space-y-2">
+            <Label className="font-medium">ملاحظة الأسفل - شامل الرسوم (عربي)</Label>
+            <Input
+              value={summaryTexts.visa_fees_included_note_ar || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, visa_fees_included_note_ar: e.target.value }))}
+              placeholder="شامل رسوم التأشيرة"
+            />
+          </div>
+
+          {/* Bottom note - fees separate */}
+          <div className="space-y-2">
+            <Label className="font-medium">ملاحظة الأسفل - غير شامل الرسوم (عربي)</Label>
+            <Input
+              value={summaryTexts.visa_fees_separate_note_ar || ''}
+              onChange={(e) => setSummaryTexts(prev => ({ ...prev, visa_fees_separate_note_ar: e.target.value }))}
+              placeholder="رسوم التأشيرة ورسوم المركز تُدفع مباشرة وقت الموعد"
+            />
+          </div>
+
+          <Button
+            onClick={() => saveSummaryTextsMutation.mutate(summaryTexts)}
+            disabled={saveSummaryTextsMutation.isPending}
+            className="w-full gap-2"
+          >
+            {saveSummaryTextsMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            حفظ إعدادات ملخص الطلب
+          </Button>
         </CardContent>
       </Card>
 
