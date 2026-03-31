@@ -150,9 +150,7 @@ export default function AIChatWidget() {
                     ].map((q) => (
                       <button
                         key={q}
-                        onClick={() => {
-                          setInput(q);
-                        }}
+                        onClick={() => sendMessage(q)}
                         className="text-xs bg-accent text-accent-foreground px-3 py-1.5 rounded-full hover:bg-accent/80 transition-colors"
                       >
                         {q}
