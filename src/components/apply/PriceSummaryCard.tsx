@@ -20,8 +20,8 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
   const { travelers, visaFeesIncluded, visaTypeName, countryName } = applicationData;
   
   // Fetch dynamic texts from site_content
-  const { data: orderSummaryContent } = useSiteContent('order_summary', 'service_fees');
-  const content = orderSummaryContent?.content as Record<string, string> | undefined;
+  const { data: orderSummaryContent } = useSiteSection('order_summary', 'service_fees');
+  const content = orderSummaryContent as Record<string, string> | null;
   
   const isRTL = direction === 'rtl';
   
