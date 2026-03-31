@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Info, CheckCircle2 } from 'lucide-react';
 import SARSymbol from '@/components/ui/SARSymbol';
-import { useSiteContent } from '@/hooks/useSiteContent';
+import { useSiteSection } from '@/hooks/useSiteContent';
 
 interface PriceSummaryCardProps {
   className?: string;
