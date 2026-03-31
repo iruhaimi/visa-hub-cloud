@@ -3,6 +3,7 @@ import HeaderArabic from './HeaderArabic';
 import FooterArabic from './FooterArabic';
 import FloatingWhatsApp from './FloatingWhatsApp';
 import ContactPopup from './ContactPopup';
+import AIChatWidget from './AIChatWidget';
 import CookieConsent from './CookieConsent';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
@@ -16,6 +17,7 @@ export default function MainLayout() {
       </main>
       <FooterArabic />
       <FloatingWhatsApp />
+      <AIChatWidget />
       <ContactPopup />
       <CookieConsent />
     </div>
