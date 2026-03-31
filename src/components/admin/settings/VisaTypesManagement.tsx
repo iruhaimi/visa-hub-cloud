@@ -1331,127 +1331,116 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                     </div>
                   </div>
 
-                  <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 space-y-3">
-                    <Label className="font-semibold text-amber-800 dark:text-amber-200">الرسوم الحكومية</Label>
-                    <Input
-                      type="number"
-                      value={formData.government_fees}
-                      onChange={(e) => setFormData({ ...formData, government_fees: e.target.value })}
-                      placeholder="0 إذا كانت شاملة في السعر"
-                    />
-                    <Select
-                      value={formData.fee_type}
-                      onValueChange={(value) => {
-                        const noteAr = value === 'included' ? 'شامل رسوم التأشيرة' : 'غير شامل رسوم التأشيرة الحكومية';
-                        const noteEn = value === 'included' ? 'Visa fees included' : 'Government visa fees not included';
-                        setFormData({ ...formData, fee_type: value, price_notes: noteAr, price_notes_en: noteEn });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="included">شامل رسوم التأشيرة الحكومية</SelectItem>
-                        <SelectItem value="separate">رسوم التأشيرة تُدفع بشكل منفصل</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Price Notes - Predefined Selectable Options */}
+                  {/* نوع الرسوم - قسم موحد */}
                   <div className="space-y-3">
                     <Label className="font-semibold flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
-                      ملاحظة السعر (تظهر للعميل أسفل السعر)
+                      هل السعر يشمل رسوم التأشيرة الحكومية؟
                     </Label>
-                    <div className="space-y-2">
-                      {[
-                        { ar: 'شامل رسوم التأشيرة', en: 'Visa fees included' },
-                        { ar: 'غير شامل رسوم التأشيرة الحكومية', en: 'Government visa fees not included' },
-                        { ar: 'شامل جميع الرسوم والخدمات', en: 'All fees and services included' },
-                        { ar: 'السعر لا يشمل رسوم VFS', en: 'Price does not include VFS fees' },
-                      ].map((option) => (
-                        <label
-                          key={option.ar}
-                          className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                            formData.price_notes === option.ar
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="price_note_option"
-                            checked={formData.price_notes === option.ar}
-                            onChange={() => setFormData({
-                              ...formData,
-                              price_notes: option.ar,
-                              price_notes_en: option.en,
-                            })}
-                            className="accent-primary"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{option.ar}</p>
-                            <p className="text-xs text-muted-foreground" dir="ltr">{option.en}</p>
-                          </div>
-                        </label>
-                      ))}
-
-                      {/* Custom option */}
-                      <label
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* خيار: شامل */}
+                      <div
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            fee_type: 'included',
+                            government_fees: '0',
+                            price_notes: 'شامل رسوم التأشيرة',
+                            price_notes_en: 'Visa fees included',
+                          });
+                        }}
                         className={cn(
-                          "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                          ![
-                            'شامل رسوم التأشيرة',
-                            'غير شامل رسوم التأشيرة الحكومية',
-                            'شامل جميع الرسوم والخدمات',
-                            'السعر لا يشمل رسوم VFS',
-                          ].includes(formData.price_notes || '')
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
+                          "p-4 rounded-lg border-2 cursor-pointer transition-all text-center",
+                          formData.fee_type === 'included'
+                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
+                            : "border-border hover:border-emerald-300"
                         )}
                       >
-                        <input
-                          type="radio"
-                          name="price_note_option"
-                          checked={![
-                            'شامل رسوم التأشيرة',
-                            'غير شامل رسوم التأشيرة الحكومية',
-                            'شامل جميع الرسوم والخدمات',
-                            'السعر لا يشمل رسوم VFS',
-                          ].includes(formData.price_notes || '')}
-                          onChange={() => setFormData({
+                        <CheckCircle2 className={cn(
+                          "h-8 w-8 mx-auto mb-2",
+                          formData.fee_type === 'included' ? "text-emerald-500" : "text-muted-foreground/40"
+                        )} />
+                        <p className="font-semibold text-sm">نعم، شامل</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          السعر يشمل كل الرسوم
+                        </p>
+                      </div>
+
+                      {/* خيار: منفصل */}
+                      <div
+                        onClick={() => {
+                          setFormData({
                             ...formData,
-                            price_notes: '',
-                            price_notes_en: '',
-                          })}
-                          className="accent-primary mt-1"
-                        />
-                        <div className="flex-1 space-y-2">
-                          <p className="text-sm font-medium">أخرى (نص مخصص)</p>
-                          {![
-                            'شامل رسوم التأشيرة',
-                            'غير شامل رسوم التأشيرة الحكومية',
-                            'شامل جميع الرسوم والخدمات',
-                            'السعر لا يشمل رسوم VFS',
-                          ].includes(formData.price_notes || '') && (
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input
-                                value={formData.price_notes || ''}
-                                onChange={(e) => setFormData({ ...formData, price_notes: e.target.value })}
-                                placeholder="الملاحظة بالعربي"
-                              />
-                              <Input
-                                value={formData.price_notes_en || ''}
-                                onChange={(e) => setFormData({ ...formData, price_notes_en: e.target.value })}
-                                placeholder="Note in English"
-                                dir="ltr"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </label>
+                            fee_type: 'separate',
+                            price_notes: 'رسوم التأشيرة تُدفع للسفارة مباشرة',
+                            price_notes_en: 'Visa fees paid directly to embassy',
+                          });
+                        }}
+                        className={cn(
+                          "p-4 rounded-lg border-2 cursor-pointer transition-all text-center",
+                          formData.fee_type === 'separate'
+                            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                            : "border-border hover:border-amber-300"
+                        )}
+                      >
+                        <DollarSign className={cn(
+                          "h-8 w-8 mx-auto mb-2",
+                          formData.fee_type === 'separate' ? "text-amber-500" : "text-muted-foreground/40"
+                        )} />
+                        <p className="font-semibold text-sm">لا، منفصل</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          العميل يدفعها للسفارة مباشرة
+                        </p>
+                      </div>
                     </div>
+
+                    {/* حقل مبلغ الرسوم الحكومية - يظهر فقط عند اختيار منفصل */}
+                    {formData.fee_type === 'separate' && (
+                      <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 space-y-3">
+                        <Label className="text-amber-800 dark:text-amber-200 text-sm">
+                          مبلغ الرسوم الحكومية التقديري (للعرض فقط - لا يُضاف للإجمالي)
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            value={formData.government_fees}
+                            onChange={(e) => setFormData({ ...formData, government_fees: e.target.value })}
+                            placeholder="مثال: 640"
+                            className="pr-12"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                            ر.س
+                          </span>
+                        </div>
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          💡 هذا المبلغ يظهر للعميل كمعلومة تقديرية فقط ولا يُحسب ضمن إجمالي الطلب
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ملاحظة السعر المخصصة */}
+                  <div className="space-y-2">
+                    <Label className="text-sm flex items-center gap-2">
+                      ✏️ ملاحظة السعر (تظهر للعميل أسفل السعر)
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={formData.price_notes || ''}
+                        onChange={(e) => setFormData({ ...formData, price_notes: e.target.value })}
+                        placeholder="الملاحظة بالعربي"
+                      />
+                      <Input
+                        value={formData.price_notes_en || ''}
+                        onChange={(e) => setFormData({ ...formData, price_notes_en: e.target.value })}
+                        placeholder="Note in English"
+                        dir="ltr"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      يتم تعبئتها تلقائياً بناءً على اختيارك أعلاه، ويمكنك تعديلها يدوياً
+                    </p>
                   </div>
                 </AccordionContent>
               </AccordionItem>
