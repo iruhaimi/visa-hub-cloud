@@ -65,7 +65,7 @@ export default function Settings() {
       if (error) throw error;
       return data as VisaType[];
     },
-    enabled: !loadingCountries,
+    enabled: !loadingCountries && activeCountryIds.length > 0,
   });
 
   return (
