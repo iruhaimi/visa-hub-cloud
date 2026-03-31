@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
 import { streamChat, type ChatMessage } from '@/lib/aiChat';
 import { getWhatsAppUrl } from './FloatingWhatsApp';
-
-const WHATSAPP_PHONE = '966920034158';
+import { useSiteSection } from '@/hooks/useSiteContent';
 
 export default function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +16,16 @@ export default function AIChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Fetch AI assistant settings
+  const { data: aiSettings } = useSiteSection('ai_assistant', 'settings');
+  const settings = (aiSettings || {}) as Record<string, any>;
+
+  const isEnabled = settings.is_enabled !== false;
+  const welcomeMessage = settings.welcome_message_ar || 'أهلاً بك! 👋';
+  const welcomeSubtitle = settings.welcome_subtitle_ar || 'أنا مساعدك الذكي، اسألني عن التأشيرات والأسعار والمتطلبات';
+  const quickQuestions = (settings.quick_questions || ['كم سعر تأشيرة تركيا؟', 'وش الدول المتاحة؟', 'في عروض حالياً؟']).filter((q: string) => q?.trim());
+  const whatsappNumber = settings.whatsapp_number || '966920034158';
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -83,9 +92,12 @@ export default function AIChatWidget() {
 
   const whatsappUrl = getWhatsAppUrl('مرحباً، أرغب في التحدث مع أحد الوكلاء');
 
+  // Don't render if disabled
+  if (!isEnabled) return null;
+
   return (
     <>
-      {/* Toggle Button - only show when chat closed and not on apply page */}
+      {/* Toggle Button */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -98,7 +110,6 @@ export default function AIChatWidget() {
             aria-label="فتح المساعد الذكي"
           >
             <Bot className="h-6 w-6" />
-            {/* Notification dot */}
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full animate-pulse" />
           </motion.button>
         )}
@@ -137,26 +148,24 @@ export default function AIChatWidget() {
                   <div className="w-14 h-14 mx-auto mb-3 bg-primary/10 rounded-full flex items-center justify-center">
                     <Bot className="h-7 w-7 text-primary" />
                   </div>
-                  <p className="font-semibold text-foreground mb-1">أهلاً بك! 👋</p>
+                  <p className="font-semibold text-foreground mb-1">{welcomeMessage}</p>
                   <p className="text-xs text-muted-foreground mb-4">
-                    أنا مساعدك الذكي، اسألني عن التأشيرات والأسعار والمتطلبات
+                    {welcomeSubtitle}
                   </p>
                   {/* Quick suggestions */}
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {[
-                      'كم سعر تأشيرة تركيا؟',
-                      'وش الدول المتاحة؟',
-                      'في عروض حالياً؟',
-                    ].map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => sendMessage(q)}
-                        className="text-xs bg-accent text-accent-foreground px-3 py-1.5 rounded-full hover:bg-accent/80 transition-colors"
-                      >
-                        {q}
-                      </button>
-                    ))}
-                  </div>
+                  {quickQuestions.length > 0 && (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {quickQuestions.map((q: string) => (
+                        <button
+                          key={q}
+                          onClick={() => sendMessage(q)}
+                          className="text-xs bg-accent text-accent-foreground px-3 py-1.5 rounded-full hover:bg-accent/80 transition-colors"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

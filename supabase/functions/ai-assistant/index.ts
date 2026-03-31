@@ -13,7 +13,6 @@ serve(async (req) => {
 
   try {
     const { messages, mode } = await req.json();
-    // mode: "customer" | "agent-summarize" | "agent-suggest-reply"
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -25,8 +24,8 @@ serve(async (req) => {
     let systemPrompt = "";
 
     if (mode === "customer") {
-      // Fetch live data for context
-      const [countriesRes, visaTypesRes, offersRes] = await Promise.all([
+      // Fetch live data + AI settings in parallel
+      const [countriesRes, visaTypesRes, offersRes, aiSettingsRes] = await Promise.all([
         supabase
           .from("countries")
           .select("name, code, is_schengen")
@@ -40,22 +39,52 @@ serve(async (req) => {
           .from("special_offers")
           .select("title, country_name, sale_price, original_price, discount_percentage, end_date")
           .eq("is_active", true),
+        supabase
+          .from("site_content")
+          .select("content")
+          .eq("page", "ai_assistant")
+          .eq("section", "settings")
+          .single(),
       ]);
 
       const countries = countriesRes.data || [];
       const visaTypes = visaTypesRes.data || [];
       const offers = offersRes.data || [];
+      const settings = (aiSettingsRes.data?.content as any) || {};
 
-      systemPrompt = `أنت مساعد ذكي لشركة "عطلات رحلاتكم" للسياحة والسفر والتأشيرات. مهمتك مساعدة العملاء بالإجابة على أسئلتهم عن التأشيرات والأسعار والمتطلبات.
+      // Check if assistant is disabled
+      if (settings.is_enabled === false) {
+        return new Response(
+          JSON.stringify({ error: "المساعد الذكي معطل حالياً" }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const companyName = settings.company_name_ar || "عطلات رحلاتكم";
+      const companyDesc = settings.company_description_ar || "للسياحة والسفر والتأشيرات";
+      const whatsapp = settings.whatsapp_number || "966920034158";
+      const fallback = settings.fallback_message_ar || "للأسف ما عندي هالمعلومة حالياً، تقدر تتواصل مع فريقنا عبر واتساب وبيساعدونك";
+      const customInstructions = settings.custom_instructions_ar || "";
+
+      // Tone mapping
+      const toneMap: Record<string, string> = {
+        professional: "كن مختصراً وواضحاً ومحترفاً",
+        friendly: "كن ودوداً وعفوياً مع العملاء، استخدم أسلوب محادثة طبيعي",
+        concise: "كن مختصراً جداً ومباشراً، أجب بأقل عدد ممكن من الكلمات",
+      };
+      const toneInstruction = toneMap[settings.tone] || toneMap.professional;
+
+      systemPrompt = `أنت مساعد ذكي لشركة "${companyName}" ${companyDesc}. مهمتك مساعدة العملاء بالإجابة على أسئلتهم عن التأشيرات والأسعار والمتطلبات.
 
 ## قواعد مهمة:
 - أجب بالعربية دائماً إلا إذا سألك العميل بالإنجليزية
-- كن مختصراً وواضحاً ومحترفاً
+- ${toneInstruction}
 - استخدم البيانات الحقيقية فقط من المعلومات المتاحة أدناه
-- إذا سُئلت عن شيء غير موجود في البيانات، قل "للأسف ما عندي هالمعلومة حالياً، تقدر تتواصل مع فريقنا عبر واتساب وبيساعدونك"
+- إذا سُئلت عن شيء غير موجود في البيانات، قل "${fallback}"
 - لا تخترع أسعار أو معلومات غير موجودة
 - إذا العميل جاهز للتقديم، وجّهه لصفحة التقديم
-- رقم واتساب الشركة: 966920034158
+- رقم واتساب الشركة: ${whatsapp}
+${customInstructions ? `\n## تعليمات إضافية:\n${customInstructions}` : ""}
 
 ## الدول المتاحة:
 ${countries.map((c: any) => `- ${c.name} (${c.code})${c.is_schengen ? " - شنغن" : ""}`).join("\n")}
@@ -63,7 +92,6 @@ ${countries.map((c: any) => `- ${c.name} (${c.code})${c.is_schengen ? " - شنغ
 ## أنواع التأشيرات والأسعار:
 ${visaTypes.map((v: any) => {
   const country = (v as any).country?.name || "";
-  const reqs = v.requirements ? JSON.stringify(v.requirements) : "غير محدد";
   return `- ${country} - ${v.name}: ${v.price} ر.س | أطفال: ${v.child_price || "غير محدد"} ر.س | رضع: ${v.infant_price || "غير محدد"} ر.س | مدة المعالجة: ${v.processing_days} يوم | نوع الدخول: ${v.entry_type || "غير محدد"} | الإقامة: ${v.max_stay_days || "غير محدد"} يوم | الصلاحية: ${v.validity_days || "غير محدد"} يوم | الرسوم: ${v.fee_type === "included" ? "شاملة" : `منفصلة (${v.government_fees} ر.س)`}`;
 }).join("\n")}
 
