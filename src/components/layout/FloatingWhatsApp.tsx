@@ -1,11 +1,45 @@
 import { MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
+
+const PHONE_NUMBER = '966920034158';
+
+/**
+ * Build a context-aware WhatsApp message based on the current page.
+ */
+export function buildWhatsAppMessage(context?: {
+  countryName?: string;
+  visaTypeName?: string;
+  currentStep?: number;
+}) {
+  const parts: string[] = ['مرحباً، أرغب في الاستفسار عن خدمات التأشيرات'];
+
+  if (context?.countryName) {
+    parts.push(`الدولة: ${context.countryName}`);
+  }
+  if (context?.visaTypeName) {
+    parts.push(`نوع التأشيرة: ${context.visaTypeName}`);
+  }
+  if (context?.currentStep) {
+    parts.push(`أنا الآن في الخطوة ${context.currentStep} من التقديم`);
+  }
+
+  return parts.join('\n');
+}
+
+export function getWhatsAppUrl(message: string) {
+  return `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
+}
 
 export default function FloatingWhatsApp() {
-  const phoneNumber = '966920034158';
-  const message = 'مرحباً، أرغب في الاستفسار عن خدمات التأشيرات';
-  
-  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+  const location = useLocation();
+
+  // Don't show on apply page (has its own help CTA)
+  const isApplyPage = location.pathname.startsWith('/apply');
+  if (isApplyPage) return null;
+
+  const message = buildWhatsAppMessage();
+  const whatsappUrl = getWhatsAppUrl(message);
 
   return (
     <motion.a
@@ -22,7 +56,7 @@ export default function FloatingWhatsApp() {
     >
       {/* Pulse animation */}
       <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-25" />
-      
+
       <MessageCircle className="h-6 w-6 relative z-10" />
       <span className="hidden sm:inline-block font-medium relative z-10">
         تواصل معنا

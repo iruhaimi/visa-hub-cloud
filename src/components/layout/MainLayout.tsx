@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import HeaderArabic from './HeaderArabic';
 import FooterArabic from './FooterArabic';
 import FloatingWhatsApp from './FloatingWhatsApp';
+import ContactPopup from './ContactPopup';
 import CookieConsent from './CookieConsent';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
@@ -15,6 +16,7 @@ export default function MainLayout() {
       </main>
       <FooterArabic />
       <FloatingWhatsApp />
+      <ContactPopup />
       <CookieConsent />
     </div>
   );

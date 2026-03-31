@@ -13,6 +13,7 @@ import Step3Requirements from '@/components/apply/steps/Step3Requirements';
 import Step4Documents from '@/components/apply/steps/Step4Documents';
 import Step5Terms from '@/components/apply/steps/Step5Terms';
 import Step6Payment from '@/components/apply/steps/Step6Payment';
+import LetTeamHelpCTA from '@/components/apply/LetTeamHelpCTA';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Save, Loader2 } from 'lucide-react';
@@ -342,6 +343,9 @@ function ApplyContent() {
       <div className="container-section px-4 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">
         <div className="max-w-4xl mx-auto bg-card rounded-xl shadow-sm border p-4 sm:p-6 md:p-8">
           {renderStep()}
+        </div>
+        <div className="max-w-4xl mx-auto">
+          <LetTeamHelpCTA />
         </div>
       </div>
     </div>
