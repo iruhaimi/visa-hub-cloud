@@ -571,6 +571,224 @@ export default function OwnerSettings() {
         </CardContent>
       </Card>
 
+      {/* AI Assistant Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-primary" />
+            إعدادات المساعد الذكي
+          </CardTitle>
+          <CardDescription>
+            تحكم كامل في سلوك ومظهر المساعد الذكي الذي يظهر للعملاء
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Enable/Disable */}
+          <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+            <div className="flex items-center gap-3">
+              <Power className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium">تفعيل المساعد الذكي</p>
+                <p className="text-sm text-muted-foreground">إظهار أو إخفاء المساعد الذكي من الموقع</p>
+              </div>
+            </div>
+            <Switch
+              checked={aiSettings.is_enabled !== false}
+              onCheckedChange={(checked) => setAiSettings(prev => ({ ...prev, is_enabled: checked }))}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Company Info */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="font-medium">اسم الشركة (عربي)</Label>
+              <Input
+                value={aiSettings.company_name_ar || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, company_name_ar: e.target.value }))}
+                placeholder="عطلات رحلاتكم"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-medium">Company Name (English)</Label>
+              <Input
+                value={aiSettings.company_name_en || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, company_name_en: e.target.value }))}
+                placeholder="Otolat Rahlatcom"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="font-medium">وصف الشركة (عربي)</Label>
+              <Input
+                value={aiSettings.company_description_ar || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, company_description_ar: e.target.value }))}
+                placeholder="للسياحة والسفر والتأشيرات"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-medium">Company Description (English)</Label>
+              <Input
+                value={aiSettings.company_description_en || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, company_description_en: e.target.value }))}
+                placeholder="Travel & Tourism and Visas"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Welcome Messages */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="font-medium">رسالة الترحيب (عربي)</Label>
+              <Input
+                value={aiSettings.welcome_message_ar || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, welcome_message_ar: e.target.value }))}
+                placeholder="أهلاً بك! 👋"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-medium">Welcome Message (English)</Label>
+              <Input
+                value={aiSettings.welcome_message_en || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, welcome_message_en: e.target.value }))}
+                placeholder="Welcome! 👋"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="font-medium">النص التوضيحي (عربي)</Label>
+              <Textarea
+                value={aiSettings.welcome_subtitle_ar || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, welcome_subtitle_ar: e.target.value }))}
+                placeholder="أنا مساعدك الذكي، اسألني عن التأشيرات والأسعار والمتطلبات"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-medium">Subtitle (English)</Label>
+              <Textarea
+                value={aiSettings.welcome_subtitle_en || ''}
+                onChange={(e) => setAiSettings(prev => ({ ...prev, welcome_subtitle_en: e.target.value }))}
+                placeholder="I am your smart assistant, ask me about visas, prices and requirements"
+                rows={2}
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Tone */}
+          <div className="space-y-2">
+            <Label className="font-medium">أسلوب الرد</Label>
+            <Select
+              value={aiSettings.tone || 'professional'}
+              onValueChange={(val) => setAiSettings(prev => ({ ...prev, tone: val }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="professional">رسمي واحترافي</SelectItem>
+                <SelectItem value="friendly">ودود وعفوي</SelectItem>
+                <SelectItem value="concise">مختصر ومباشر</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Custom Instructions */}
+          <div className="space-y-2">
+            <Label className="font-medium">تعليمات إضافية للمساعد (عربي)</Label>
+            <Textarea
+              value={aiSettings.custom_instructions_ar || ''}
+              onChange={(e) => setAiSettings(prev => ({ ...prev, custom_instructions_ar: e.target.value }))}
+              placeholder="مثال: لا تذكر أسعار المنافسين، دائماً اقترح على العميل التقديم عبر الموقع..."
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground">قواعد إضافية يتبعها المساعد الذكي عند الرد على العملاء</p>
+          </div>
+
+          <Separator />
+
+          {/* Fallback Message */}
+          <div className="space-y-2">
+            <Label className="font-medium">رسالة عدم توفر المعلومة (عربي)</Label>
+            <Textarea
+              value={aiSettings.fallback_message_ar || ''}
+              onChange={(e) => setAiSettings(prev => ({ ...prev, fallback_message_ar: e.target.value }))}
+              placeholder="للأسف ما عندي هالمعلومة حالياً، تقدر تتواصل مع فريقنا عبر واتساب"
+              rows={2}
+            />
+          </div>
+
+          {/* WhatsApp */}
+          <div className="space-y-2">
+            <Label className="font-medium">رقم واتساب الشركة</Label>
+            <Input
+              value={aiSettings.whatsapp_number || ''}
+              onChange={(e) => setAiSettings(prev => ({ ...prev, whatsapp_number: e.target.value }))}
+              placeholder="966920034158"
+              dir="ltr"
+            />
+          </div>
+
+          <Separator />
+
+          {/* Quick Questions */}
+          <div className="space-y-3">
+            <Label className="font-medium">الأسئلة السريعة المقترحة</Label>
+            <p className="text-xs text-muted-foreground">الأزرار التي تظهر للعميل عند فتح المساعد الذكي</p>
+            {(aiSettings.quick_questions || ['', '', '']).map((q: string, i: number) => (
+              <Input
+                key={i}
+                value={q}
+                onChange={(e) => {
+                  const updated = [...(aiSettings.quick_questions || ['', '', ''])];
+                  updated[i] = e.target.value;
+                  setAiSettings(prev => ({ ...prev, quick_questions: updated }));
+                }}
+                placeholder={`السؤال السريع ${i + 1}`}
+              />
+            ))}
+            {(aiSettings.quick_questions || []).length < 5 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAiSettings(prev => ({
+                  ...prev,
+                  quick_questions: [...(prev.quick_questions || []), '']
+                }))}
+              >
+                + إضافة سؤال
+              </Button>
+            )}
+          </div>
+
+          <Button
+            onClick={() => saveAiSettingsMutation.mutate(aiSettings)}
+            disabled={saveAiSettingsMutation.isPending}
+            className="w-full gap-2"
+          >
+            {saveAiSettingsMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            حفظ إعدادات المساعد الذكي
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* System Backup Section */}
       <Card>
         <CardHeader>
