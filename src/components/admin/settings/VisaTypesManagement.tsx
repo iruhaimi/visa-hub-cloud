@@ -1341,7 +1341,11 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                     />
                     <Select
                       value={formData.fee_type}
-                      onValueChange={(value) => setFormData({ ...formData, fee_type: value })}
+                      onValueChange={(value) => {
+                        const noteAr = value === 'included' ? 'شامل رسوم التأشيرة' : 'غير شامل رسوم التأشيرة الحكومية';
+                        const noteEn = value === 'included' ? 'Visa fees included' : 'Government visa fees not included';
+                        setFormData({ ...formData, fee_type: value, price_notes: noteAr, price_notes_en: noteEn });
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue />
