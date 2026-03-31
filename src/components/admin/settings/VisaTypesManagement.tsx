@@ -1357,9 +1357,12 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                     </Select>
                   </div>
 
-                  {/* Price Notes - Predefined Options */}
+                  {/* Price Notes - Predefined Selectable Options */}
                   <div className="space-y-3">
-                    <Label className="font-semibold">ملاحظة السعر</Label>
+                    <Label className="font-semibold flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      ملاحظة السعر (تظهر للعميل أسفل السعر)
+                    </Label>
                     <div className="space-y-2">
                       {[
                         { ar: 'شامل رسوم التأشيرة', en: 'Visa fees included' },
