@@ -19,8 +19,8 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
   const { travelers, visaFeesIncluded, visaTypeName, countryName, priceNotes, priceNotesEn } = applicationData;
   
   // Get the appropriate price note based on language, falling back by fee_type
-  const defaultNoteAr = visaFeesIncluded ? 'شامل رسوم التأشيرة' : 'غير شامل رسوم التأشيرة الحكومية';
-  const defaultNoteEn = visaFeesIncluded ? 'Visa fees included' : 'Government visa fees not included';
+  const defaultNoteAr = visaFeesIncluded ? 'شامل رسوم التأشيرة' : 'رسوم التأشيرة تُدفع للسفارة مباشرة';
+  const defaultNoteEn = visaFeesIncluded ? 'Visa fees included' : 'Visa fees paid directly to embassy';
   const displayPriceNote = direction === 'rtl' 
     ? (priceNotes || defaultNoteAr)
     : (priceNotesEn || defaultNoteEn);
