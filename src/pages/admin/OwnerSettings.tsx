@@ -102,6 +102,22 @@ export default function OwnerSettings() {
     onError: () => toast.error('حدث خطأ أثناء الحفظ'),
   });
 
+  const saveAiSettingsMutation = useMutation({
+    mutationFn: async (settings: Record<string, any>) => {
+      const { error } = await supabase
+        .from('site_content')
+        .update({ content: settings as any, updated_at: new Date().toISOString() })
+        .eq('page', 'ai_assistant')
+        .eq('section', 'settings');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site-content', 'ai_assistant'] });
+      toast.success('تم حفظ إعدادات المساعد الذكي');
+    },
+    onError: () => toast.error('حدث خطأ أثناء الحفظ'),
+  });
+
   // System backups
   const { backups, loading: loadingBackups, creating, createBackup, downloadBackup, deleteBackup } = useSystemBackups();
 
