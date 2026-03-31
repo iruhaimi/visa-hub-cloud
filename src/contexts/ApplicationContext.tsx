@@ -134,7 +134,7 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
     return {
       serviceTotal,
       governmentTotal,
-      grandTotal: serviceTotal + governmentTotal,
+      grandTotal: serviceTotal,
       breakdown: {
         adults: adultsTotal,
         children: childrenTotal,
