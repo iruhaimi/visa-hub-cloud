@@ -67,12 +67,24 @@ export default function OwnerSettings() {
   const [summaryTexts, setSummaryTexts] = useState<Record<string, string>>({});
   const [summaryTextsLoaded, setSummaryTextsLoaded] = useState(false);
 
+  // AI Assistant settings
+  const { data: aiSettingsData } = useSiteSection('ai_assistant', 'settings');
+  const [aiSettings, setAiSettings] = useState<Record<string, any>>({});
+  const [aiSettingsLoaded, setAiSettingsLoaded] = useState(false);
+
   useEffect(() => {
     if (orderSummaryData && !summaryTextsLoaded) {
       setSummaryTexts(orderSummaryData as Record<string, string>);
       setSummaryTextsLoaded(true);
     }
   }, [orderSummaryData, summaryTextsLoaded]);
+
+  useEffect(() => {
+    if (aiSettingsData && !aiSettingsLoaded) {
+      setAiSettings(aiSettingsData as Record<string, any>);
+      setAiSettingsLoaded(true);
+    }
+  }, [aiSettingsData, aiSettingsLoaded]);
 
   const saveSummaryTextsMutation = useMutation({
     mutationFn: async (texts: Record<string, string>) => {
