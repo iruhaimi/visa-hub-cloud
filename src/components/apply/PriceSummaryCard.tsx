@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Info, CheckCircle2 } from 'lucide-react';
 import SARSymbol from '@/components/ui/SARSymbol';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 interface PriceSummaryCardProps {
   className?: string;
@@ -16,14 +17,34 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
   const { applicationData, calculateTotal } = useApplication();
   const { serviceTotal, governmentTotal, grandTotal, breakdown } = calculateTotal();
   
-  const { travelers, visaFeesIncluded, visaTypeName, countryName, priceNotes, priceNotesEn } = applicationData;
+  const { travelers, visaFeesIncluded, visaTypeName, countryName } = applicationData;
   
-  // Get the appropriate price note based on language, falling back by fee_type
-  const defaultNoteAr = visaFeesIncluded ? 'شامل رسوم التأشيرة' : 'رسوم التأشيرة تُدفع للسفارة مباشرة';
-  const defaultNoteEn = visaFeesIncluded ? 'Visa fees included' : 'Visa fees paid directly to embassy';
-  const displayPriceNote = direction === 'rtl' 
-    ? (priceNotes || defaultNoteAr)
-    : (priceNotesEn || defaultNoteEn);
+  // Fetch dynamic texts from site_content
+  const { data: orderSummaryContent } = useSiteContent('order_summary', 'service_fees');
+  const content = orderSummaryContent?.content as Record<string, string> | undefined;
+  
+  const isRTL = direction === 'rtl';
+  
+  // Dynamic labels with fallbacks
+  const serviceFeeLabel = isRTL 
+    ? (content?.title_ar || 'رسوم الخدمة')
+    : (content?.title_en || 'Service Fees');
+  
+  const serviceFeeNote = isRTL 
+    ? (content?.note_ar || '')
+    : (content?.note_en || '');
+  
+  const visaFeesLabel = isRTL
+    ? (content?.visa_fees_label_ar || 'رسوم التأشيرة (تُدفع للسفارة مباشرة)')
+    : (content?.visa_fees_label_en || 'Visa Fees (paid directly to embassy)');
+  
+  const bottomNote = visaFeesIncluded
+    ? (isRTL 
+        ? (content?.visa_fees_included_note_ar || 'شامل رسوم التأشيرة')
+        : (content?.visa_fees_included_note_en || 'Visa fees included'))
+    : (isRTL 
+        ? (content?.visa_fees_separate_note_ar || 'رسوم التأشيرة ورسوم المركز تُدفع مباشرة وقت الموعد')
+        : (content?.visa_fees_separate_note_en || 'Visa and center fees are paid directly at the appointment'));
   
   const totalTravelers = travelers.adults + travelers.children + travelers.infants;
 
@@ -81,21 +102,24 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
           
           <Separator className="my-3 sm:my-4" />
           
-          <div className="flex justify-between text-xs sm:text-sm mb-2">
-            <span className="text-muted-foreground">
-              {direction === 'rtl' ? 'رسوم الخدمة' : 'Service Fees'}
-            </span>
-            <span className="font-medium flex items-center gap-1">
-              {serviceTotal.toLocaleString()}
-              <SARSymbol size="xs" />
-            </span>
+          <div className="space-y-1 mb-2">
+            <div className="flex justify-between text-xs sm:text-sm">
+              <span className="text-muted-foreground">{serviceFeeLabel}</span>
+              <span className="font-medium flex items-center gap-1">
+                {serviceTotal.toLocaleString()}
+                <SARSymbol size="xs" />
+              </span>
+            </div>
+            {serviceFeeNote && (
+              <p className="text-[10px] sm:text-xs text-muted-foreground/70 leading-relaxed">
+                {serviceFeeNote}
+              </p>
+            )}
           </div>
           
           {!visaFeesIncluded && governmentTotal > 0 && (
             <div className="flex justify-between text-xs sm:text-sm mb-2 p-2 rounded-lg bg-warning/10 border border-warning/20">
-              <span className="text-muted-foreground">
-                {direction === 'rtl' ? 'رسوم التأشيرة (تُدفع للسفارة مباشرة)' : 'Visa Fees (paid directly to embassy)'}
-              </span>
+              <span className="text-muted-foreground">{visaFeesLabel}</span>
               <span className="font-medium flex items-center gap-1 text-muted-foreground">
                 {governmentTotal.toLocaleString()}
                 <SARSymbol size="xs" />
@@ -119,12 +143,12 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
         {visaFeesIncluded ? (
           <Badge variant="secondary" className="w-full justify-center py-1.5 sm:py-2 text-xs sm:text-sm bg-accent/20 text-accent-foreground">
             <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 me-1.5 sm:me-2" />
-            {displayPriceNote}
+            {bottomNote}
           </Badge>
         ) : (
           <Badge variant="secondary" className="w-full justify-center py-1.5 sm:py-2 text-xs sm:text-sm bg-warning/20 text-warning-foreground">
             <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 me-1.5 sm:me-2" />
-            {displayPriceNote}
+            {bottomNote}
           </Badge>
         )}
       </div>
