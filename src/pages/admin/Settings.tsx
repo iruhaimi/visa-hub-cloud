@@ -183,8 +183,8 @@ export default function Settings() {
           <TabsContent value="visa-types" className="mt-6">
             <VisaTypesManagement 
               visaTypes={visaTypes || []} 
-              countries={countries || []}
-              isLoading={loadingVisaTypes}
+              countries={(countries || []).filter(c => c.is_active)}
+              isLoading={loadingVisaTypes || loadingCountries}
               isRTL={isRTL}
             />
           </TabsContent>
