@@ -100,7 +100,7 @@ export default function Contact() {
     );
   }
 
-  const waNumber = whatsappData.number || '966920034158';
+  const waNumber = whatsappData.number || '966562525665';
   const waMessage = encodeURIComponent(whatsappData.message || 'السلام عليكم');
   const waBtnText = isRTL ? (whatsappData.button_text || 'ابدأ المحادثة') : (whatsappData.button_text_en || whatsappData.button_text || 'Start Chat');
 

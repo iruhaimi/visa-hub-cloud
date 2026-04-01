@@ -198,7 +198,7 @@ export default function FAQ() {
                   <div className="flex flex-wrap gap-3">
                     <Button asChild className="rounded-xl"><Link to="/contact">{isRTL ? 'تواصل معنا' : 'Contact Us'}</Link></Button>
                     <Button variant="outline" className="rounded-xl gap-2" asChild>
-                      <a href="https://wa.me/966920034158" target="_blank" rel="noopener"><MessageCircle className="w-4 h-4" />{isRTL ? 'واتساب' : 'WhatsApp'}</a>
+                      <a href="<a href="https://wa.me/966562525665" target="_blank" rel="noopener"><MessageCircle className="w-4 h-4" />{isRTL ? 'واتساب' : 'WhatsApp'}</a>" target="_blank" rel="noopener"><MessageCircle className="w-4 h-4" />{isRTL ? 'واتساب' : 'WhatsApp'}</a>
                     </Button>
                   </div>
                 </div>
