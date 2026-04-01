@@ -144,7 +144,7 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
   }, [applicationData]);
 
   const goToNextStep = useCallback(() => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(prev => prev + 1);
     }
   }, [currentStep]);
