@@ -51,6 +51,7 @@ import { toast } from 'sonner';
 const STATUS_OPTIONS = [
   { value: 'all', label: 'جميع الحالات' },
   { value: 'submitted', label: 'مقدم' },
+  { value: 'whatsapp_pending', label: 'بانتظار التواصل عبر الواتساب' },
   { value: 'under_review', label: 'قيد المراجعة' },
   { value: 'documents_required', label: 'مستندات مطلوبة' },
   { value: 'processing', label: 'قيد المعالجة' },
