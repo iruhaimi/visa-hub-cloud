@@ -37,6 +37,7 @@ const STATUS_CONFIG: Record<ApplicationStatus, {
   draft: { icon: FileText, labelAr: 'مسودة', labelEn: 'Draft', className: 'bg-muted text-muted-foreground' },
   pending_payment: { icon: CreditCard, labelAr: 'بانتظار الدفع', labelEn: 'Pending Payment', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
   submitted: { icon: Send, labelAr: 'تم الإرسال', labelEn: 'Submitted', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  whatsapp_pending: { icon: Clock, labelAr: 'بانتظار التواصل عبر الواتساب', labelEn: 'WhatsApp Pending', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
   under_review: { icon: Eye, labelAr: 'قيد المراجعة', labelEn: 'Under Review', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
   documents_required: { icon: AlertCircle, labelAr: 'مستندات مطلوبة', labelEn: 'Documents Required', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
   processing: { icon: Clock, labelAr: 'قيد المعالجة', labelEn: 'Processing', className: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' },
