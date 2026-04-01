@@ -291,8 +291,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Application Wizard
     'wizard.step1': 'Info & Visa',
     'wizard.step2': 'Requirements & Docs',
-    'wizard.step3': 'Terms & Conditions',
-    'wizard.step4': 'Payment',
+    'wizard.step3': 'Terms & Payment',
     'wizard.next': 'Next',
     'wizard.previous': 'Previous',
     'wizard.submit': 'Submit Application',
