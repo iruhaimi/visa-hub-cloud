@@ -377,6 +377,7 @@ export default function AgentApplicationsList() {
         draft: 'مسودة',
         pending_payment: 'بانتظار الدفع',
         submitted: 'مقدم',
+        whatsapp_pending: 'بانتظار التواصل عبر الواتساب',
         under_review: 'قيد المراجعة',
         documents_required: 'مستندات مطلوبة',
         processing: 'قيد المعالجة',
