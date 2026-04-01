@@ -4,7 +4,7 @@ import { MessageCircle, X, Send, Loader2, Bot, User, ExternalLink } from 'lucide
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
 import { streamChat, type ChatMessage } from '@/lib/aiChat';
-import { getWhatsAppUrl } from './FloatingWhatsApp';
+import { getWhatsAppUrl, openWhatsAppUrl } from '@/lib/whatsapp';
 import { useSiteSection } from '@/hooks/useSiteContent';
 
 export default function AIChatWidget() {
@@ -215,6 +215,10 @@ export default function AIChatWidget() {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    openWhatsAppUrl(whatsappUrl);
+                  }}
                   className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white text-xs py-2 rounded-lg hover:bg-[#20BD5A] transition-colors"
                 >
                   <MessageCircle className="h-3.5 w-3.5" />

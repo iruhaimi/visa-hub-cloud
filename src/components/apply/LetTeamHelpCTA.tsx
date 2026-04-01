@@ -1,7 +1,7 @@
 import { MessageCircle, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApplication } from '@/contexts/ApplicationContext';
-import { getWhatsAppUrl, buildWhatsAppMessage } from '@/components/layout/FloatingWhatsApp';
+import { buildWhatsAppMessage, getWhatsAppUrl, openWhatsAppUrl } from '@/lib/whatsapp';
 
 /**
  * A CTA button that appears inside the visa application form.
@@ -45,6 +45,10 @@ export default function LetTeamHelpCTA() {
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={(event) => {
+          event.preventDefault();
+          openWhatsAppUrl(whatsappUrl);
+        }}
         className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20BD5A] text-white font-medium px-5 py-2.5 rounded-xl transition-colors text-sm"
       >
         <MessageCircle className="h-4 w-4" />
