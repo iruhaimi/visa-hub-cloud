@@ -156,9 +156,36 @@ export default function Step3TermsAndPayment() {
       return;
     }
 
-    // Build requirements list
+    // Build requirements list with human-readable labels
+    const requirementLabels: Record<string, { ar: string; en: string }> = {
+      passport: { ar: 'جواز السفر', en: 'Passport' },
+      photo: { ar: 'الصورة الشخصية', en: 'Personal Photo' },
+      bank_statement: { ar: 'كشف الحساب البنكي', en: 'Bank Statement' },
+      hotel_booking: { ar: 'حجز الفندق', en: 'Hotel Booking' },
+      flight_booking: { ar: 'حجز الطيران', en: 'Flight Booking' },
+      travel_insurance: { ar: 'تأمين السفر', en: 'Travel Insurance' },
+    };
+
+    const categoryLabels: Record<string, { ar: string; en: string }> = {
+      adult: { ar: 'بالغ', en: 'Adult' },
+      child: { ar: 'طفل', en: 'Child' },
+      infant: { ar: 'رضيع', en: 'Infant' },
+    };
+
+    const formatRequirement = (reqId: string) => {
+      // reqId format: "passport_adult_1" or "bank_statement_child_2"
+      const parts = reqId.split('_');
+      const num = parts.pop(); // "1"
+      const category = parts.pop(); // "adult"
+      const baseId = parts.join('_'); // "passport" or "bank_statement"
+      const lang = direction === 'rtl' ? 'ar' : 'en';
+      const label = requirementLabels[baseId]?.[lang] || baseId;
+      const cat = categoryLabels[category || '']?.[lang] || category;
+      return `${label} - ${cat} ${num}`;
+    };
+
     const requirementsList = applicationData.checkedRequirements.length > 0
-      ? applicationData.checkedRequirements.map((req, i) => `  ${i + 1}. ${req}`).join('\n')
+      ? applicationData.checkedRequirements.map((req, i) => `  ${i + 1}. ${formatRequirement(req)}`).join('\n')
       : (direction === 'rtl' ? '  لم يتم تحديد متطلبات' : '  No requirements checked');
 
     const travelDateFormatted = applicationData.travelDate
