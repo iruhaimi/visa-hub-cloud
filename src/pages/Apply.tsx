@@ -7,10 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import WizardStepper from '@/components/apply/WizardStepper';
-import Step1BasicInfo from '@/components/apply/steps/Step1BasicInfo';
-import Step2VisaDetails from '@/components/apply/steps/Step2VisaDetails';
-import Step3Requirements from '@/components/apply/steps/Step3Requirements';
-import Step4Documents from '@/components/apply/steps/Step4Documents';
+import Step1InfoAndVisa from '@/components/apply/steps/Step1InfoAndVisa';
+import Step2RequirementsAndDocs from '@/components/apply/steps/Step2RequirementsAndDocs';
 import Step5Terms from '@/components/apply/steps/Step5Terms';
 import Step6Payment from '@/components/apply/steps/Step6Payment';
 import LetTeamHelpCTA from '@/components/apply/LetTeamHelpCTA';
@@ -231,8 +229,8 @@ function ApplyContent() {
   // Trigger save on step change (after step 2)
   useEffect(() => {
     if (currentStep >= 2 && profile && applicationData.visaTypeId) {
-      // Force save when reaching payment step to ensure draftId exists
-      const forceSave = currentStep >= 5 && !draftId;
+      // Force save when reaching terms/payment step to ensure draftId exists
+      const forceSave = currentStep >= 3 && !draftId;
       const timer = setTimeout(() => {
         saveDraft(forceSave);
       }, forceSave ? 0 : 500);
@@ -274,19 +272,15 @@ function ApplyContent() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1BasicInfo />;
+        return <Step1InfoAndVisa />;
       case 2:
-        return <Step2VisaDetails />;
+        return <Step2RequirementsAndDocs />;
       case 3:
-        return <Step3Requirements />;
-      case 4:
-        return <Step4Documents />;
-      case 5:
         return <Step5Terms />;
-      case 6:
+      case 4:
         return <Step6Payment />;
       default:
-        return <Step1BasicInfo />;
+        return <Step1InfoAndVisa />;
     }
   };
 
@@ -334,7 +328,7 @@ function ApplyContent() {
       <div className="container-section px-4 sm:px-6">
         <WizardStepper 
           currentStep={currentStep} 
-          totalSteps={6} 
+          totalSteps={4} 
           onStepClick={handleStepClick}
         />
       </div>
