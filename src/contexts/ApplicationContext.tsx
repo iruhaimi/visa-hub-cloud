@@ -170,9 +170,7 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
         return applicationData.checkedRequirements.length > 0 &&
           applicationData.uploadedDocuments.some(doc => doc.uploaded);
       case 3:
-        return applicationData.termsAccepted;
-      case 4:
-        return !!applicationData.paymentMethod;
+        return applicationData.termsAccepted && !!applicationData.paymentMethod;
       default:
         return false;
     }

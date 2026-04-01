@@ -325,7 +325,7 @@ function ApplyContent() {
       <div className="container-section px-4 sm:px-6">
         <WizardStepper 
           currentStep={currentStep} 
-          totalSteps={4} 
+          totalSteps={3} 
           onStepClick={handleStepClick}
         />
       </div>
