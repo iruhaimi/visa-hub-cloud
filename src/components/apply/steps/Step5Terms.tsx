@@ -75,7 +75,7 @@ export default function Step5Terms() {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">{t('wizard.step5')}</h2>
+        <h2 className="text-2xl font-bold">{t('wizard.step3')}</h2>
         <p className="text-muted-foreground mt-2">
           {direction === 'rtl' 
             ? 'يرجى قراءة الشروط والأحكام والموافقة عليها' 
