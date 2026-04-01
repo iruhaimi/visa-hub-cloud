@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, MessageCircle, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { getWhatsAppUrl, buildWhatsAppMessage } from './FloatingWhatsApp';
+import { buildWhatsAppMessage, getWhatsAppUrl, openWhatsAppUrl } from '@/lib/whatsapp';
 
 const POPUP_DELAY_MS = 18000; // 18 seconds
 const STORAGE_KEY = 'contact_popup_dismissed';
@@ -73,7 +73,11 @@ export default function ContactPopup() {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={dismiss}
+              onClick={(event) => {
+                event.preventDefault();
+                dismiss();
+                openWhatsAppUrl(whatsappUrl);
+              }}
               className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-medium py-3 rounded-xl transition-colors mb-3"
             >
               <MessageCircle className="h-5 w-5" />

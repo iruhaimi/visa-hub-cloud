@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import CountryCodePicker from '@/components/ui/CountryCodePicker';
 import { filterArabicChars, filterNonNumeric } from '@/lib/inputFilters';
-import { getWhatsAppUrl } from '@/components/layout/FloatingWhatsApp';
+import { getWhatsAppUrl, openWhatsAppUrl } from '@/lib/whatsapp';
 import { 
   MapPin, Phone, Mail, Clock, MessageCircle, Send, Loader2, CheckCircle2, Headphones, Globe
 } from 'lucide-react';
@@ -168,7 +168,15 @@ export default function Contact() {
                     <h3 className="font-bold text-lg mb-1">{isRTL ? 'واتساب' : 'WhatsApp'}</h3>
                     <p className="text-sm text-muted-foreground mb-3">{isRTL ? 'تحدث معنا مباشرة وسنرد فوراً' : 'Chat with us directly'}</p>
                     <Button className="bg-green-500 hover:bg-green-600 rounded-xl w-full" asChild>
-                      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          openWhatsAppUrl(whatsappUrl);
+                        }}
+                      >
                         <MessageCircle className="w-4 h-4 ml-2" />
                         {waBtnText}
                       </a>
