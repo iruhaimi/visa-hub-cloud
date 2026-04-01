@@ -275,9 +275,7 @@ function ApplyContent() {
       case 2:
         return <Step2RequirementsAndDocs />;
       case 3:
-        return <Step5Terms />;
-      case 4:
-        return <Step6Payment />;
+        return <Step3TermsAndPayment />;
       default:
         return <Step1InfoAndVisa />;
     }
