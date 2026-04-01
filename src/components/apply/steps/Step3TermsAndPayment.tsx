@@ -4,7 +4,6 @@ import { ar, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -38,7 +37,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { getWhatsAppUrl, openWhatsAppUrl } from '@/lib/whatsapp';
+import { getWhatsAppUrl, openWhatsAppUrl, prepareWhatsAppWindow } from '@/lib/whatsapp';
 
 const paymentMethods = [
   {
@@ -64,14 +63,11 @@ const paymentMethods = [
 export default function Step3TermsAndPayment() {
   const { t, direction, language } = useLanguage();
   const { applicationData, updateApplicationData, calculateTotal, goToPreviousStep, resetApplication, draftId } = useApplication();
-  const { profile } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const { serviceTotal, governmentTotal, grandTotal, breakdown } = calculateTotal();
-
-  const ArrowNextIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
   const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
 
   const termsContent = direction === 'rtl' ? {
@@ -160,10 +156,10 @@ export default function Step3TermsAndPayment() {
       return;
     }
 
+    const pendingWhatsAppWindow = prepareWhatsAppWindow();
     setIsProcessing(true);
 
     try {
-      // Update application status to whatsapp_pending
       const { error: updateError } = await supabase
         .from('applications')
         .update({
@@ -175,10 +171,9 @@ export default function Step3TermsAndPayment() {
         .in('status', ['draft', 'pending_payment'] as const);
 
       if (updateError) {
-        console.error('Error updating to whatsapp_pending:', updateError);
+        throw updateError;
       }
 
-      // Build WhatsApp message with application details
       const messageParts = [
         direction === 'rtl' ? '🔹 طلب تأشيرة جديد عبر الموقع' : '🔹 New visa application from website',
         '',
@@ -210,9 +205,9 @@ export default function Step3TermsAndPayment() {
           : 'Your application has been saved. Our team will contact you via WhatsApp soon.',
       });
 
-      // Open WhatsApp
-      openWhatsAppUrl(url);
+      openWhatsAppUrl(url, pendingWhatsAppWindow);
     } catch (error) {
+      pendingWhatsAppWindow?.close();
       console.error('Error submitting via WhatsApp:', error);
       setIsProcessing(false);
       toast({
