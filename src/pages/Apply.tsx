@@ -272,19 +272,15 @@ function ApplyContent() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <Step1BasicInfo />;
+        return <Step1InfoAndVisa />;
       case 2:
-        return <Step2VisaDetails />;
+        return <Step2RequirementsAndDocs />;
       case 3:
-        return <Step3Requirements />;
-      case 4:
-        return <Step4Documents />;
-      case 5:
         return <Step5Terms />;
-      case 6:
+      case 4:
         return <Step6Payment />;
       default:
-        return <Step1BasicInfo />;
+        return <Step1InfoAndVisa />;
     }
   };
 
