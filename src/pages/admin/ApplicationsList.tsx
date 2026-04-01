@@ -46,6 +46,7 @@ const STATUS_OPTIONS = [
   { value: 'draft', label: 'مسودة' },
   { value: 'pending_payment', label: 'بانتظار الدفع' },
   { value: 'submitted', label: 'مقدم' },
+  { value: 'whatsapp_pending', label: 'بانتظار التواصل عبر الواتساب' },
   { value: 'under_review', label: 'قيد المراجعة' },
   { value: 'documents_required', label: 'مستندات مطلوبة' },
   { value: 'processing', label: 'قيد المعالجة' },
