@@ -156,7 +156,20 @@ export default function Step3TermsAndPayment() {
       return;
     }
 
-    // Build requirements list with human-readable labels
+    // Fetch all visa type requirements from database
+    let allRequirements: string[] = [];
+    if (applicationData.visaTypeId) {
+      const { data: vtData } = await supabase
+        .from('visa_types')
+        .select('requirements')
+        .eq('id', applicationData.visaTypeId)
+        .single();
+      if (vtData?.requirements) {
+        allRequirements = vtData.requirements as string[];
+      }
+    }
+
+    // Build human-readable labels for attached documents
     const requirementLabels: Record<string, { ar: string; en: string }> = {
       passport: { ar: 'جواز السفر', en: 'Passport' },
       photo: { ar: 'الصورة الشخصية', en: 'Personal Photo' },
@@ -173,20 +186,25 @@ export default function Step3TermsAndPayment() {
     };
 
     const formatRequirement = (reqId: string) => {
-      // reqId format: "passport_adult_1" or "bank_statement_child_2"
       const parts = reqId.split('_');
-      const num = parts.pop(); // "1"
-      const category = parts.pop(); // "adult"
-      const baseId = parts.join('_'); // "passport" or "bank_statement"
+      const num = parts.pop();
+      const category = parts.pop();
+      const baseId = parts.join('_');
       const lang = direction === 'rtl' ? 'ar' : 'en';
       const label = requirementLabels[baseId]?.[lang] || baseId;
       const cat = categoryLabels[category || '']?.[lang] || category;
       return `${label} - ${cat} ${num}`;
     };
 
-    const requirementsList = applicationData.checkedRequirements.length > 0
+    // All visa requirements from admin panel
+    const allReqsList = allRequirements.length > 0
+      ? allRequirements.map((req, i) => `  ${i + 1}. ${req}`).join('\n')
+      : (direction === 'rtl' ? '  لا توجد متطلبات محددة' : '  No requirements specified');
+
+    // Documents attached by customer
+    const attachedList = applicationData.checkedRequirements.length > 0
       ? applicationData.checkedRequirements.map((req, i) => `  ${i + 1}. ${formatRequirement(req)}`).join('\n')
-      : (direction === 'rtl' ? '  لم يتم تحديد متطلبات' : '  No requirements checked');
+      : (direction === 'rtl' ? '  لم يتم إرفاق مستندات' : '  No documents attached');
 
     const travelDateFormatted = applicationData.travelDate
       ? format(applicationData.travelDate, 'yyyy/MM/dd')
@@ -210,7 +228,10 @@ export default function Step3TermsAndPayment() {
       direction === 'rtl' ? `💰 المبلغ الإجمالي: ${grandTotal.toLocaleString()} ر.س` : `💰 Total: ${grandTotal.toLocaleString()} SAR`,
       '',
       direction === 'rtl' ? '📌 المتطلبات المطلوب توفيرها قبل الموعد:' : '📌 Requirements to prepare before appointment:',
-      requirementsList,
+      allReqsList,
+      '',
+      direction === 'rtl' ? '📎 المستندات المرفقة من العميل:' : '📎 Documents attached by customer:',
+      attachedList,
       '',
       direction === 'rtl' ? '✅ العميل وافق على الشروط والأحكام' : '✅ Client agreed to Terms and Conditions',
       '',
