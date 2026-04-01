@@ -90,7 +90,7 @@ export default function AIChatWidget() {
     }
   };
 
-  const whatsappUrl = getWhatsAppUrl('مرحباً، أرغب في التحدث مع أحد الوكلاء');
+  const whatsappUrl = getWhatsAppUrl('مرحباً، أرغب في التحدث مع أحد الوكلاء', whatsappNumber);
 
   // Don't render if disabled
   if (!isEnabled) return null;

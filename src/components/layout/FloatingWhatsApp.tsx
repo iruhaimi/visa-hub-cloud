@@ -2,7 +2,8 @@ import { MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
-const PHONE_NUMBER = '966562525665';
+export const DEFAULT_WHATSAPP_NUMBER = '966562525665';
+const LEGACY_WHATSAPP_NUMBERS = new Set(['920034158', '966920034158']);
 
 /**
  * Build a context-aware WhatsApp message based on the current page.
@@ -27,8 +28,19 @@ export function buildWhatsAppMessage(context?: {
   return parts.join('\n');
 }
 
-export function getWhatsAppUrl(message: string) {
-  return `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
+export function normalizeWhatsAppNumber(phoneNumber?: string) {
+  const digitsOnly = (phoneNumber || DEFAULT_WHATSAPP_NUMBER).replace(/\D/g, '');
+
+  if (!digitsOnly || LEGACY_WHATSAPP_NUMBERS.has(digitsOnly)) {
+    return DEFAULT_WHATSAPP_NUMBER;
+  }
+
+  return digitsOnly;
+}
+
+export function getWhatsAppUrl(message: string, phoneNumber?: string) {
+  const normalizedPhoneNumber = normalizeWhatsAppNumber(phoneNumber);
+  return `https://wa.me/${normalizedPhoneNumber}?text=${encodeURIComponent(message)}`;
 }
 
 export default function FloatingWhatsApp() {

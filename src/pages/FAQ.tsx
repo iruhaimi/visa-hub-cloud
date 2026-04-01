@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getWhatsAppUrl } from '@/components/layout/FloatingWhatsApp';
 import {
   HelpCircle, 
   Search, 
@@ -32,6 +33,7 @@ export default function FAQ() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const { data: content, isLoading } = useSiteContent('faq');
+  const whatsappUrl = getWhatsAppUrl('مرحباً، أرغب في الاستفسار عن خدمات التأشيرات');
 
   const toggleItem = (key: string) => {
     setOpenItems(prev => ({ ...prev, [key]: !prev[key] }));
@@ -198,7 +200,7 @@ export default function FAQ() {
                   <div className="flex flex-wrap gap-3">
                     <Button asChild className="rounded-xl"><Link to="/contact">{isRTL ? 'تواصل معنا' : 'Contact Us'}</Link></Button>
                     <Button variant="outline" className="rounded-xl gap-2" asChild>
-                      <a href="https://wa.me/966562525665" target="_blank" rel="noopener"><MessageCircle className="w-4 h-4" />{isRTL ? 'واتساب' : 'WhatsApp'}</a>
+                      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"><MessageCircle className="w-4 h-4" />{isRTL ? 'واتساب' : 'WhatsApp'}</a>
                     </Button>
                   </div>
                 </div>

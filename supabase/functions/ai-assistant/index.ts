@@ -62,7 +62,7 @@ serve(async (req) => {
 
       const companyName = settings.company_name_ar || "عطلات رحلاتكم";
       const companyDesc = settings.company_description_ar || "للسياحة والسفر والتأشيرات";
-      const whatsapp = settings.whatsapp_number || "966920034158";
+      const whatsapp = settings.whatsapp_number || "966562525665";
       const fallback = settings.fallback_message_ar || "للأسف ما عندي هالمعلومة حالياً، تقدر تتواصل مع فريقنا عبر واتساب وبيساعدونك";
       const customInstructions = settings.custom_instructions_ar || "";
 
