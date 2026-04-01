@@ -49,7 +49,7 @@ const flashTabTitle = (message: string) => {
   window.addEventListener('focus', stopFlashing, { once: true });
 };
 
-export function useAdminNotifications(onNewTransfer?: () => void, onNewWork?: () => void) {
+export function useAdminNotifications(onNewTransfer?: () => void, onNewWork?: () => void, onNewWhatsApp?: () => void) {
   const { profile, isAdmin } = useAuth();
   const hasSetupRef = useRef(false);
 
@@ -81,7 +81,6 @@ export function useAdminNotifications(onNewTransfer?: () => void, onNewWork?: ()
               action: {
                 label: 'عرض',
                 onClick: () => {
-                  // Scroll to transfers section or trigger refresh
                   onNewTransfer?.();
                 },
               },
@@ -123,10 +122,40 @@ export function useAdminNotifications(onNewTransfer?: () => void, onNewWork?: ()
       )
       .subscribe();
 
+    // Subscribe to WhatsApp orders
+    const whatsappChannel = supabase
+      .channel('admin-whatsapp-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'applications',
+          filter: 'status=eq.whatsapp_pending',
+        },
+        () => {
+          playNotificationSound();
+          flashTabTitle('طلب واتساب جديد');
+          
+          toast.info('📱 طلب جديد عبر الواتساب', {
+            description: 'تم استلام طلب جديد بانتظار التواصل عبر الواتساب',
+            duration: 10000,
+            action: {
+              label: 'عرض الطلبات',
+              onClick: () => {
+                onNewWhatsApp?.();
+              },
+            },
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       hasSetupRef.current = false;
       supabase.removeChannel(transferChannel);
       supabase.removeChannel(workChannel);
+      supabase.removeChannel(whatsappChannel);
     };
-  }, [profile?.id, isAdmin, onNewTransfer, onNewWork]);
+  }, [profile?.id, isAdmin, onNewTransfer, onNewWork, onNewWhatsApp]);
 }
