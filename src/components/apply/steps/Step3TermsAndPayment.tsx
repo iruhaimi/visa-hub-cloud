@@ -156,6 +156,15 @@ export default function Step3TermsAndPayment() {
       return;
     }
 
+    // Build requirements list
+    const requirementsList = applicationData.checkedRequirements.length > 0
+      ? applicationData.checkedRequirements.map((req, i) => `  ${i + 1}. ${req}`).join('\n')
+      : (direction === 'rtl' ? '  لم يتم تحديد متطلبات' : '  No requirements checked');
+
+    const travelDateFormatted = applicationData.travelDate
+      ? format(applicationData.travelDate, 'yyyy/MM/dd')
+      : (direction === 'rtl' ? 'غير محدد' : 'Not specified');
+
     const messageParts = [
       direction === 'rtl' ? '🔹 طلب تأشيرة جديد عبر الموقع' : '🔹 New visa application from website',
       '',
@@ -166,11 +175,17 @@ export default function Step3TermsAndPayment() {
       '',
       direction === 'rtl' ? `🌍 الدولة: ${applicationData.countryName}` : `🌍 Country: ${applicationData.countryName}`,
       direction === 'rtl' ? `📄 نوع التأشيرة: ${applicationData.visaTypeName}` : `📄 Visa Type: ${applicationData.visaTypeName}`,
+      direction === 'rtl' ? `📅 تاريخ السفر: ${travelDateFormatted}` : `📅 Travel Date: ${travelDateFormatted}`,
       direction === 'rtl'
         ? `👥 المسافرين: ${applicationData.travelers.adults} بالغ${applicationData.travelers.children > 0 ? ` - ${applicationData.travelers.children} طفل` : ''}${applicationData.travelers.infants > 0 ? ` - ${applicationData.travelers.infants} رضيع` : ''}`
         : `👥 Travelers: ${applicationData.travelers.adults} Adults${applicationData.travelers.children > 0 ? `, ${applicationData.travelers.children} Children` : ''}${applicationData.travelers.infants > 0 ? `, ${applicationData.travelers.infants} Infants` : ''}`,
       '',
       direction === 'rtl' ? `💰 المبلغ الإجمالي: ${grandTotal.toLocaleString()} ر.س` : `💰 Total: ${grandTotal.toLocaleString()} SAR`,
+      '',
+      direction === 'rtl' ? '📌 المتطلبات المطلوب توفيرها قبل الموعد:' : '📌 Requirements to prepare before appointment:',
+      requirementsList,
+      '',
+      direction === 'rtl' ? '✅ العميل وافق على الشروط والأحكام' : '✅ Client agreed to Terms and Conditions',
       '',
       direction === 'rtl' ? 'أرغب بإكمال الطلب والدفع عبر الواتساب.' : 'I would like to complete the application and payment via WhatsApp.',
     ];
