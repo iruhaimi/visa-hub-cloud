@@ -41,6 +41,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof FileText; colo
   draft: { label: 'مسودة', icon: FileText, color: 'text-muted-foreground', bgColor: 'bg-muted/50', borderColor: 'border-muted-foreground/30' },
   pending_payment: { label: 'بانتظار الدفع', icon: Clock, color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/30' },
   submitted: { label: 'مقدم', icon: FileText, color: 'text-info', bgColor: 'bg-info/10', borderColor: 'border-info/30' },
+  whatsapp_pending: { label: 'بانتظار التواصل عبر الواتساب', icon: Clock, color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-300' },
   under_review: { label: 'قيد المراجعة', icon: AlertCircle, color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/30' },
   documents_required: { label: 'مستندات مطلوبة', icon: AlertCircle, color: 'text-warning', bgColor: 'bg-warning/10', borderColor: 'border-warning/30' },
   processing: { label: 'قيد المعالجة', icon: Clock, color: 'text-primary', bgColor: 'bg-primary/10', borderColor: 'border-primary/30' },
