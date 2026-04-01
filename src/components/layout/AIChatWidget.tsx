@@ -25,7 +25,7 @@ export default function AIChatWidget() {
   const welcomeMessage = settings.welcome_message_ar || 'أهلاً بك! 👋';
   const welcomeSubtitle = settings.welcome_subtitle_ar || 'أنا مساعدك الذكي، اسألني عن التأشيرات والأسعار والمتطلبات';
   const quickQuestions = (settings.quick_questions || ['كم سعر تأشيرة تركيا؟', 'وش الدول المتاحة؟', 'في عروض حالياً؟']).filter((q: string) => q?.trim());
-  const whatsappNumber = settings.whatsapp_number || '966920034158';
+  const whatsappNumber = settings.whatsapp_number || '966562525665';
 
   // Auto-scroll on new messages
   useEffect(() => {

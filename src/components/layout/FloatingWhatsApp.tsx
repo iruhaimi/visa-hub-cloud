@@ -2,7 +2,7 @@ import { MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
-const PHONE_NUMBER = '966920034158';
+const PHONE_NUMBER = '966562525665';
 
 /**
  * Build a context-aware WhatsApp message based on the current page.
