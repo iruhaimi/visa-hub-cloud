@@ -18,6 +18,7 @@ export type ApplicationStatus =
   | 'draft'
   | 'pending_payment'
   | 'submitted'
+  | 'whatsapp_pending'
   | 'under_review'
   | 'documents_required'
   | 'processing'
