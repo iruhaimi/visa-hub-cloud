@@ -67,8 +67,35 @@ export function getWhatsAppUrl(message: string, phoneNumber?: string) {
     : getWhatsAppDesktopUrl(message, phoneNumber);
 }
 
-export function openWhatsAppUrl(url: string) {
+export function prepareWhatsAppWindow() {
+  if (typeof window === 'undefined' || isMobileDevice()) return null;
+
+  const popup = window.open('', '_blank');
+  if (!popup) return null;
+
+  popup.opener = null;
+
+  try {
+    popup.document.title = 'Opening WhatsApp';
+    popup.document.body.innerHTML = '<p style="font-family: system-ui, sans-serif; padding: 24px; text-align: center;">Opening WhatsApp…</p>';
+  } catch {
+    // Ignore document access issues and continue with the blank tab.
+  }
+
+  return popup;
+}
+
+export function openWhatsAppUrl(url: string, popup?: Window | null) {
   if (typeof window === 'undefined') return;
+
+  if (popup && !popup.closed) {
+    try {
+      popup.location.replace(url);
+      return;
+    } catch {
+      // Fallback to standard navigation logic below.
+    }
+  }
 
   if (isMobileDevice()) {
     if (isInIframe()) {
@@ -84,9 +111,9 @@ export function openWhatsAppUrl(url: string) {
     return;
   }
 
-  const popup = window.open(url, '_blank', 'noopener,noreferrer');
-  if (popup) {
-    popup.opener = null;
+  const nextPopup = window.open(url, '_blank');
+  if (nextPopup) {
+    nextPopup.opener = null;
     return;
   }
 
