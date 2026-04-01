@@ -67,13 +67,21 @@ export function getWhatsAppUrl(message: string, phoneNumber?: string) {
     : getWhatsAppDesktopUrl(message, phoneNumber);
 }
 
-export function prepareWhatsAppWindow() {
+export function prepareWhatsAppWindow(initialUrl?: string) {
   if (typeof window === 'undefined' || isMobileDevice()) return null;
 
-  const popup = window.open('', '_blank');
+  const popup = window.open(initialUrl || '', '_blank');
   if (!popup) return null;
 
-  popup.opener = null;
+  try {
+    popup.opener = null;
+  } catch {
+    // Ignore opener access issues.
+  }
+
+  if (initialUrl) {
+    return popup;
+  }
 
   try {
     popup.document.title = 'Opening WhatsApp';

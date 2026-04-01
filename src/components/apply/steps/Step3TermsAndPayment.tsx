@@ -156,7 +156,30 @@ export default function Step3TermsAndPayment() {
       return;
     }
 
-    const pendingWhatsAppWindow = prepareWhatsAppWindow();
+    const messageParts = [
+      direction === 'rtl' ? '🔹 طلب تأشيرة جديد عبر الموقع' : '🔹 New visa application from website',
+      '',
+      direction === 'rtl' ? `📋 رقم الطلب: ${draftId.slice(0, 8).toUpperCase()}` : `📋 Application: ${draftId.slice(0, 8).toUpperCase()}`,
+      direction === 'rtl' ? `👤 الاسم: ${applicationData.fullName}` : `👤 Name: ${applicationData.fullName}`,
+      direction === 'rtl' ? `📧 الإيميل: ${applicationData.email}` : `📧 Email: ${applicationData.email}`,
+      direction === 'rtl' ? `📞 الجوال: ${applicationData.countryCode} ${applicationData.phone}` : `📞 Phone: ${applicationData.countryCode} ${applicationData.phone}`,
+      '',
+      direction === 'rtl' ? `🌍 الدولة: ${applicationData.countryName}` : `🌍 Country: ${applicationData.countryName}`,
+      direction === 'rtl' ? `📄 نوع التأشيرة: ${applicationData.visaTypeName}` : `📄 Visa Type: ${applicationData.visaTypeName}`,
+      direction === 'rtl'
+        ? `👥 المسافرين: ${applicationData.travelers.adults} بالغ${applicationData.travelers.children > 0 ? ` - ${applicationData.travelers.children} طفل` : ''}${applicationData.travelers.infants > 0 ? ` - ${applicationData.travelers.infants} رضيع` : ''}`
+        : `👥 Travelers: ${applicationData.travelers.adults} Adults${applicationData.travelers.children > 0 ? `, ${applicationData.travelers.children} Children` : ''}${applicationData.travelers.infants > 0 ? `, ${applicationData.travelers.infants} Infants` : ''}`,
+      '',
+      direction === 'rtl' ? `💰 المبلغ الإجمالي: ${grandTotal.toLocaleString()} ر.س` : `💰 Total: ${grandTotal.toLocaleString()} SAR`,
+      '',
+      direction === 'rtl' ? 'أرغب بإكمال الطلب والدفع عبر الواتساب.' : 'I would like to complete the application and payment via WhatsApp.',
+    ];
+
+    const message = messageParts.join('\n');
+    const url = getWhatsAppUrl(message);
+    const pendingWhatsAppWindow = prepareWhatsAppWindow(url);
+    const shouldOpenAfterSave = !pendingWhatsAppWindow;
+
     setIsProcessing(true);
 
     try {
@@ -174,28 +197,6 @@ export default function Step3TermsAndPayment() {
         throw updateError;
       }
 
-      const messageParts = [
-        direction === 'rtl' ? '🔹 طلب تأشيرة جديد عبر الموقع' : '🔹 New visa application from website',
-        '',
-        direction === 'rtl' ? `📋 رقم الطلب: ${draftId.slice(0, 8).toUpperCase()}` : `📋 Application: ${draftId.slice(0, 8).toUpperCase()}`,
-        direction === 'rtl' ? `👤 الاسم: ${applicationData.fullName}` : `👤 Name: ${applicationData.fullName}`,
-        direction === 'rtl' ? `📧 الإيميل: ${applicationData.email}` : `📧 Email: ${applicationData.email}`,
-        direction === 'rtl' ? `📞 الجوال: ${applicationData.countryCode} ${applicationData.phone}` : `📞 Phone: ${applicationData.countryCode} ${applicationData.phone}`,
-        '',
-        direction === 'rtl' ? `🌍 الدولة: ${applicationData.countryName}` : `🌍 Country: ${applicationData.countryName}`,
-        direction === 'rtl' ? `📄 نوع التأشيرة: ${applicationData.visaTypeName}` : `📄 Visa Type: ${applicationData.visaTypeName}`,
-        direction === 'rtl'
-          ? `👥 المسافرين: ${applicationData.travelers.adults} بالغ${applicationData.travelers.children > 0 ? ` - ${applicationData.travelers.children} طفل` : ''}${applicationData.travelers.infants > 0 ? ` - ${applicationData.travelers.infants} رضيع` : ''}`
-          : `👥 Travelers: ${applicationData.travelers.adults} Adults${applicationData.travelers.children > 0 ? `, ${applicationData.travelers.children} Children` : ''}${applicationData.travelers.infants > 0 ? `, ${applicationData.travelers.infants} Infants` : ''}`,
-        '',
-        direction === 'rtl' ? `💰 المبلغ الإجمالي: ${grandTotal.toLocaleString()} ر.س` : `💰 Total: ${grandTotal.toLocaleString()} SAR`,
-        '',
-        direction === 'rtl' ? 'أرغب بإكمال الطلب والدفع عبر الواتساب.' : 'I would like to complete the application and payment via WhatsApp.',
-      ];
-
-      const message = messageParts.join('\n');
-      const url = getWhatsAppUrl(message);
-
       setIsProcessing(false);
 
       toast({
@@ -205,7 +206,9 @@ export default function Step3TermsAndPayment() {
           : 'Your application has been saved. Our team will contact you via WhatsApp soon.',
       });
 
-      openWhatsAppUrl(url, pendingWhatsAppWindow);
+      if (shouldOpenAfterSave) {
+        openWhatsAppUrl(url, pendingWhatsAppWindow);
+      }
     } catch (error) {
       pendingWhatsAppWindow?.close();
       console.error('Error submitting via WhatsApp:', error);
