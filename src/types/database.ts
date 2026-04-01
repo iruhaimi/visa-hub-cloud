@@ -18,6 +18,7 @@ export type ApplicationStatus =
   | 'draft'
   | 'pending_payment'
   | 'submitted'
+  | 'whatsapp_pending'
   | 'under_review'
   | 'documents_required'
   | 'processing'
@@ -191,6 +192,7 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   draft: 'Draft',
   pending_payment: 'Pending Payment',
   submitted: 'Submitted',
+  whatsapp_pending: 'WhatsApp Pending',
   under_review: 'Under Review',
   documents_required: 'Documents Required',
   processing: 'Processing',
@@ -203,6 +205,7 @@ export const STATUS_COLORS: Record<ApplicationStatus, string> = {
   draft: 'bg-muted text-muted-foreground',
   pending_payment: 'bg-warning/10 text-warning',
   submitted: 'bg-info/10 text-info',
+  whatsapp_pending: 'bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   under_review: 'bg-primary/10 text-primary',
   documents_required: 'bg-warning/10 text-warning',
   processing: 'bg-primary/10 text-primary',

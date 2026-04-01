@@ -85,6 +85,13 @@ const STATUS_CONFIG: Record<ApplicationStatus, {
     labelAr: 'تم الإرسال',
     labelEn: 'Submitted'
   },
+  whatsapp_pending: { 
+    icon: Clock, 
+    color: 'text-emerald-600', 
+    bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+    labelAr: 'بانتظار التواصل عبر الواتساب',
+    labelEn: 'WhatsApp Pending'
+  },
   under_review: { 
     icon: Eye, 
     color: 'text-purple-600', 

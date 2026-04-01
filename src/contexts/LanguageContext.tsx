@@ -90,8 +90,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Application Wizard
     'wizard.step1': 'المعلومات والتأشيرة',
     'wizard.step2': 'المتطلبات والمستندات',
-    'wizard.step3': 'الشروط والأحكام',
-    'wizard.step4': 'الدفع',
+    'wizard.step3': 'الشروط والدفع',
     'wizard.next': 'التالي',
     'wizard.previous': 'السابق',
     'wizard.submit': 'إرسال الطلب',
@@ -292,8 +291,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Application Wizard
     'wizard.step1': 'Info & Visa',
     'wizard.step2': 'Requirements & Docs',
-    'wizard.step3': 'Terms & Conditions',
-    'wizard.step4': 'Payment',
+    'wizard.step3': 'Terms & Payment',
     'wizard.next': 'Next',
     'wizard.previous': 'Previous',
     'wizard.submit': 'Submit Application',

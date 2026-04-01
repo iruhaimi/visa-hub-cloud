@@ -13,6 +13,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: 'مسودة', color: 'hsl(var(--muted-foreground))' },
   pending_payment: { label: 'بانتظار الدفع', color: 'hsl(45, 93%, 47%)' },
   submitted: { label: 'مقدم', color: 'hsl(199, 89%, 48%)' },
+  whatsapp_pending: { label: 'بانتظار التواصل عبر الواتساب', color: 'hsl(152, 69%, 40%)' },
   under_review: { label: 'قيد المراجعة', color: 'hsl(var(--primary))' },
   documents_required: { label: 'مستندات مطلوبة', color: 'hsl(38, 92%, 50%)' },
   processing: { label: 'قيد المعالجة', color: 'hsl(262, 83%, 58%)' },

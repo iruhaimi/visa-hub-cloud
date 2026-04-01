@@ -9,8 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import WizardStepper from '@/components/apply/WizardStepper';
 import Step1InfoAndVisa from '@/components/apply/steps/Step1InfoAndVisa';
 import Step2RequirementsAndDocs from '@/components/apply/steps/Step2RequirementsAndDocs';
-import Step5Terms from '@/components/apply/steps/Step5Terms';
-import Step6Payment from '@/components/apply/steps/Step6Payment';
+import Step3TermsAndPayment from '@/components/apply/steps/Step3TermsAndPayment';
 import LetTeamHelpCTA from '@/components/apply/LetTeamHelpCTA';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -276,9 +275,7 @@ function ApplyContent() {
       case 2:
         return <Step2RequirementsAndDocs />;
       case 3:
-        return <Step5Terms />;
-      case 4:
-        return <Step6Payment />;
+        return <Step3TermsAndPayment />;
       default:
         return <Step1InfoAndVisa />;
     }
@@ -328,7 +325,7 @@ function ApplyContent() {
       <div className="container-section px-4 sm:px-6">
         <WizardStepper 
           currentStep={currentStep} 
-          totalSteps={4} 
+          totalSteps={3} 
           onStepClick={handleStepClick}
         />
       </div>

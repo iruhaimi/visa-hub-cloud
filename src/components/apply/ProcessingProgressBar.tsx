@@ -19,6 +19,7 @@ const STATUS_PROGRESS: Record<ApplicationStatus, number> = {
   draft: 0,
   pending_payment: 10,
   submitted: 20,
+  whatsapp_pending: 15,
   under_review: 40,
   documents_required: 50,
   processing: 70,

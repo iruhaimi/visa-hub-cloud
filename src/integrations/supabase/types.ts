@@ -1847,6 +1847,7 @@ export type Database = {
         | "draft"
         | "pending_payment"
         | "submitted"
+        | "whatsapp_pending"
         | "under_review"
         | "documents_required"
         | "processing"
@@ -2012,6 +2013,7 @@ export const Constants = {
         "draft",
         "pending_payment",
         "submitted",
+        "whatsapp_pending",
         "under_review",
         "documents_required",
         "processing",
