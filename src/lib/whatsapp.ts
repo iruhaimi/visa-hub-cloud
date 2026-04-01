@@ -58,7 +58,7 @@ export function getWhatsAppWebUrl(message: string, phoneNumber?: string) {
 
 export function getWhatsAppDesktopUrl(message: string, phoneNumber?: string) {
   const normalizedPhoneNumber = normalizeWhatsAppNumber(phoneNumber);
-  return `https://web.whatsapp.com/send?phone=${normalizedPhoneNumber}&text=${encodeURIComponent(message)}`;
+  return `https://api.whatsapp.com/send/?phone=${normalizedPhoneNumber}&text=${encodeURIComponent(message)}&type=phone_number&app_absent=0`;
 }
 
 export function getWhatsAppUrl(message: string, phoneNumber?: string) {
@@ -68,7 +68,7 @@ export function getWhatsAppUrl(message: string, phoneNumber?: string) {
 }
 
 export function prepareWhatsAppWindow(initialUrl?: string) {
-  if (typeof window === 'undefined' || isMobileDevice()) return null;
+  if (typeof window === 'undefined' || isMobileDevice() || isInIframe()) return null;
 
   const popup = window.open(initialUrl || '', '_blank');
   if (!popup) return null;
@@ -95,6 +95,27 @@ export function prepareWhatsAppWindow(initialUrl?: string) {
 
 export function openWhatsAppUrl(url: string, popup?: Window | null) {
   if (typeof window === 'undefined') return;
+
+  if (isInIframe()) {
+    try {
+      if (window.top && window.top !== window) {
+        window.top.location.href = url;
+        return;
+      }
+    } catch {
+      // Fallback to popup navigation below.
+    }
+
+    const iframePopup = window.open(url, '_blank', 'noopener,noreferrer');
+    if (iframePopup) {
+      try {
+        iframePopup.opener = null;
+      } catch {
+        // Ignore opener access issues.
+      }
+      return;
+    }
+  }
 
   if (popup && !popup.closed) {
     try {
