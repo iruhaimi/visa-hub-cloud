@@ -88,12 +88,10 @@ const translations: Record<Language, Record<string, string>> = {
     'pricing.perPerson': 'للشخص',
     
     // Application Wizard
-    'wizard.step1': 'البيانات الأساسية',
-    'wizard.step2': 'تفاصيل التأشيرة',
-    'wizard.step3': 'المتطلبات',
-    'wizard.step4': 'رفع المستندات',
-    'wizard.step5': 'الشروط والأحكام',
-    'wizard.step6': 'الدفع',
+    'wizard.step1': 'المعلومات والتأشيرة',
+    'wizard.step2': 'المتطلبات والمستندات',
+    'wizard.step3': 'الشروط والأحكام',
+    'wizard.step4': 'الدفع',
     'wizard.next': 'التالي',
     'wizard.previous': 'السابق',
     'wizard.submit': 'إرسال الطلب',
