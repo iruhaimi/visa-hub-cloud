@@ -229,8 +229,8 @@ function ApplyContent() {
   // Trigger save on step change (after step 2)
   useEffect(() => {
     if (currentStep >= 2 && profile && applicationData.visaTypeId) {
-      // Force save when reaching payment step to ensure draftId exists
-      const forceSave = currentStep >= 5 && !draftId;
+      // Force save when reaching terms/payment step to ensure draftId exists
+      const forceSave = currentStep >= 3 && !draftId;
       const timer = setTimeout(() => {
         saveDraft(forceSave);
       }, forceSave ? 0 : 500);
