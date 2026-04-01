@@ -88,6 +88,7 @@ const MyApplications = () => {
     draft: { ar: 'مسودة', en: 'Draft' },
     pending_payment: { ar: 'في انتظار الدفع', en: 'Pending Payment' },
     submitted: { ar: 'تم التقديم', en: 'Submitted' },
+    whatsapp_pending: { ar: 'بانتظار التواصل عبر الواتساب', en: 'WhatsApp Pending' },
     under_review: { ar: 'قيد المراجعة', en: 'Under Review' },
     documents_required: { ar: 'مستندات مطلوبة', en: 'Documents Required' },
     processing: { ar: 'قيد المعالجة', en: 'Processing' },
