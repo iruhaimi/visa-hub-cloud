@@ -161,21 +161,17 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
         return !!(
           applicationData.fullName.trim() &&
           applicationData.email.includes('@') &&
-          applicationData.phone.length >= 9
-        );
-      case 2:
-        return !!(
+          applicationData.phone.length >= 9 &&
           applicationData.visaTypeId &&
           applicationData.travelDate &&
           (applicationData.travelers.adults + applicationData.travelers.children + applicationData.travelers.infants) > 0
         );
+      case 2:
+        return applicationData.checkedRequirements.length > 0 &&
+          applicationData.uploadedDocuments.some(doc => doc.uploaded);
       case 3:
-        return applicationData.checkedRequirements.length > 0;
-      case 4:
-        return applicationData.uploadedDocuments.some(doc => doc.uploaded);
-      case 5:
         return applicationData.termsAccepted;
-      case 6:
+      case 4:
         return !!applicationData.paymentMethod;
       default:
         return false;

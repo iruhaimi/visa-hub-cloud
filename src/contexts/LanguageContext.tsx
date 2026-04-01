@@ -290,12 +290,10 @@ const translations: Record<Language, Record<string, string>> = {
     'pricing.perPerson': 'per person',
     
     // Application Wizard
-    'wizard.step1': 'Basic Info',
-    'wizard.step2': 'Visa Details',
-    'wizard.step3': 'Requirements',
-    'wizard.step4': 'Upload Documents',
-    'wizard.step5': 'Terms & Conditions',
-    'wizard.step6': 'Payment',
+    'wizard.step1': 'Info & Visa',
+    'wizard.step2': 'Requirements & Docs',
+    'wizard.step3': 'Terms & Conditions',
+    'wizard.step4': 'Payment',
     'wizard.next': 'Next',
     'wizard.previous': 'Previous',
     'wizard.submit': 'Submit Application',
