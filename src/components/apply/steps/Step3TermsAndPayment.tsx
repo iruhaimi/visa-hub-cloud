@@ -4,7 +4,6 @@ import { ar, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -39,7 +38,114 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getWhatsAppUrl, openWhatsAppUrl, prepareWhatsAppWindow } from '@/lib/whatsapp';
-...
+
+const paymentMethods = [
+  {
+    id: 'card',
+    label: { ar: 'بطاقة ائتمانية', en: 'Credit Card' },
+    description: { ar: 'Visa, Mastercard, مدى', en: 'Visa, Mastercard, Mada' },
+    icon: CreditCard,
+  },
+  {
+    id: 'apple_pay',
+    label: { ar: 'Apple Pay', en: 'Apple Pay' },
+    description: { ar: 'ادفع بسهولة', en: 'Pay easily' },
+    icon: Wallet,
+  },
+  {
+    id: 'bank_transfer',
+    label: { ar: 'تحويل بنكي', en: 'Bank Transfer' },
+    description: { ar: 'تحويل مباشر للحساب', en: 'Direct bank transfer' },
+    icon: Building2,
+  },
+];
+
+export default function Step3TermsAndPayment() {
+  const { t, direction, language } = useLanguage();
+  const { applicationData, updateApplicationData, calculateTotal, goToPreviousStep, resetApplication, draftId } = useApplication();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { serviceTotal, governmentTotal, grandTotal, breakdown } = calculateTotal();
+  const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
+
+  const termsContent = direction === 'rtl' ? {
+    title: 'الشروط والأحكام',
+    sections: [
+      { title: '1. الخدمات المقدمة', content: 'تقدم الشركة خدمات مساعدة في تجهيز وتقديم طلبات التأشيرات. نحن وسطاء ولسنا الجهة المانحة للتأشيرة.' },
+      { title: '2. الرسوم والمدفوعات', content: 'الرسوم تشمل رسوم خدماتنا فقط ما لم يُذكر خلاف ذلك. جميع الرسوم غير قابلة للاسترداد في حال رفض التأشيرة.' },
+      { title: '3. مسؤولية العميل', content: 'يتعهد العميل بتقديم معلومات صحيحة ودقيقة. أي معلومات خاطئة قد تؤدي لرفض الطلب دون استرداد الرسوم.' },
+      { title: '4. مدة المعالجة', content: 'مدة المعالجة المذكورة تقديرية. الشركة غير مسؤولة عن التأخير الناتج عن الجهات الرسمية.' },
+      { title: '5. حماية البيانات', content: 'نحن ملتزمون بحماية بياناتك الشخصية وفقاً لسياسة الخصوصية.' },
+      { title: '6. إلغاء الطلب', content: 'يمكن إلغاء الطلب قبل البدء في المعالجة مع خصم رسوم إدارية.' },
+    ],
+  } : {
+    title: 'Terms and Conditions',
+    sections: [
+      { title: '1. Services Provided', content: 'The company provides assistance services in preparing and submitting visa applications. We are intermediaries and not the visa-issuing authority.' },
+      { title: '2. Fees and Payments', content: 'Fees include our service charges only unless otherwise stated. All fees are non-refundable in case of visa rejection.' },
+      { title: '3. Client Responsibility', content: 'The client undertakes to provide accurate and correct information. Any false information may result in application rejection without fee refund.' },
+      { title: '4. Processing Time', content: 'The processing time mentioned is estimated. The company is not responsible for delays caused by official authorities.' },
+      { title: '5. Data Protection', content: 'We are committed to protecting your personal data in accordance with our Privacy Policy.' },
+      { title: '6. Cancellation', content: 'The application can be cancelled before processing begins with an administrative fee deduction.' },
+    ],
+  };
+
+  const handlePayment = async () => {
+    if (!applicationData.paymentMethod) {
+      toast({
+        title: direction === 'rtl' ? 'خطأ' : 'Error',
+        description: t('payment.selectMethod'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!draftId) {
+      toast({
+        title: direction === 'rtl' ? 'خطأ' : 'Error',
+        description: direction === 'rtl' ? 'لم يتم حفظ الطلب. يرجى المحاولة مرة أخرى.' : 'Application not saved. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { error: updateError } = await supabase
+        .from('applications')
+        .update({
+          status: 'pending_payment' as const,
+          submitted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', draftId)
+        .in('status', ['draft', 'pending_payment'] as const);
+
+      if (updateError) {
+        console.error('Error updating to pending_payment:', updateError);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      const appNumber = `VISA-${Date.now().toString(36).toUpperCase()}`;
+
+      setIsProcessing(false);
+      navigate(`/payment-success?app=${appNumber}&id=${draftId}`);
+      setTimeout(() => resetApplication(), 1000);
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      setIsProcessing(false);
+      toast({
+        title: direction === 'rtl' ? 'خطأ' : 'Error',
+        description: direction === 'rtl' ? 'حدث خطأ أثناء تقديم الطلب' : 'An error occurred while submitting the application',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleWhatsAppSubmit = async () => {
     if (!draftId) {
       toast({
