@@ -46,10 +46,16 @@ export default function PartnersSection() {
             const color = COLORS[index % COLORS.length];
             return (
               <motion.div key={index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }} whileHover={{ scale: 1.05, y: -5 }} className="group">
-                <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 text-center h-full flex flex-col items-center justify-center gap-3">
-                  <div className={`w-14 h-14 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 transition-colors ${color}`}>
-                    <IconComp className="h-7 w-7" />
-                  </div>
+                  <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 text-center h-full flex flex-col items-center justify-center gap-3">
+                  {partner.logo_url ? (
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center">
+                      <img src={partner.logo_url} alt={partner.name} className="max-h-12 max-w-12 object-contain" />
+                    </div>
+                  ) : (
+                    <div className={`w-14 h-14 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 transition-colors ${color}`}>
+                      <IconComp className="h-7 w-7" />
+                    </div>
+                  )}
                   <span className="font-semibold text-sm text-foreground">
                     {isRTL ? partner.name : (partner.name_en || partner.name)}
                   </span>

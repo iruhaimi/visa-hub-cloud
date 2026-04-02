@@ -712,8 +712,32 @@ export default function ContentManagement() {
                                 </div>
                               )}
                             </div>
-                            {field.type === 'image' && item[field.key] && (
-                              <img src={item[field.key]} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                            {field.type === 'image' && (
+                              <div className="flex items-center gap-3 mt-1">
+                                {item[field.key] && (
+                                  <img src={item[field.key]} alt="" className="h-14 w-14 rounded-lg object-contain border bg-white" />
+                                )}
+                                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-dashed border-primary/40 text-xs text-primary hover:bg-primary/5 transition-colors">
+                                  <ImageIcon className="h-3.5 w-3.5" />
+                                  رفع شعار
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      const ext = file.name.split('.').pop();
+                                      const path = `partner-logos/${Date.now()}.${ext}`;
+                                      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+                                      if (error) { toast.error('فشل رفع الصورة'); return; }
+                                      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+                                      updateArrayItem(currentSectionDef.arrayKey!, i, field.key, urlData.publicUrl);
+                                      toast.success('تم رفع الشعار بنجاح');
+                                    }}
+                                  />
+                                </label>
+                              </div>
                             )}
                           </div>
                         );
