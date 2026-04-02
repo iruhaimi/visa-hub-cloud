@@ -81,7 +81,8 @@ const SECTION_CONFIG: Record<string, SectionDef[]> = {
       { key: 'subtitle', label: 'العنوان الفرعي' },
     ], arrayKey: 'items', arrayLabel: 'شريك', arrayFields: [
       { key: 'name', label: 'الاسم' },
-      { key: 'icon', label: 'الأيقونة (Plane/Landmark/Factory/Building2/Smartphone/Wifi)', bilingual: false },
+      { key: 'logo_url', label: 'شعار الشركة (رابط صورة أو رفع)', bilingual: false, type: 'image' },
+      { key: 'icon', label: 'أيقونة احتياطية (Plane/Landmark/Factory/Building2/Smartphone/Wifi)', bilingual: false },
     ]},
     { key: 'features', label: 'المميزات', fields: [
       { key: 'title', label: 'العنوان' },
