@@ -12,7 +12,8 @@ export type StaffPermission =
   | 'view_reports'
   | 'process_refunds'
   | 'manage_unlock_requests'
-  | 'view_revenue';
+  | 'view_revenue'
+  | 'manage_appointments';
 
 export type ApplicationStatus = 
   | 'draft'
