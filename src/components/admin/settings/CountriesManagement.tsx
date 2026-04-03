@@ -366,7 +366,7 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
   });
 
   const resetForm = () => {
-    setFormData({ name: '', code: '', flag_url: '', is_active: true, is_schengen: false });
+    setFormData({ name: '', code: '', flag_url: '', is_active: true, is_schengen: false, expected_appointment_date: '', expected_appointment_note: '' });
     setEditingCountry(null);
     setUseCustomCountry(false);
   };
