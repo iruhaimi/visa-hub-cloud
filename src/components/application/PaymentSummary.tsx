@@ -26,7 +26,7 @@ const STATUS_MAP = {
   refunded: { labelAr: 'تم الاسترداد', labelEn: 'Refunded', icon: RotateCcw, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
 };
 
-export function PaymentSummary({ applicationId }: { applicationId: string }) {
+export function PaymentSummary({ applicationId, applicationStatus }: { applicationId: string; applicationStatus?: string }) {
   const { language } = useLanguage();
   const isRTL = language === 'ar';
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -45,7 +45,12 @@ export function PaymentSummary({ applicationId }: { applicationId: string }) {
     fetchPayments();
   }, [applicationId]);
 
-  if (loading || payments.length === 0) return null;
+  if (loading) return null;
+
+  // Show WhatsApp payment notice when no payments exist and status is whatsapp_pending
+  const isWhatsApp = applicationStatus === 'whatsapp_pending';
+  
+  if (payments.length === 0 && !isWhatsApp) return null;
 
   return (
     <Card>
@@ -56,36 +61,51 @@ export function PaymentSummary({ applicationId }: { applicationId: string }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {payments.map(p => {
-            const st = STATUS_MAP[p.status];
-            const Icon = st.icon;
-            return (
-              <div key={p.id} className="p-3 rounded-lg bg-muted/50 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold">
-                    {p.amount} {p.currency === 'SAR' || !p.currency ? 'ر.س' : p.currency}
-                  </span>
-                  <Badge className={`${st.className} gap-1`}>
-                    <Icon className="h-3 w-3" />
-                    {isRTL ? st.labelAr : st.labelEn}
-                  </Badge>
+        {payments.length === 0 && isWhatsApp ? (
+          <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-center space-y-2">
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              {isRTL 
+                ? '💬 سيتم تحصيل الرسوم بالتنسيق مع فريقنا عبر الواتساب' 
+                : '💬 Fees will be collected in coordination with our team via WhatsApp'}
+            </p>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400">
+              {isRTL 
+                ? 'سيتواصل معك أحد أعضاء فريقنا قريباً لإتمام عملية الدفع' 
+                : 'A team member will contact you shortly to complete the payment'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {payments.map(p => {
+              const st = STATUS_MAP[p.status];
+              const Icon = st.icon;
+              return (
+                <div key={p.id} className="p-3 rounded-lg bg-muted/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xl font-bold">
+                      {p.amount} {p.currency === 'SAR' || !p.currency ? 'ر.س' : p.currency}
+                    </span>
+                    <Badge className={`${st.className} gap-1`}>
+                      <Icon className="h-3 w-3" />
+                      {isRTL ? st.labelAr : st.labelEn}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    {p.payment_method && <span>{p.payment_method}</span>}
+                    <span>
+                      {format(new Date(p.paid_at || p.created_at), 'dd MMM yyyy', { locale: isRTL ? ar : enUS })}
+                    </span>
+                  </div>
+                  {p.invoice_number && (
+                    <p className="text-xs text-muted-foreground">
+                      {isRTL ? 'رقم الفاتورة: ' : 'Invoice: '}{p.invoice_number}
+                    </p>
+                  )}
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  {p.payment_method && <span>{p.payment_method}</span>}
-                  <span>
-                    {format(new Date(p.paid_at || p.created_at), 'dd MMM yyyy', { locale: isRTL ? ar : enUS })}
-                  </span>
-                </div>
-                {p.invoice_number && (
-                  <p className="text-xs text-muted-foreground">
-                    {isRTL ? 'رقم الفاتورة: ' : 'Invoice: '}{p.invoice_number}
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
