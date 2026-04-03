@@ -1524,6 +1524,9 @@ export type Database = {
           display_order: number | null
           entry_type: string | null
           fee_type: string | null
+          gov_fee_adult: number | null
+          gov_fee_child: number | null
+          gov_fee_infant: number | null
           government_fees: number | null
           id: string
           infant_price: number | null
@@ -1546,6 +1549,9 @@ export type Database = {
           display_order?: number | null
           entry_type?: string | null
           fee_type?: string | null
+          gov_fee_adult?: number | null
+          gov_fee_child?: number | null
+          gov_fee_infant?: number | null
           government_fees?: number | null
           id?: string
           infant_price?: number | null
@@ -1568,6 +1574,9 @@ export type Database = {
           display_order?: number | null
           entry_type?: string | null
           fee_type?: string | null
+          gov_fee_adult?: number | null
+          gov_fee_child?: number | null
+          gov_fee_infant?: number | null
           government_fees?: number | null
           id?: string
           infant_price?: number | null

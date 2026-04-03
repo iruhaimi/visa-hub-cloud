@@ -106,6 +106,9 @@ interface VisaType {
   child_price: number | null;
   infant_price: number | null;
   government_fees: number | null;
+  gov_fee_adult: number | null;
+  gov_fee_child: number | null;
+  gov_fee_infant: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;
@@ -418,6 +421,9 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
     child_price: '',
     infant_price: '',
     government_fees: '',
+    gov_fee_adult: '',
+    gov_fee_child: '',
+    gov_fee_infant: '',
     processing_days: '7',
     validity_days: '',
     max_stay_days: '',
@@ -438,6 +444,9 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
       child_price: '',
       infant_price: '',
       government_fees: '',
+      gov_fee_adult: '',
+      gov_fee_child: '',
+      gov_fee_infant: '',
       processing_days: '7',
       validity_days: '',
       max_stay_days: '',
@@ -461,6 +470,9 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
       child_price: visa.child_price?.toString() || '',
       infant_price: visa.infant_price?.toString() || '',
       government_fees: visa.government_fees?.toString() || '',
+      gov_fee_adult: visa.gov_fee_adult?.toString() || '',
+      gov_fee_child: visa.gov_fee_child?.toString() || '',
+      gov_fee_infant: visa.gov_fee_infant?.toString() || '',
       processing_days: visa.processing_days.toString(),
       validity_days: visa.validity_days?.toString() || '',
       max_stay_days: visa.max_stay_days?.toString() || '',
@@ -485,6 +497,9 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
       child_price: visa.child_price?.toString() || '',
       infant_price: visa.infant_price?.toString() || '',
       government_fees: visa.government_fees?.toString() || '',
+      gov_fee_adult: visa.gov_fee_adult?.toString() || '',
+      gov_fee_child: visa.gov_fee_child?.toString() || '',
+      gov_fee_infant: visa.gov_fee_infant?.toString() || '',
       processing_days: visa.processing_days.toString(),
       validity_days: visa.validity_days?.toString() || '',
       max_stay_days: visa.max_stay_days?.toString() || '',
@@ -514,6 +529,9 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
         child_price: formData.child_price ? parseFloat(formData.child_price) : null,
         infant_price: formData.infant_price ? parseFloat(formData.infant_price) : null,
         government_fees: formData.government_fees ? parseFloat(formData.government_fees) : 0,
+        gov_fee_adult: formData.gov_fee_adult ? parseFloat(formData.gov_fee_adult) : 0,
+        gov_fee_child: formData.gov_fee_child ? parseFloat(formData.gov_fee_child) : 0,
+        gov_fee_infant: formData.gov_fee_infant ? parseFloat(formData.gov_fee_infant) : 0,
         processing_days: parseInt(formData.processing_days),
         validity_days: formData.validity_days ? parseInt(formData.validity_days) : null,
         max_stay_days: formData.max_stay_days ? parseInt(formData.max_stay_days) : null,
@@ -1421,24 +1439,59 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
 
                     {/* حقل مبلغ الرسوم الحكومية - يظهر فقط عند اختيار منفصل */}
                     {formData.fee_type === 'separate' && (
-                      <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 space-y-3">
-                        <Label className="text-amber-800 dark:text-amber-200 text-sm">
-                          مبلغ الرسوم الحكومية التقديري (للعرض فقط - لا يُضاف للإجمالي)
+                      <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800 space-y-4">
+                        <Label className="text-amber-800 dark:text-amber-200 text-sm font-semibold">
+                          الرسوم الحكومية التقديرية حسب الفئة العمرية (للعرض فقط - لا تُضاف للإجمالي)
                         </Label>
-                        <div className="relative">
-                          <Input
-                            type="number"
-                            value={formData.government_fees}
-                            onChange={(e) => setFormData({ ...formData, government_fees: e.target.value })}
-                            placeholder="مثال: 640"
-                            className="pr-12"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                            ر.س
-                          </span>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">رسوم البالغ (12+ سنة)</Label>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                value={formData.gov_fee_adult}
+                                onChange={(e) => setFormData({ ...formData, gov_fee_adult: e.target.value })}
+                                placeholder="مثال: 640"
+                                className="pr-12"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                                ر.س
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">رسوم الطفل (6-12 سنة)</Label>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                value={formData.gov_fee_child}
+                                onChange={(e) => setFormData({ ...formData, gov_fee_child: e.target.value })}
+                                placeholder="مثال: 320"
+                                className="pr-12"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                                ر.س
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">رسوم الرضيع ({'<'}6 سنوات)</Label>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                value={formData.gov_fee_infant}
+                                onChange={(e) => setFormData({ ...formData, gov_fee_infant: e.target.value })}
+                                placeholder="مثال: 0"
+                                className="pr-12"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                                ر.س
+                              </span>
+                            </div>
+                          </div>
                         </div>
                         <p className="text-xs text-amber-700 dark:text-amber-300">
-                          💡 هذا المبلغ يظهر للعميل كمعلومة تقديرية فقط ولا يُحسب ضمن إجمالي الطلب
+                          💡 هذه المبالغ تظهر للعميل كمعلومة تقديرية حسب عدد المسافرين ولا تُحسب ضمن إجمالي الطلب
                         </p>
                       </div>
                     )}

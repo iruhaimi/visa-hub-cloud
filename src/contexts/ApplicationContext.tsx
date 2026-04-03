@@ -27,6 +27,9 @@ export interface ApplicationData {
   infantPrice: number;
   visaFeesIncluded: boolean;
   governmentFees: number;
+  govFeeAdult: number;
+  govFeeChild: number;
+  govFeeInfant: number;
   priceNotes: string;
   priceNotesEn: string;
   
@@ -63,6 +66,11 @@ interface ApplicationContextType {
       children: number;
       infants: number;
     };
+    govBreakdown: {
+      adults: number;
+      children: number;
+      infants: number;
+    };
   };
   goToNextStep: () => void;
   goToPreviousStep: () => void;
@@ -94,6 +102,9 @@ const initialApplicationData: ApplicationData = {
   infantPrice: 0,
   visaFeesIncluded: true,
   governmentFees: 0,
+  govFeeAdult: 0,
+  govFeeChild: 0,
+  govFeeInfant: 0,
   priceNotes: '',
   priceNotesEn: '',
   checkedRequirements: [],
@@ -121,15 +132,17 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const calculateTotal = useCallback(() => {
-    const { travelers, adultPrice, childPrice, infantPrice, governmentFees, visaFeesIncluded } = applicationData;
+    const { travelers, adultPrice, childPrice, infantPrice, govFeeAdult, govFeeChild, govFeeInfant, visaFeesIncluded } = applicationData;
     
     const adultsTotal = travelers.adults * adultPrice;
     const childrenTotal = travelers.children * childPrice;
     const infantsTotal = travelers.infants * infantPrice;
     const serviceTotal = adultsTotal + childrenTotal + infantsTotal;
     
-    const totalTravelers = travelers.adults + travelers.children + travelers.infants;
-    const governmentTotal = visaFeesIncluded ? 0 : (governmentFees * totalTravelers);
+    const govAdultsTotal = travelers.adults * govFeeAdult;
+    const govChildrenTotal = travelers.children * govFeeChild;
+    const govInfantsTotal = travelers.infants * govFeeInfant;
+    const governmentTotal = visaFeesIncluded ? 0 : (govAdultsTotal + govChildrenTotal + govInfantsTotal);
     
     return {
       serviceTotal,
@@ -139,6 +152,11 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
         adults: adultsTotal,
         children: childrenTotal,
         infants: infantsTotal,
+      },
+      govBreakdown: {
+        adults: govAdultsTotal,
+        children: govChildrenTotal,
+        infants: govInfantsTotal,
       },
     };
   }, [applicationData]);
