@@ -521,7 +521,7 @@ export default function ApplicationDetail() {
                   <p className="font-medium">{application.visa_type?.name || '-'}</p>
                 </div>
                 <div className="space-y-1 p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">تاريخ السفر</p>
+                  <p className="text-xs text-muted-foreground">تاريخ السفر المتوقع</p>
                   <p className="font-medium">{application.travel_date ? format(new Date(application.travel_date), 'dd/MM/yyyy') : '-'}</p>
                 </div>
                 <div className="space-y-1 p-3 rounded-lg bg-muted/50">

@@ -246,7 +246,7 @@ export default function MyApplicationDetail() {
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-xs text-muted-foreground">
-                        {isRTL ? 'تاريخ السفر' : 'Travel Date'}
+                        {isRTL ? 'تاريخ السفر المتوقع' : 'Expected Travel Date'}
                       </p>
                       <p className="font-medium">{formatDate(application.travel_date)}</p>
                     </div>

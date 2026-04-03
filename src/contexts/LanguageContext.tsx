@@ -102,7 +102,7 @@ const translations: Record<Language, Record<string, string>> = {
     'form.phone': 'رقم الجوال',
     'form.country': 'الدولة',
     'form.visaType': 'نوع التأشيرة',
-    'form.travelDate': 'تاريخ السفر',
+    'form.travelDate': 'تاريخ السفر المتوقع',
     'form.travelers': 'عدد المسافرين',
     'form.adults': 'بالغين',
     'form.children': 'أطفال',

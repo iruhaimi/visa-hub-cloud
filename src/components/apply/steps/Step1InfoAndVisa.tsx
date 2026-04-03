@@ -479,7 +479,14 @@ function VisaDetailsSection() {
           {/* Travel Date */}
           <div className="space-y-2">
             <Label className="text-sm sm:text-base">{t('form.travelDate')}</Label>
-            <DatePicker value={applicationData.travelDate} onChange={(ds) => updateApplicationData({ travelDate: ds ? new Date(ds) : null })} placeholder={direction === 'rtl' ? 'اختر تاريخ السفر' : 'Pick a travel date'} isRTL={direction === 'rtl'} minDate={new Date()} />
+            <DatePicker value={applicationData.travelDate} onChange={(ds) => updateApplicationData({ travelDate: ds ? new Date(ds) : null })} placeholder={direction === 'rtl' ? 'اختر تاريخ السفر المتوقع' : 'Pick expected travel date'} isRTL={direction === 'rtl'} minDate={new Date()} />
+            <p className="text-xs text-muted-foreground/80 leading-relaxed bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 rounded-lg p-2.5 flex items-start gap-2">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+              <span>{direction === 'rtl' 
+                ? 'اختيارك لتاريخ السفر لا يعني بالضرورة حصولك على موعد قبل هذا التاريخ، حيث أن مواعيد السفارات تتغير بشكل ديناميكي وليست من طرفنا.' 
+                : 'Selecting a travel date does not guarantee an appointment before this date, as embassy appointments change dynamically and are not controlled by us.'}
+              </span>
+            </p>
           </div>
 
           {/* Travelers */}
