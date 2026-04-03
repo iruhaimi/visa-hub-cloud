@@ -934,6 +934,35 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
               </div>
             </label>
 
+            {/* Expected Appointment Date - only show when editing */}
+            {editingCountry && (
+              <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-primary/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-sm">التواريخ المتوقعة لموعد السفارة</span>
+                </div>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  هذه المعلومات ستظهر للعملاء كملاحظة عند تقديم طلب لهذه الدولة
+                </p>
+                <div className="space-y-2">
+                  <Label className="text-xs">الموعد المتوقع</Label>
+                  <Input
+                    value={formData.expected_appointment_date}
+                    onChange={(e) => setFormData({ ...formData, expected_appointment_date: e.target.value })}
+                    placeholder="مثال: 15 - 20 يوليو 2026"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">ملاحظة إضافية (اختياري)</Label>
+                  <Input
+                    value={formData.expected_appointment_note}
+                    onChange={(e) => setFormData({ ...formData, expected_appointment_note: e.target.value })}
+                    placeholder="مثال: المواعيد قد تتغير حسب السفارة"
+                  />
+                </div>
+              </div>
+            )}
+
             <Button
               className="w-full" 
               onClick={() => saveMutation.mutate()}
