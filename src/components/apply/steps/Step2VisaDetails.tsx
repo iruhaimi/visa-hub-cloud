@@ -334,7 +334,7 @@ export default function Step2VisaDetails() {
             <DatePicker
               value={applicationData.travelDate}
               onChange={handleDateChange}
-              placeholder={direction === 'rtl' ? 'اختر تاريخ السفر' : 'Pick a travel date'}
+              placeholder={direction === 'rtl' ? 'اختر تاريخ السفر المتوقع' : 'Pick expected travel date'}
               isRTL={direction === 'rtl'}
               minDate={new Date()}
             />
