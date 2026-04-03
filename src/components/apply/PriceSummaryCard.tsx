@@ -15,9 +15,9 @@ interface PriceSummaryCardProps {
 export default function PriceSummaryCard({ className, showDetails = true }: PriceSummaryCardProps) {
   const { t, direction } = useLanguage();
   const { applicationData, calculateTotal } = useApplication();
-  const { serviceTotal, governmentTotal, grandTotal, breakdown } = calculateTotal();
+  const { serviceTotal, governmentTotal, grandTotal, breakdown, govBreakdown } = calculateTotal();
   
-  const { travelers, visaFeesIncluded, visaTypeName, countryName } = applicationData;
+  const { travelers, visaFeesIncluded, visaTypeName, countryName, govFeeAdult, govFeeChild, govFeeInfant } = applicationData;
   
   // Fetch dynamic texts from site_content
   const { data: orderSummaryContent } = useSiteSection('order_summary', 'service_fees');
