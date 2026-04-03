@@ -295,7 +295,7 @@ export default function MyApplicationDetail() {
             <DocumentsSection applicationId={application.id} />
 
             {/* Payment Summary */}
-            <PaymentSummary applicationId={application.id} />
+            <PaymentSummary applicationId={application.id} applicationStatus={application.status} />
 
             {/* Status History */}
             <StatusHistoryTimeline applicationId={application.id} />
