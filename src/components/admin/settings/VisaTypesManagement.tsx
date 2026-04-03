@@ -106,6 +106,9 @@ interface VisaType {
   child_price: number | null;
   infant_price: number | null;
   government_fees: number | null;
+  gov_fee_adult: number | null;
+  gov_fee_child: number | null;
+  gov_fee_infant: number | null;
   processing_days: number;
   validity_days: number | null;
   max_stay_days: number | null;
