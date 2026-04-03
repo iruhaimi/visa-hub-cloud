@@ -407,6 +407,9 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
             flag_url: formData.flag_url || null,
             is_active: formData.is_active,
             is_schengen: formData.is_schengen,
+            expected_appointment_date: formData.expected_appointment_date || null,
+            expected_appointment_note: formData.expected_appointment_note || null,
+            expected_appointment_updated_at: (formData.expected_appointment_date || formData.expected_appointment_note) ? new Date().toISOString() : null,
           })
           .eq('id', editingCountry.id);
         if (error) throw error;
