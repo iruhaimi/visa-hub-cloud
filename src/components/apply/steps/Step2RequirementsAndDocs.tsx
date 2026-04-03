@@ -265,7 +265,7 @@ export default function Step2RequirementsAndDocs() {
       <div className="space-y-3">
         {groupedByTraveler.map((group) => {
           const key = `${group.category}_${group.index}`;
-          const isOpen = openGroups[key] ?? false;
+          const isOpen = activeGroup === key;
           const colors = getCategoryColor(group.category);
           const groupChecked = getGroupCheckedCount(group);
           const groupTotal = group.requirements.length;
