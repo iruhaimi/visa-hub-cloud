@@ -1230,7 +1230,19 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                       <Label>اسم التأشيرة <span className="text-destructive">*</span></Label>
                       <Select
                         value={formData.name}
-                        onValueChange={(value) => setFormData({ ...formData, name: value })}
+                        onValueChange={(value) => {
+                          const visaDescriptions: Record<string, string> = {
+                            'تأشيرة سياحية': 'تأشيرة للسفر بغرض السياحة والترفيه وزيارة المعالم السياحية',
+                            'تأشيرة دراسة': 'تأشيرة للسفر بغرض الدراسة والالتحاق بالمؤسسات التعليمية',
+                            'تأشيرة علاج': 'تأشيرة للسفر بغرض تلقي العلاج الطبي والرعاية الصحية',
+                            'تأشيرة عمل': 'تأشيرة للسفر بغرض العمل والأنشطة المهنية',
+                          };
+                          setFormData({ 
+                            ...formData, 
+                            name: value, 
+                            description: visaDescriptions[value] || formData.description 
+                          });
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="اختر نوع التأشيرة" />
