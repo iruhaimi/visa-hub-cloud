@@ -21,7 +21,7 @@ import TravelerCounter from '../TravelerCounter';
 import PriceSummaryCard from '../PriceSummaryCard';
 import SARSymbol from '@/components/ui/SARSymbol';
 import {
-  User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle,
+  User, Mail, Phone, ArrowLeft, ArrowRight, CheckCircle, AlertCircle,
   Loader2, LogIn, UserPlus, Eye, EyeOff, KeyRound, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
