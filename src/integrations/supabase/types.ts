@@ -552,6 +552,10 @@ export type Database = {
           code: string
           created_at: string
           display_order: number | null
+          expected_appointment_date: string | null
+          expected_appointment_note: string | null
+          expected_appointment_updated_at: string | null
+          expected_appointment_updated_by: string | null
           flag_url: string | null
           id: string
           is_active: boolean | null
@@ -563,6 +567,10 @@ export type Database = {
           code: string
           created_at?: string
           display_order?: number | null
+          expected_appointment_date?: string | null
+          expected_appointment_note?: string | null
+          expected_appointment_updated_at?: string | null
+          expected_appointment_updated_by?: string | null
           flag_url?: string | null
           id?: string
           is_active?: boolean | null
@@ -574,6 +582,10 @@ export type Database = {
           code?: string
           created_at?: string
           display_order?: number | null
+          expected_appointment_date?: string | null
+          expected_appointment_note?: string | null
+          expected_appointment_updated_at?: string | null
+          expected_appointment_updated_by?: string | null
           flag_url?: string | null
           id?: string
           is_active?: boolean | null
