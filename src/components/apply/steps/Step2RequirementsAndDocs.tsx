@@ -62,11 +62,14 @@ interface GroupedRequirement {
 
 export default function Step2RequirementsAndDocs() {
   const { t, direction, language } = useLanguage();
-  const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
+  const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep, draftId, setDraftId } = useApplication();
+  const { session } = useAuth();
   // uploads keyed by full requirement id (e.g. passport_adult_1)
   const [uploads, setUploads] = useState<Record<string, FileUploadState>>({});
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const isRTL = direction === 'rtl';
+  // Track document IDs from DB for deletion
+  const docIdsRef = useRef<Record<string, string>>({});
 
   const ArrowNextIcon = isRTL ? ArrowLeft : ArrowRight;
   const ArrowPrevIcon = isRTL ? ArrowRight : ArrowLeft;
