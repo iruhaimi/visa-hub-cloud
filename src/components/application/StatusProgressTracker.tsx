@@ -14,7 +14,7 @@ function getStepState(stepIndex: number, status: ApplicationStatus) {
   if (status === 'draft' || status === 'pending_payment') return stepIndex === 0 ? 'current' : 'pending';
   if (status === 'cancelled') return 'pending';
 
-  const currentStepIndex = STEPS.findIndex(s => s.statuses.includes(status));
+  const currentStepIndex = STEPS.findIndex(s => (s.statuses as readonly string[]).includes(status));
   if (stepIndex < currentStepIndex) return 'completed';
   if (stepIndex === currentStepIndex) return status === 'approved' || status === 'rejected' ? 'completed' : 'current';
   return 'pending';
