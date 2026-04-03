@@ -4,14 +4,17 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useApplication } from '@/contexts/ApplicationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
   ArrowLeft, ArrowRight, FileText, Image, CreditCard, Building,
   Plane, Shield, CheckCircle2, AlertCircle, Upload, XCircle, Loader2, Trash2,
+  ChevronDown, User, Baby, Users, Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -47,13 +50,26 @@ interface FileUploadState {
   error?: string;
 }
 
+type TravelerCategory = 'adult' | 'child' | 'infant';
+
+interface GroupedRequirement {
+  category: TravelerCategory;
+  index: number;
+  label: string;
+  icon: any;
+  requirements: { id: string; label: string; iconKey: string }[];
+}
+
 export default function Step2RequirementsAndDocs() {
   const { t, direction, language } = useLanguage();
   const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
   const [uploads, setUploads] = useState<Record<string, FileUploadState>>({});
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [docsOpen, setDocsOpen] = useState(true);
+  const isRTL = direction === 'rtl';
 
-  const ArrowNextIcon = direction === 'rtl' ? ArrowLeft : ArrowRight;
-  const ArrowPrevIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
+  const ArrowNextIcon = isRTL ? ArrowLeft : ArrowRight;
+  const ArrowPrevIcon = isRTL ? ArrowRight : ArrowLeft;
 
   // ─── Requirements Logic ──────────────────────────────────
   const { data: visaType } = useQuery({
@@ -67,37 +83,61 @@ export default function Step2RequirementsAndDocs() {
     enabled: !!applicationData.visaTypeId,
   });
 
-  const getRequirements = () => {
+  const { requirements, groupedByTraveler } = useMemo(() => {
     const { travelers } = applicationData;
     const reqs: { id: string; label: string; forCategory?: string }[] = [];
     const baseReqs = visaType?.requirements as string[] || defaultRequirements.map(r => r.id);
+    const groups: GroupedRequirement[] = [];
 
-    defaultRequirements.forEach(req => {
-      if (baseReqs.includes(req.id) || req.forAll) {
-        if (travelers.adults > 0 && (req.forAll || req.forAdult)) {
-          for (let i = 1; i <= travelers.adults; i++) {
-            reqs.push({ id: `${req.id}_adult_${i}`, label: `${t(req.key)} - ${direction === 'rtl' ? `بالغ ${i}` : `Adult ${i}`}`, forCategory: 'adult' });
-          }
+    const buildGroup = (category: TravelerCategory, index: number, count: number) => {
+      const catLabel = category === 'adult' 
+        ? (isRTL ? `بالغ ${index}` : `Adult ${index}`)
+        : category === 'child' 
+          ? (isRTL ? `طفل ${index}` : `Child ${index}`)
+          : (isRTL ? `رضيع ${index}` : `Infant ${index}`);
+
+      const catIcon = category === 'adult' ? User : category === 'child' ? Users : Baby;
+      const groupReqs: { id: string; label: string; iconKey: string }[] = [];
+
+      defaultRequirements.forEach(req => {
+        if (!baseReqs.includes(req.id) && !req.forAll) return;
+        
+        const isApplicable = 
+          (category === 'adult' && (req.forAll || req.forAdult)) ||
+          (category === 'child' && req.forAll) ||
+          (category === 'infant' && (req.id === 'passport' || req.id === 'photo'));
+
+        if (isApplicable) {
+          const reqId = `${req.id}_${category}_${index}`;
+          reqs.push({ id: reqId, label: `${t(req.key)} - ${catLabel}`, forCategory: category });
+          groupReqs.push({ id: reqId, label: t(req.key), iconKey: req.id });
         }
-        if (travelers.children > 0 && req.forAll) {
-          for (let i = 1; i <= travelers.children; i++) {
-            reqs.push({ id: `${req.id}_child_${i}`, label: `${t(req.key)} - ${direction === 'rtl' ? `طفل ${i}` : `Child ${i}`}`, forCategory: 'child' });
-          }
-        }
-        if (travelers.infants > 0 && (req.id === 'passport' || req.id === 'photo')) {
-          for (let i = 1; i <= travelers.infants; i++) {
-            reqs.push({ id: `${req.id}_infant_${i}`, label: `${t(req.key)} - ${direction === 'rtl' ? `رضيع ${i}` : `Infant ${i}`}`, forCategory: 'infant' });
-          }
-        }
+      });
+
+      if (groupReqs.length > 0) {
+        groups.push({ category, index, label: catLabel, icon: catIcon, requirements: groupReqs });
       }
-    });
-    return reqs;
-  };
+    };
 
-  const requirements = getRequirements();
+    for (let i = 1; i <= travelers.adults; i++) buildGroup('adult', i, travelers.adults);
+    for (let i = 1; i <= travelers.children; i++) buildGroup('child', i, travelers.children);
+    for (let i = 1; i <= travelers.infants; i++) buildGroup('infant', i, travelers.infants);
+
+    return { requirements: reqs, groupedByTraveler: groups };
+  }, [applicationData.travelers, applicationData.visaTypeId, visaType, isRTL, t]);
+
+  // Initialize open groups on mount
+  useEffect(() => {
+    if (groupedByTraveler.length > 0 && Object.keys(openGroups).length === 0) {
+      const initial: Record<string, boolean> = {};
+      groupedByTraveler.forEach((g, i) => { initial[`${g.category}_${g.index}`] = i === 0; });
+      setOpenGroups(initial);
+    }
+  }, [groupedByTraveler]);
+
   const checkedCount = applicationData.checkedRequirements.length;
   const totalCount = requirements.length;
-  const allChecked = checkedCount === totalCount;
+  const allChecked = checkedCount === totalCount && totalCount > 0;
 
   const toggleRequirement = (reqId: string) => {
     const current = applicationData.checkedRequirements;
@@ -106,6 +146,21 @@ export default function Step2RequirementsAndDocs() {
 
   const toggleAll = () => {
     updateApplicationData({ checkedRequirements: allChecked ? [] : requirements.map(r => r.id) });
+  };
+
+  const toggleGroupAll = (group: GroupedRequirement) => {
+    const groupIds = group.requirements.map(r => r.id);
+    const allGroupChecked = groupIds.every(id => applicationData.checkedRequirements.includes(id));
+    if (allGroupChecked) {
+      updateApplicationData({ checkedRequirements: applicationData.checkedRequirements.filter(id => !groupIds.includes(id)) });
+    } else {
+      const newChecked = new Set([...applicationData.checkedRequirements, ...groupIds]);
+      updateApplicationData({ checkedRequirements: Array.from(newChecked) });
+    }
+  };
+
+  const getGroupCheckedCount = (group: GroupedRequirement) => {
+    return group.requirements.filter(r => applicationData.checkedRequirements.includes(r.id)).length;
   };
 
   // ─── Document Upload Logic ──────────────────────────────
@@ -126,11 +181,11 @@ export default function Step2RequirementsAndDocs() {
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
 
     if (!allowedTypes.includes(file.type)) {
-      setUploads(prev => ({ ...prev, [docType]: { file: null, progress: 0, status: 'error', error: direction === 'rtl' ? 'نوع الملف غير مدعوم' : 'File type not supported' } }));
+      setUploads(prev => ({ ...prev, [docType]: { file: null, progress: 0, status: 'error', error: isRTL ? 'نوع الملف غير مدعوم' : 'File type not supported' } }));
       return;
     }
     if (file.size > maxSize) {
-      setUploads(prev => ({ ...prev, [docType]: { file: null, progress: 0, status: 'error', error: direction === 'rtl' ? 'حجم الملف كبير جداً' : 'File size too large' } }));
+      setUploads(prev => ({ ...prev, [docType]: { file: null, progress: 0, status: 'error', error: isRTL ? 'حجم الملف كبير جداً' : 'File size too large' } }));
       return;
     }
 
@@ -149,7 +204,7 @@ export default function Step2RequirementsAndDocs() {
         setUploads(prev => ({ ...prev, [docType]: { ...prev[docType], progress } }));
       }
     }, 200);
-  }, [applicationData.uploadedDocuments, direction, updateApplicationData]);
+  }, [applicationData.uploadedDocuments, isRTL, updateApplicationData]);
 
   const handleRemove = (docType: string) => {
     setUploads(prev => { const u = { ...prev }; delete u[docType]; return u; });
@@ -166,114 +221,207 @@ export default function Step2RequirementsAndDocs() {
   const totalRequired = requiredDocTypes.length;
   const canProceed = checkedCount > 0 && uploadedCount >= 1;
 
+  const getCategoryColor = (category: TravelerCategory) => {
+    switch (category) {
+      case 'adult': return { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-600 dark:text-blue-400', badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' };
+      case 'child': return { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-600 dark:text-emerald-400', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' };
+      case 'infant': return { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-600 dark:text-amber-400', badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' };
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-4 sm:mb-6">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="text-center mb-2">
         <h2 className="text-xl sm:text-2xl font-bold">{t('wizard.step2')}</h2>
-        <p className="text-sm sm:text-base text-muted-foreground mt-2">
-          {direction === 'rtl' ? 'تحقق من المتطلبات وارفع المستندات اللازمة' : 'Check requirements and upload necessary documents'}
+        <p className="text-sm text-muted-foreground mt-1">
+          {isRTL ? 'تحقق من المتطلبات وارفع المستندات اللازمة' : 'Check requirements and upload necessary documents'}
         </p>
       </div>
 
-      {/* ── Requirements Section ── */}
-      <div className="space-y-4">
-        <h3 className="font-bold text-base sm:text-lg">{direction === 'rtl' ? 'المتطلبات' : 'Requirements'}</h3>
-
-        <div className="flex items-center justify-between p-3 sm:p-4 bg-muted/30 rounded-lg">
-          <div className="flex items-center gap-2">
-            {allChecked ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <AlertCircle className="w-5 h-5 text-amber-600" />}
-            <span className="font-medium text-sm">{direction === 'rtl' ? `${checkedCount} من ${totalCount} متطلب` : `${checkedCount} of ${totalCount} requirements`}</span>
-          </div>
-          <Button variant="outline" size="sm" onClick={toggleAll}>
-            {allChecked ? (direction === 'rtl' ? 'إلغاء تحديد الكل' : 'Uncheck All') : (direction === 'rtl' ? 'تحديد الكل' : 'Check All')}
+      {/* ── Overall Progress Bar ── */}
+      <div className="p-3 rounded-xl bg-muted/40 border">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            {isRTL ? 'تقدم المتطلبات' : 'Requirements Progress'}
+          </span>
+          <span className="text-xs font-bold">
+            {checkedCount}/{totalCount}
+          </span>
+        </div>
+        <Progress value={totalCount > 0 ? (checkedCount / totalCount) * 100 : 0} className="h-2" />
+        <div className="flex items-center justify-between mt-2">
+          <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={toggleAll}>
+            {allChecked ? (isRTL ? 'إلغاء تحديد الكل' : 'Uncheck All') : (isRTL ? 'تحديد الكل ✓' : 'Check All ✓')}
           </Button>
-        </div>
-
-        <div className="space-y-2">
-          {requirements.map(req => {
-            const isChecked = applicationData.checkedRequirements.includes(req.id);
-            const iconKey = req.id.split('_')[0];
-            const IconComponent = requirementIcons[iconKey] || requirementIcons.default;
-            return (
-              <div key={req.id} className={cn('flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer', isChecked ? 'bg-primary/5 border-primary/30' : 'bg-card hover:bg-muted/50')} onClick={() => toggleRequirement(req.id)}>
-                <Checkbox id={req.id} checked={isChecked} onCheckedChange={() => toggleRequirement(req.id)} />
-                <IconComponent className={cn('w-4 h-4', isChecked ? 'text-primary' : 'text-muted-foreground')} />
-                <Label htmlFor={req.id} className="flex-1 cursor-pointer text-sm">{req.label}</Label>
-                {req.forCategory && (
-                  <Badge variant="secondary" className="text-xs">
-                    {req.forCategory === 'adult' && (direction === 'rtl' ? 'بالغ' : 'Adult')}
-                    {req.forCategory === 'child' && (direction === 'rtl' ? 'طفل' : 'Child')}
-                    {req.forCategory === 'infant' && (direction === 'rtl' ? 'رضيع' : 'Infant')}
-                  </Badge>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Tips */}
-        <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800" dir={direction === 'rtl' ? 'rtl' : 'ltr'}>
-          <h4 className={`font-semibold text-blue-900 dark:text-blue-100 mb-1 text-sm ${direction === 'rtl' ? 'text-right' : 'text-left'}`}>
-            {direction === 'rtl' ? 'نصائح مهمة' : 'Important Tips'}
-          </h4>
-          <ul className={`text-xs text-blue-800 dark:text-blue-200 space-y-1 ${direction === 'rtl' ? 'list-disc list-inside text-right' : 'list-disc list-inside text-left'}`}>
-            <li>{direction === 'rtl' ? 'تأكد من صلاحية جواز السفر لمدة 6 أشهر على الأقل' : 'Make sure your passport is valid for at least 6 months'}</li>
-            <li>{direction === 'rtl' ? 'الصور يجب أن تكون بخلفية بيضاء وحديثة' : 'Photos must have a white background and be recent'}</li>
-          </ul>
+          {allChecked && (
+            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 text-xs gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              {isRTL ? 'مكتمل' : 'Complete'}
+            </Badge>
+          )}
         </div>
       </div>
 
-      <Separator className="my-4" />
+      {/* ── Requirements Grouped by Traveler ── */}
+      <div className="space-y-3">
+        {groupedByTraveler.map((group) => {
+          const key = `${group.category}_${group.index}`;
+          const isOpen = openGroups[key] ?? false;
+          const colors = getCategoryColor(group.category);
+          const groupChecked = getGroupCheckedCount(group);
+          const groupTotal = group.requirements.length;
+          const allGroupDone = groupChecked === groupTotal;
+          const IconComp = group.icon;
 
-      {/* ── Document Upload Section ── */}
-      <div className="space-y-4">
-        <h3 className="font-bold text-base sm:text-lg">{direction === 'rtl' ? 'رفع المستندات' : 'Upload Documents'}</h3>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-muted/30 rounded-xl">
-          <span className="font-medium text-sm">{direction === 'rtl' ? `${uploadedCount} من ${totalRequired} مستند تم رفعه` : `${uploadedCount} of ${totalRequired} document${totalRequired !== 1 ? 's' : ''} uploaded`}</span>
-          <Badge variant={uploadedCount >= totalRequired ? 'default' : 'secondary'} className="w-fit text-xs">
-            {uploadedCount >= totalRequired ? (direction === 'rtl' ? 'جميع المستندات مرفوعة ✓' : 'All documents uploaded ✓') : (direction === 'rtl' ? `${totalRequired - uploadedCount} مستند متبقي` : `${totalRequired - uploadedCount} remaining`)}
-          </Badge>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {requiredDocTypes.map(docTypeId => {
-            const docType = documentTypes[docTypeId];
-            if (!docType) return null;
-            const upload = uploads[docTypeId];
-            const existingDoc = applicationData.uploadedDocuments.find(d => d.type === docTypeId);
-            const isUploaded = upload?.status === 'success' || existingDoc?.uploaded;
-
-            return (
-              <div key={docTypeId} className={cn('relative p-4 rounded-lg border-2 border-dashed transition-colors', isUploaded && 'border-green-500 bg-green-50 dark:bg-green-950/20', upload?.status === 'error' && 'border-destructive bg-destructive/5', !isUploaded && !upload?.status && 'border-muted-foreground/30 hover:border-primary/50')}>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(docTypeId, f); }} disabled={upload?.status === 'uploading'} />
-                <div className="flex items-start gap-3">
-                  <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', isUploaded ? 'bg-green-100 text-green-600' : 'bg-muted')}>
-                    {upload?.status === 'uploading' ? <Loader2 className="w-5 h-5 animate-spin" /> : isUploaded ? <CheckCircle2 className="w-5 h-5" /> : upload?.status === 'error' ? <XCircle className="w-5 h-5 text-destructive" /> : <Upload className="w-5 h-5 text-muted-foreground" />}
+          return (
+            <Collapsible key={key} open={isOpen} onOpenChange={(open) => setOpenGroups(prev => ({ ...prev, [key]: open }))}>
+              <CollapsibleTrigger asChild>
+                <button className={cn(
+                  'w-full flex items-center gap-3 p-3 rounded-xl border transition-all',
+                  colors.bg, colors.border,
+                  'hover:shadow-sm'
+                )}>
+                  <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', allGroupDone ? 'bg-green-100 dark:bg-green-900/50' : colors.bg)}>
+                    {allGroupDone ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <IconComp className={cn('w-5 h-5', colors.text)} />}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">{docType.label[language]}</div>
-                    {upload?.status === 'uploading' && <div className="mt-2"><Progress value={upload.progress} className="h-1" /><span className="text-xs text-muted-foreground">{Math.round(upload.progress)}%</span></div>}
-                    {isUploaded && (upload?.file || existingDoc) && (
-                      <div className="flex items-center gap-2 mt-1"><FileText className="w-3 h-3 text-muted-foreground" /><span className="text-xs text-muted-foreground truncate">{upload?.file?.name || existingDoc?.fileName}</span><span className="text-xs text-muted-foreground">({formatFileSize(upload?.file?.size || existingDoc?.fileSize || 0)})</span></div>
-                    )}
-                    {upload?.status === 'error' && <div className="text-xs text-destructive mt-1">{upload.error}</div>}
-                    {!isUploaded && !upload?.status && <div className="text-xs text-muted-foreground mt-1">{t('documents.formats')} • {t('documents.maxSize')}</div>}
+                  <div className="flex-1 text-start">
+                    <span className="font-semibold text-sm">{group.label}</span>
+                    <span className="text-xs text-muted-foreground ms-2">
+                      {groupChecked}/{groupTotal}
+                    </span>
                   </div>
-                  {isUploaded && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 z-20 relative" onClick={e => { e.stopPropagation(); handleRemove(docTypeId); }}>
-                      <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                  {!allGroupDone && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs px-2 z-10"
+                      onClick={(e) => { e.stopPropagation(); toggleGroupAll(group); }}
+                    >
+                      {isRTL ? 'تحديد الكل' : 'Check All'}
                     </Button>
                   )}
+                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', isOpen && 'rotate-180')} />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="pt-2 ps-4 space-y-1.5">
+                  {group.requirements.map(req => {
+                    const isChecked = applicationData.checkedRequirements.includes(req.id);
+                    const IconComponent = requirementIcons[req.iconKey] || requirementIcons.default;
+                    return (
+                      <div
+                        key={req.id}
+                        className={cn(
+                          'flex items-center gap-3 p-2.5 rounded-lg border transition-colors cursor-pointer text-sm',
+                          isChecked ? 'bg-primary/5 border-primary/20' : 'bg-card hover:bg-muted/50 border-transparent'
+                        )}
+                        onClick={() => toggleRequirement(req.id)}
+                      >
+                        <Checkbox id={req.id} checked={isChecked} onCheckedChange={() => toggleRequirement(req.id)} className="shrink-0" />
+                        <IconComponent className={cn('w-4 h-4 shrink-0', isChecked ? 'text-primary' : 'text-muted-foreground')} />
+                        <Label htmlFor={req.id} className="flex-1 cursor-pointer text-sm leading-tight">{req.label}</Label>
+                        {isChecked && <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            );
-          })}
+              </CollapsibleContent>
+            </Collapsible>
+          );
+        })}
+      </div>
+
+      {/* Tips - compact */}
+      <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800 text-xs">
+        <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+        <div className="space-y-0.5 text-blue-800 dark:text-blue-200">
+          <p>{isRTL ? 'تأكد من صلاحية جواز السفر لمدة 6 أشهر على الأقل' : 'Passport must be valid for at least 6 months'}</p>
+          <p>{isRTL ? 'الصور يجب أن تكون بخلفية بيضاء وحديثة' : 'Photos must have a white background and be recent'}</p>
         </div>
       </div>
 
+      {/* ── Document Upload Section (Collapsible) ── */}
+      <Collapsible open={docsOpen} onOpenChange={setDocsOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center gap-3 p-3 rounded-xl bg-muted/40 border hover:shadow-sm transition-all">
+            <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', uploadedCount >= totalRequired ? 'bg-green-100 dark:bg-green-900/50' : 'bg-muted')}>
+              {uploadedCount >= totalRequired ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <Upload className="w-5 h-5 text-muted-foreground" />}
+            </div>
+            <div className="flex-1 text-start">
+              <span className="font-semibold text-sm">{isRTL ? 'رفع المستندات' : 'Upload Documents'}</span>
+              <span className="text-xs text-muted-foreground ms-2">{uploadedCount}/{totalRequired}</span>
+            </div>
+            <Badge variant={uploadedCount >= totalRequired ? 'default' : 'secondary'} className="text-xs shrink-0">
+              {uploadedCount >= totalRequired
+                ? (isRTL ? 'مكتمل ✓' : 'Done ✓')
+                : (isRTL ? `${totalRequired - uploadedCount} متبقي` : `${totalRequired - uploadedCount} left`)}
+            </Badge>
+            <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', docsOpen && 'rotate-180')} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
+            {requiredDocTypes.map(docTypeId => {
+              const docType = documentTypes[docTypeId];
+              if (!docType) return null;
+              const upload = uploads[docTypeId];
+              const existingDoc = applicationData.uploadedDocuments.find(d => d.type === docTypeId);
+              const isUploaded = upload?.status === 'success' || existingDoc?.uploaded;
+
+              return (
+                <div key={docTypeId} className={cn(
+                  'relative p-3 rounded-lg border-2 border-dashed transition-colors',
+                  isUploaded && 'border-green-500/50 bg-green-50/50 dark:bg-green-950/20',
+                  upload?.status === 'error' && 'border-destructive bg-destructive/5',
+                  !isUploaded && !upload?.status && 'border-muted-foreground/25 hover:border-primary/50'
+                )}>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(docTypeId, f); }}
+                    disabled={upload?.status === 'uploading'}
+                  />
+                  <div className="flex items-center gap-3">
+                    <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', isUploaded ? 'bg-green-100 text-green-600' : 'bg-muted')}>
+                      {upload?.status === 'uploading' ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : isUploaded ? <CheckCircle2 className="w-4 h-4" />
+                        : upload?.status === 'error' ? <XCircle className="w-4 h-4 text-destructive" />
+                        : <Upload className="w-4 h-4 text-muted-foreground" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{docType.label[language]}</div>
+                      {upload?.status === 'uploading' && (
+                        <div className="mt-1.5">
+                          <Progress value={upload.progress} className="h-1" />
+                          <span className="text-[10px] text-muted-foreground">{Math.round(upload.progress)}%</span>
+                        </div>
+                      )}
+                      {isUploaded && (upload?.file || existingDoc) && (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">{upload?.file?.name || existingDoc?.fileName}</span>
+                          <span className="text-[10px] text-muted-foreground">({formatFileSize(upload?.file?.size || existingDoc?.fileSize || 0)})</span>
+                        </div>
+                      )}
+                      {upload?.status === 'error' && <div className="text-xs text-destructive mt-0.5">{upload.error}</div>}
+                      {!isUploaded && !upload?.status && <div className="text-[11px] text-muted-foreground mt-0.5">{t('documents.formats')} • {t('documents.maxSize')}</div>}
+                    </div>
+                    {isUploaded && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7 z-20 relative shrink-0" onClick={e => { e.stopPropagation(); handleRemove(docTypeId); }}>
+                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Navigation */}
-      <div className="flex gap-3 pt-4 sticky bottom-0 bg-background/95 backdrop-blur-sm pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:static sm:bg-transparent sm:backdrop-blur-none border-t sm:border-0">
+      <div className="flex gap-3 pt-3 sticky bottom-0 bg-background/95 backdrop-blur-sm pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:static sm:bg-transparent sm:backdrop-blur-none border-t sm:border-0">
         <Button type="button" variant="outline" size="lg" className="flex-1 h-12 gap-2 text-sm sm:text-base" onClick={goToPreviousStep}>
           <ArrowPrevIcon className="w-4 h-4" /><span>{t('wizard.previous')}</span>
         </Button>
