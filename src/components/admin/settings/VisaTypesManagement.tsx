@@ -1228,11 +1228,20 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                     </div>
                     <div className="space-y-2">
                       <Label>اسم التأشيرة <span className="text-destructive">*</span></Label>
-                      <Input
+                      <Select
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="مثال: تأشيرة سياحية"
-                      />
+                        onValueChange={(value) => setFormData({ ...formData, name: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع التأشيرة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="تأشيرة سياحية">تأشيرة سياحية</SelectItem>
+                          <SelectItem value="تأشيرة دراسة">تأشيرة دراسة</SelectItem>
+                          <SelectItem value="تأشيرة علاج">تأشيرة علاج</SelectItem>
+                          <SelectItem value="تأشيرة عمل">تأشيرة عمل</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
