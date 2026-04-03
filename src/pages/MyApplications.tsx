@@ -74,7 +74,7 @@ const MyApplications = () => {
     startApplication: isRTL ? 'ابدأ طلب جديد' : 'Start New Application',
     viewDetails: isRTL ? 'عرض التفاصيل' : 'View Details',
     applicationId: isRTL ? 'رقم الطلب' : 'Application ID',
-    travelDate: isRTL ? 'تاريخ السفر' : 'Travel Date',
+    travelDate: isRTL ? 'تاريخ السفر المتوقع' : 'Expected Travel Date',
     submittedAt: isRTL ? 'تاريخ التقديم' : 'Submitted At',
     createdAt: isRTL ? 'تاريخ الإنشاء' : 'Created At',
     status: isRTL ? 'الحالة' : 'Status',

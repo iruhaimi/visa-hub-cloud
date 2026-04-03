@@ -301,7 +301,7 @@ export default function ApplicationsList() {
         { header: 'الوجهة', key: 'country', width: 15 },
         { header: 'نوع التأشيرة', key: 'visa_type', width: 20 },
         { header: 'تاريخ الإنشاء', key: 'created_at', width: 12 },
-        { header: 'تاريخ السفر', key: 'travel_date', width: 12 },
+        { header: 'تاريخ السفر المتوقع', key: 'travel_date', width: 12 },
         { header: 'الحالة', key: 'status', width: 15 },
       ],
       data,

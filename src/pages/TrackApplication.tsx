@@ -533,7 +533,7 @@ export default function TrackApplication() {
                         <div className="flex items-center gap-3 bg-muted/50 rounded-xl p-3">
                           <MapPin className="w-5 h-5 text-primary" />
                           <div>
-                            <p className="text-xs text-muted-foreground">{isRTL ? 'تاريخ السفر' : 'Travel Date'}</p>
+                            <p className="text-xs text-muted-foreground">{isRTL ? 'تاريخ السفر المتوقع' : 'Expected Travel Date'}</p>
                             <p className="font-medium text-sm">
                               {format(new Date(result.travel_date), 'dd MMM yyyy', {
                                 locale: isRTL ? ar : enUS

@@ -220,7 +220,7 @@ export default function Step3TermsAndPayment() {
       '',
       direction === 'rtl' ? `🌍 الدولة: ${applicationData.countryName}` : `🌍 Country: ${applicationData.countryName}`,
       direction === 'rtl' ? `📄 نوع التأشيرة: ${applicationData.visaTypeName}` : `📄 Visa Type: ${applicationData.visaTypeName}`,
-      direction === 'rtl' ? `📅 تاريخ السفر: ${travelDateFormatted}` : `📅 Travel Date: ${travelDateFormatted}`,
+      direction === 'rtl' ? `📅 تاريخ السفر المتوقع: ${travelDateFormatted}` : `📅 Expected Travel Date: ${travelDateFormatted}`,
       direction === 'rtl'
         ? `👥 المسافرين: ${applicationData.travelers.adults} بالغ${applicationData.travelers.children > 0 ? ` - ${applicationData.travelers.children} طفل` : ''}${applicationData.travelers.infants > 0 ? ` - ${applicationData.travelers.infants} رضيع` : ''}`
         : `👥 Travelers: ${applicationData.travelers.adults} Adults${applicationData.travelers.children > 0 ? `, ${applicationData.travelers.children} Children` : ''}${applicationData.travelers.infants > 0 ? `, ${applicationData.travelers.infants} Infants` : ''}`,

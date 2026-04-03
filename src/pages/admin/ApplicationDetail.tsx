@@ -186,7 +186,7 @@ export default function ApplicationDetail() {
             name,
             price,
             processing_days,
-            country:countries(name, code)
+            country:countries(name, code, expected_appointment_date, expected_appointment_note)
           ),
           profile:profiles!applications_user_id_fkey(
             full_name,
@@ -521,7 +521,7 @@ export default function ApplicationDetail() {
                   <p className="font-medium">{application.visa_type?.name || '-'}</p>
                 </div>
                 <div className="space-y-1 p-3 rounded-lg bg-muted/50">
-                  <p className="text-xs text-muted-foreground">تاريخ السفر</p>
+                  <p className="text-xs text-muted-foreground">تاريخ السفر المتوقع</p>
                   <p className="font-medium">{application.travel_date ? format(new Date(application.travel_date), 'dd/MM/yyyy') : '-'}</p>
                 </div>
                 <div className="space-y-1 p-3 rounded-lg bg-muted/50">

@@ -185,8 +185,8 @@ export default function Step2VisaDetails() {
         <h2 className="text-xl sm:text-2xl font-bold">{t('wizard.step2')}</h2>
         <p className="text-sm sm:text-base text-muted-foreground mt-2">
           {direction === 'rtl' 
-            ? 'حدد نوع التأشيرة وتاريخ السفر وعدد المسافرين' 
-            : 'Select visa type, travel date and number of travelers'}
+            ? 'حدد نوع التأشيرة وتاريخ السفر المتوقع وعدد المسافرين' 
+            : 'Select visa type, expected travel date and number of travelers'}
         </p>
       </div>
 
@@ -334,7 +334,7 @@ export default function Step2VisaDetails() {
             <DatePicker
               value={applicationData.travelDate}
               onChange={handleDateChange}
-              placeholder={direction === 'rtl' ? 'اختر تاريخ السفر' : 'Pick a travel date'}
+              placeholder={direction === 'rtl' ? 'اختر تاريخ السفر المتوقع' : 'Pick expected travel date'}
               isRTL={direction === 'rtl'}
               minDate={new Date()}
             />

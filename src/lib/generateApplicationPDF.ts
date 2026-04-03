@@ -158,7 +158,7 @@ export function generateApplicationPDF(application: ApplicationData): void {
       ['نوع التأشيرة', application.visa_type?.name || '-'],
       ['سعر التأشيرة', `${application.visa_type?.price || 0} ر.س`],
       ['مدة المعالجة', `${application.visa_type?.processing_days || 0} أيام عمل`],
-      ['تاريخ السفر', application.travel_date ? format(new Date(application.travel_date), 'yyyy/MM/dd') : '-'],
+      ['تاريخ السفر المتوقع', application.travel_date ? format(new Date(application.travel_date), 'yyyy/MM/dd') : '-'],
       ['تاريخ العودة', application.return_date ? format(new Date(application.return_date), 'yyyy/MM/dd') : '-'],
       ['الغرض من السفر', application.purpose_of_travel || '-'],
     ],

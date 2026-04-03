@@ -59,7 +59,8 @@ import {
   GripVertical,
   ArrowUpDown,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -361,10 +362,12 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
     flag_url: '',
     is_active: true,
     is_schengen: false,
+    expected_appointment_date: '',
+    expected_appointment_note: '',
   });
 
   const resetForm = () => {
-    setFormData({ name: '', code: '', flag_url: '', is_active: true, is_schengen: false });
+    setFormData({ name: '', code: '', flag_url: '', is_active: true, is_schengen: false, expected_appointment_date: '', expected_appointment_note: '' });
     setEditingCountry(null);
     setUseCustomCountry(false);
   };
@@ -377,6 +380,8 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
       flag_url: country.flag_url || '',
       is_active: country.is_active,
       is_schengen: (country as any).is_schengen || false,
+      expected_appointment_date: (country as any).expected_appointment_date || '',
+      expected_appointment_note: (country as any).expected_appointment_note || '',
     });
     setUseCustomCountry(true);
     setIsOpen(true);
@@ -403,6 +408,9 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
             flag_url: formData.flag_url || null,
             is_active: formData.is_active,
             is_schengen: formData.is_schengen,
+            expected_appointment_date: formData.expected_appointment_date || null,
+            expected_appointment_note: formData.expected_appointment_note || null,
+            expected_appointment_updated_at: (formData.expected_appointment_date || formData.expected_appointment_note) ? new Date().toISOString() : null,
           })
           .eq('id', editingCountry.id);
         if (error) throw error;
@@ -926,6 +934,35 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
                 </p>
               </div>
             </label>
+
+            {/* Expected Appointment Date - only show when editing */}
+            {editingCountry && (
+              <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-primary/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-sm">التواريخ المتوقعة لموعد السفارة</span>
+                </div>
+                <p className="text-xs text-muted-foreground -mt-1">
+                  هذه المعلومات ستظهر للعملاء كملاحظة عند تقديم طلب لهذه الدولة
+                </p>
+                <div className="space-y-2">
+                  <Label className="text-xs">الموعد المتوقع</Label>
+                  <Input
+                    value={formData.expected_appointment_date}
+                    onChange={(e) => setFormData({ ...formData, expected_appointment_date: e.target.value })}
+                    placeholder="مثال: 15 - 20 يوليو 2026"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">ملاحظة إضافية (اختياري)</Label>
+                  <Input
+                    value={formData.expected_appointment_note}
+                    onChange={(e) => setFormData({ ...formData, expected_appointment_note: e.target.value })}
+                    placeholder="مثال: المواعيد قد تتغير حسب السفارة"
+                  />
+                </div>
+              </div>
+            )}
 
             <Button
               className="w-full" 
