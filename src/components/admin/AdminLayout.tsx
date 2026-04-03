@@ -20,6 +20,7 @@ import {
   PanelBottom,
   Pencil,
   Mail,
+  CalendarClock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -98,6 +99,12 @@ export default function AdminLayout() {
       icon: FileSearch,
       href: '/admin/document-logs',
       show: isAdmin && isSuperAdmin,
+    },
+    {
+      title: 'مواعيد السفارات',
+      icon: CalendarClock,
+      href: '/admin/appointment-dates',
+      show: isAdmin && (isSuperAdmin || hasPermission('manage_appointments' as any)),
     },
     {
       title: 'طلبات نقل الطلبات',

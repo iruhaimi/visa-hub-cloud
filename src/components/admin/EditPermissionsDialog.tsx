@@ -13,7 +13,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Shield, Crown, FileText, Users, Settings, Percent, Globe, Layout, BarChart3, RefreshCcw, Unlock, AlertTriangle } from 'lucide-react';
+import { Loader2, Shield, Crown, FileText, Users, Settings, Percent, Globe, Layout, BarChart3, RefreshCcw, Unlock, AlertTriangle, CalendarClock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { StaffPermission } from '@/types/database';
@@ -41,6 +41,7 @@ const IconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   RefreshCcw,
   Unlock,
   Shield,
+  CalendarClock,
 };
 
 export function EditPermissionsDialog({

@@ -63,6 +63,7 @@ const DocumentAccessLogs = lazy(() => import("@/pages/admin/DocumentAccessLogs")
 const FooterManagement = lazy(() => import("@/pages/admin/FooterManagement"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 const EmailLogs = lazy(() => import("@/pages/admin/EmailLogs"));
+const AppointmentDatesManagement = lazy(() => import("@/pages/admin/AppointmentDatesManagement"));
 
 // Agent Pages
 const AgentDashboard = lazy(() => import("@/pages/agent/AgentDashboard"));
@@ -160,6 +161,7 @@ const App = () => (
                   <Route path="footer" element={<FooterManagement />} />
                   <Route path="content" element={<ContentManagement />} />
                   <Route path="email-logs" element={<EmailLogs />} />
+                  <Route path="appointment-dates" element={<AppointmentDatesManagement />} />
                 </Route>
 
                 {/* Agent Routes */}

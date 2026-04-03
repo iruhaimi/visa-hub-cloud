@@ -12,7 +12,8 @@ export type StaffPermission =
   | 'view_reports'
   | 'process_refunds'
   | 'manage_unlock_requests'
-  | 'view_revenue';
+  | 'view_revenue'
+  | 'manage_appointments';
 
 export type ApplicationStatus = 
   | 'draft'
@@ -270,6 +271,11 @@ export const PERMISSION_LABELS: Record<StaffPermission, { label: string; descrip
     label: 'عرض الإيرادات',
     description: 'الاطلاع على إحصائيات الإيرادات والمبيعات',
     icon: 'DollarSign'
+  },
+  manage_appointments: {
+    label: 'إدارة مواعيد السفارات',
+    description: 'تحديث التواريخ المتوقعة لمواعيد السفارات لكل دولة',
+    icon: 'CalendarClock'
   }
 };
 
