@@ -2,6 +2,7 @@ export const DEFAULT_WHATSAPP_NUMBER = '966562525665';
 
 const LEGACY_WHATSAPP_NUMBERS = new Set(['920034158', '966920034158']);
 const MOBILE_DEVICE_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+const WHATSAPP_LAUNCH_PATH = '/whatsapp-launch.html';
 
 /**
  * Build a context-aware WhatsApp message based on the current page.
@@ -51,6 +52,30 @@ function isInIframe() {
   }
 }
 
+function unwrapWhatsAppLaunchUrl(url: string) {
+  if (!url || typeof window === 'undefined') return url;
+
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    if (parsedUrl.pathname !== WHATSAPP_LAUNCH_PATH) {
+      return url;
+    }
+
+    return parsedUrl.searchParams.get('target') || url;
+  } catch {
+    return url;
+  }
+}
+
+function getWhatsAppLaunchUrl(url: string) {
+  if (!url || typeof window === 'undefined') return url;
+
+  const targetUrl = unwrapWhatsAppLaunchUrl(url);
+  const launchUrl = new URL(WHATSAPP_LAUNCH_PATH, window.location.origin);
+  launchUrl.searchParams.set('target', targetUrl);
+  return launchUrl.toString();
+}
+
 export function getWhatsAppWebUrl(message: string, phoneNumber?: string) {
   const normalizedPhoneNumber = normalizeWhatsAppNumber(phoneNumber);
   return `https://wa.me/${normalizedPhoneNumber}?text=${encodeURIComponent(message)}`;
@@ -62,15 +87,19 @@ export function getWhatsAppDesktopUrl(message: string, phoneNumber?: string) {
 }
 
 export function getWhatsAppUrl(message: string, phoneNumber?: string) {
-  return isMobileDevice()
+  const whatsappUrl = isMobileDevice()
     ? getWhatsAppWebUrl(message, phoneNumber)
     : getWhatsAppDesktopUrl(message, phoneNumber);
+
+  return isInIframe() ? getWhatsAppLaunchUrl(whatsappUrl) : whatsappUrl;
 }
 
 export function prepareWhatsAppWindow(initialUrl?: string) {
-  if (typeof window === 'undefined' || isMobileDevice() || isInIframe()) return null;
+  if (typeof window === 'undefined' || isMobileDevice()) return null;
 
-  const popup = window.open(initialUrl || '', '_blank');
+  const launchUrl = initialUrl ? getWhatsAppLaunchUrl(initialUrl) : '';
+
+  const popup = window.open(launchUrl || '', '_blank');
   if (!popup) return null;
 
   try {
@@ -79,7 +108,7 @@ export function prepareWhatsAppWindow(initialUrl?: string) {
     // Ignore opener access issues.
   }
 
-  if (initialUrl) {
+  if (launchUrl) {
     return popup;
   }
 
@@ -96,30 +125,42 @@ export function prepareWhatsAppWindow(initialUrl?: string) {
 export function openWhatsAppUrl(url: string, popup?: Window | null) {
   if (typeof window === 'undefined') return;
 
-  if (isInIframe()) {
+  const targetUrl = unwrapWhatsAppLaunchUrl(url);
+  const launchUrl = getWhatsAppLaunchUrl(targetUrl);
+
+  const openLaunchPopup = () => {
+    const nextPopup = window.open('', '_blank');
+    if (!nextPopup) return false;
+
     try {
-      if (window.top && window.top !== window) {
-        window.top.location.href = url;
-        return;
-      }
+      nextPopup.opener = null;
     } catch {
-      // Fallback to popup navigation below.
+      // Ignore opener access issues.
     }
 
-    const iframePopup = window.open(url, '_blank', 'noopener,noreferrer');
-    if (iframePopup) {
+    try {
+      nextPopup.location.replace(launchUrl);
+    } catch {
       try {
-        iframePopup.opener = null;
+        nextPopup.location.href = launchUrl;
       } catch {
-        // Ignore opener access issues.
+        nextPopup.close();
+        return false;
       }
+    }
+
+    return true;
+  };
+
+  if (isInIframe()) {
+    if (openLaunchPopup()) {
       return;
     }
   }
 
   if (popup && !popup.closed) {
     try {
-      popup.location.replace(url);
+      popup.location.replace(launchUrl);
       return;
     } catch {
       // Fallback to standard navigation logic below.
@@ -129,31 +170,30 @@ export function openWhatsAppUrl(url: string, popup?: Window | null) {
   if (isMobileDevice()) {
     if (isInIframe()) {
       try {
-        window.top?.location.assign(url);
+        window.top?.location.assign(launchUrl);
         return;
       } catch {
         // Fallback to same-window navigation below.
       }
     }
 
-    window.location.assign(url);
+    window.location.assign(targetUrl);
     return;
   }
 
-  const nextPopup = window.open(url, '_blank');
-  if (nextPopup) {
-    nextPopup.opener = null;
+  if (openLaunchPopup()) {
     return;
   }
 
   if (isInIframe()) {
     try {
-      window.top?.location.assign(url);
+      window.top?.location.assign(launchUrl);
       return;
     } catch {
-      // Fallback to same-window navigation below.
+      window.location.assign(launchUrl);
+      return;
     }
   }
 
-  window.location.assign(url);
+  window.location.assign(launchUrl);
 }
