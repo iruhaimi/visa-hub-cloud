@@ -27,6 +27,9 @@ export interface ApplicationData {
   infantPrice: number;
   visaFeesIncluded: boolean;
   governmentFees: number;
+  govFeeAdult: number;
+  govFeeChild: number;
+  govFeeInfant: number;
   priceNotes: string;
   priceNotesEn: string;
   
