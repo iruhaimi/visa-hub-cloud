@@ -188,8 +188,35 @@ export default function Step2RequirementsAndDocs() {
     }).length;
   };
 
+  // ─── Ensure draft exists (needed for associating documents) ──
+  const ensureDraftExists = useCallback(async (): Promise<string | null> => {
+    if (draftId) return draftId;
+    if (!session?.user?.id || !applicationData.visaTypeId) return null;
+    
+    try {
+      const { data: createdId, error } = await supabase.rpc('create_application_draft', {
+        p_visa_type_id: applicationData.visaTypeId,
+        p_travel_date: applicationData.travelDate ? applicationData.travelDate.toISOString().split('T')[0] : null,
+        p_draft_data: JSON.parse(JSON.stringify({
+          fullName: applicationData.fullName,
+          email: applicationData.email,
+          phone: applicationData.phone,
+          countryCode: applicationData.countryCode,
+          travelers: applicationData.travelers,
+          checkedRequirements: applicationData.checkedRequirements,
+        })),
+      });
+      if (error) throw error;
+      setDraftId(createdId);
+      return createdId;
+    } catch (err) {
+      console.error('Error creating draft for upload:', err);
+      return null;
+    }
+  }, [draftId, session, applicationData, setDraftId]);
+
   // ─── Upload Logic (per requirement) ──────────────────────
-  const handleFileSelect = useCallback((reqId: string, file: File) => {
+  const handleFileSelect = useCallback(async (reqId: string, file: File) => {
     const maxSize = 10 * 1024 * 1024;
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
 
@@ -202,30 +229,102 @@ export default function Step2RequirementsAndDocs() {
       return;
     }
 
-    setUploads(prev => ({ ...prev, [reqId]: { file, progress: 0, status: 'uploading' } }));
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 30;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setUploads(prev => ({ ...prev, [reqId]: { file, progress: 100, status: 'success' } }));
-        updateApplicationData({
-          uploadedDocuments: [
-            ...applicationData.uploadedDocuments.filter(d => d.type !== reqId),
-            { type: reqId, fileName: file.name, fileSize: file.size, uploaded: true },
-          ],
-        });
-      } else {
-        setUploads(prev => ({ ...prev, [reqId]: { ...prev[reqId], progress } }));
-      }
-    }, 200);
-  }, [applicationData.uploadedDocuments, isRTL, updateApplicationData]);
+    if (!session?.user?.id) {
+      setUploads(prev => ({ ...prev, [reqId]: { file: null, progress: 0, status: 'error', error: isRTL ? 'يجب تسجيل الدخول أولاً' : 'Please sign in first' } }));
+      return;
+    }
 
-  const handleRemove = (reqId: string) => {
+    setUploads(prev => ({ ...prev, [reqId]: { file, progress: 10, status: 'uploading' } }));
+
+    try {
+      // 1. Ensure we have a draft/application ID
+      const appId = await ensureDraftExists();
+      if (!appId) throw new Error('Could not create application draft');
+
+      setUploads(prev => ({ ...prev, [reqId]: { file, progress: 30, status: 'uploading' } }));
+
+      // 2. Upload file to Supabase Storage
+      const fileExt = file.name.split('.').pop() || 'pdf';
+      const storagePath = `${session.user.id}/${appId}/${reqId}_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(storagePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      setUploads(prev => ({ ...prev, [reqId]: { file, progress: 70, status: 'uploading' } }));
+
+      // 3. Parse document type label
+      const match = reqId.match(/^(.+?)_(adult|child|infant)_(\d+)$/);
+      const baseType = match ? match[1] : reqId;
+      const docTypeLabel = documentTypeLabels[baseType]?.[language] || baseType;
+
+      // 4. Insert record into application_documents
+      const { data: docRecord, error: dbError } = await supabase
+        .from('application_documents')
+        .insert({
+          application_id: appId,
+          document_type: docTypeLabel,
+          file_name: file.name,
+          file_path: storagePath,
+          file_size: file.size,
+          mime_type: file.type,
+          status: 'pending',
+        })
+        .select('id')
+        .single();
+
+      if (dbError) throw dbError;
+
+      // Track the DB id for deletion
+      if (docRecord) {
+        docIdsRef.current[reqId] = docRecord.id;
+      }
+
+      setUploads(prev => ({ ...prev, [reqId]: { file, progress: 100, status: 'success' } }));
+      updateApplicationData({
+        uploadedDocuments: [
+          ...applicationData.uploadedDocuments.filter(d => d.type !== reqId),
+          { type: reqId, fileName: file.name, fileSize: file.size, uploaded: true },
+        ],
+      });
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setUploads(prev => ({
+        ...prev,
+        [reqId]: { file: null, progress: 0, status: 'error', error: isRTL ? 'فشل رفع الملف' : 'Upload failed' },
+      }));
+    }
+  }, [applicationData, isRTL, updateApplicationData, session, ensureDraftExists, language]);
+
+  const handleRemove = useCallback(async (reqId: string) => {
+    // Remove from UI immediately
     setUploads(prev => { const u = { ...prev }; delete u[reqId]; return u; });
     updateApplicationData({ uploadedDocuments: applicationData.uploadedDocuments.filter(d => d.type !== reqId) });
-  };
+
+    // Delete from DB and storage in background
+    const docId = docIdsRef.current[reqId];
+    if (docId) {
+      try {
+        // Get file_path before deleting record
+        const { data: docData } = await supabase
+          .from('application_documents')
+          .select('file_path')
+          .eq('id', docId)
+          .single();
+
+        await supabase.from('application_documents').delete().eq('id', docId);
+
+        if (docData?.file_path) {
+          await supabase.storage.from('documents').remove([docData.file_path]);
+        }
+      } catch (err) {
+        console.error('Error removing document:', err);
+      }
+      delete docIdsRef.current[reqId];
+    }
+  }, [applicationData.uploadedDocuments, updateApplicationData]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
