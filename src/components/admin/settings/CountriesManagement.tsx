@@ -379,6 +379,8 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
       flag_url: country.flag_url || '',
       is_active: country.is_active,
       is_schengen: (country as any).is_schengen || false,
+      expected_appointment_date: (country as any).expected_appointment_date || '',
+      expected_appointment_note: (country as any).expected_appointment_note || '',
     });
     setUseCustomCountry(true);
     setIsOpen(true);
