@@ -126,12 +126,10 @@ export default function Step2RequirementsAndDocs() {
     return { requirements: reqs, groupedByTraveler: groups };
   }, [applicationData.travelers, applicationData.visaTypeId, visaType, isRTL, t]);
 
-  // Initialize open groups on mount
+  // Initialize first group open on mount
   useEffect(() => {
-    if (groupedByTraveler.length > 0 && Object.keys(openGroups).length === 0) {
-      const initial: Record<string, boolean> = {};
-      groupedByTraveler.forEach((g, i) => { initial[`${g.category}_${g.index}`] = i === 0; });
-      setOpenGroups(initial);
+    if (groupedByTraveler.length > 0 && activeGroup === null) {
+      setActiveGroup(`${groupedByTraveler[0].category}_${groupedByTraveler[0].index}`);
     }
   }, [groupedByTraveler]);
 
