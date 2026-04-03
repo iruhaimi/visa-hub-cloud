@@ -101,6 +101,12 @@ export default function AdminLayout() {
       show: isAdmin && isSuperAdmin,
     },
     {
+      title: 'مواعيد السفارات',
+      icon: CalendarClock,
+      href: '/admin/appointment-dates',
+      show: isAdmin && (isSuperAdmin || hasPermission('manage_appointments' as any)),
+    },
+    {
       title: 'طلبات نقل الطلبات',
       icon: ArrowLeftRight,
       href: '/admin/agent-requests',

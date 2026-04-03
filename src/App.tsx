@@ -161,6 +161,7 @@ const App = () => (
                   <Route path="footer" element={<FooterManagement />} />
                   <Route path="content" element={<ContentManagement />} />
                   <Route path="email-logs" element={<EmailLogs />} />
+                  <Route path="appointment-dates" element={<AppointmentDatesManagement />} />
                 </Route>
 
                 {/* Agent Routes */}

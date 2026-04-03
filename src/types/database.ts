@@ -271,6 +271,11 @@ export const PERMISSION_LABELS: Record<StaffPermission, { label: string; descrip
     label: 'عرض الإيرادات',
     description: 'الاطلاع على إحصائيات الإيرادات والمبيعات',
     icon: 'DollarSign'
+  },
+  manage_appointments: {
+    label: 'إدارة مواعيد السفارات',
+    description: 'تحديث التواريخ المتوقعة لمواعيد السفارات لكل دولة',
+    icon: 'CalendarClock'
   }
 };
 

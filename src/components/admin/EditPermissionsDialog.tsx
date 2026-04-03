@@ -41,6 +41,7 @@ const IconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   RefreshCcw,
   Unlock,
   Shield,
+  CalendarClock,
 };
 
 export function EditPermissionsDialog({
