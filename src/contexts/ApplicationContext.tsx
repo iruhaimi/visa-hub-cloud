@@ -66,6 +66,11 @@ interface ApplicationContextType {
       children: number;
       infants: number;
     };
+    govBreakdown: {
+      adults: number;
+      children: number;
+      infants: number;
+    };
   };
   goToNextStep: () => void;
   goToPreviousStep: () => void;
