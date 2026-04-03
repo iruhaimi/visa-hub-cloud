@@ -361,6 +361,8 @@ export function CountriesManagement({ countries, isLoading, isRTL }: CountriesMa
     flag_url: '',
     is_active: true,
     is_schengen: false,
+    expected_appointment_date: '',
+    expected_appointment_note: '',
   });
 
   const resetForm = () => {
