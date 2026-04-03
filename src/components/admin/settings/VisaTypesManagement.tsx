@@ -1213,7 +1213,7 @@ export function VisaTypesManagement({ visaTypes, countries, isLoading, isRTL }: 
                           <SelectValue placeholder="اختر الدولة" />
                         </SelectTrigger>
                         <SelectContent>
-                          {countries.map((country) => (
+                          {[...countries].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)).map((country) => (
                             <SelectItem key={country.id} value={country.id}>
                               <div className="flex items-center gap-2">
                                 {country.flag_url && (
