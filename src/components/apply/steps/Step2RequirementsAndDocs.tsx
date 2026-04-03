@@ -64,7 +64,7 @@ export default function Step2RequirementsAndDocs() {
   const { t, direction, language } = useLanguage();
   const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
   const [uploads, setUploads] = useState<Record<string, FileUploadState>>({});
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [docsOpen, setDocsOpen] = useState(true);
   const isRTL = direction === 'rtl';
 
@@ -126,12 +126,10 @@ export default function Step2RequirementsAndDocs() {
     return { requirements: reqs, groupedByTraveler: groups };
   }, [applicationData.travelers, applicationData.visaTypeId, visaType, isRTL, t]);
 
-  // Initialize open groups on mount
+  // Initialize first group open on mount
   useEffect(() => {
-    if (groupedByTraveler.length > 0 && Object.keys(openGroups).length === 0) {
-      const initial: Record<string, boolean> = {};
-      groupedByTraveler.forEach((g, i) => { initial[`${g.category}_${g.index}`] = i === 0; });
-      setOpenGroups(initial);
+    if (groupedByTraveler.length > 0 && activeGroup === null) {
+      setActiveGroup(`${groupedByTraveler[0].category}_${groupedByTraveler[0].index}`);
     }
   }, [groupedByTraveler]);
 
@@ -267,7 +265,7 @@ export default function Step2RequirementsAndDocs() {
       <div className="space-y-3">
         {groupedByTraveler.map((group) => {
           const key = `${group.category}_${group.index}`;
-          const isOpen = openGroups[key] ?? false;
+          const isOpen = activeGroup === key;
           const colors = getCategoryColor(group.category);
           const groupChecked = getGroupCheckedCount(group);
           const groupTotal = group.requirements.length;
@@ -275,7 +273,7 @@ export default function Step2RequirementsAndDocs() {
           const IconComp = group.icon;
 
           return (
-            <Collapsible key={key} open={isOpen} onOpenChange={(open) => setOpenGroups(prev => ({ ...prev, [key]: open }))}>
+            <Collapsible key={key} open={isOpen} onOpenChange={(open) => setActiveGroup(open ? key : null)}>
               <CollapsibleTrigger asChild>
                 <button className={cn(
                   'w-full flex items-center gap-3 p-3 rounded-xl border transition-all',
