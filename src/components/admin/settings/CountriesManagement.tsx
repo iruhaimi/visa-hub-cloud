@@ -59,7 +59,8 @@ import {
   GripVertical,
   ArrowUpDown,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
