@@ -273,7 +273,7 @@ export default function Step2RequirementsAndDocs() {
           const IconComp = group.icon;
 
           return (
-            <Collapsible key={key} open={isOpen} onOpenChange={(open) => setOpenGroups(prev => ({ ...prev, [key]: open }))}>
+            <Collapsible key={key} open={isOpen} onOpenChange={(open) => setActiveGroup(open ? key : null)}>
               <CollapsibleTrigger asChild>
                 <button className={cn(
                   'w-full flex items-center gap-3 p-3 rounded-xl border transition-all',
