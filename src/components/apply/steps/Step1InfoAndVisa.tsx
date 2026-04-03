@@ -366,6 +366,9 @@ function VisaDetailsSection() {
           infantPrice: sv.infant_price != null ? Number(sv.infant_price) : Math.round(bp * 0.5),
           visaFeesIncluded: isInc,
           governmentFees: isInc ? 0 : (sv.government_fees != null ? Number(sv.government_fees) : Math.round(bp * 0.3)),
+          govFeeAdult: isInc ? 0 : ((sv as any).gov_fee_adult != null ? Number((sv as any).gov_fee_adult) : 0),
+          govFeeChild: isInc ? 0 : ((sv as any).gov_fee_child != null ? Number((sv as any).gov_fee_child) : 0),
+          govFeeInfant: isInc ? 0 : ((sv as any).gov_fee_infant != null ? Number((sv as any).gov_fee_infant) : 0),
           priceNotes: sv.price_notes || '',
           priceNotesEn: sv.price_notes_en || '',
         });
