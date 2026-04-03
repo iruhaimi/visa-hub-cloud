@@ -108,7 +108,7 @@ export default function MyApplicationDetail() {
           visa_type:visa_types(
             name,
             processing_days,
-            country:countries(name, flag_url)
+            country:countries(name, flag_url, expected_appointment_date, expected_appointment_note)
           ),
           assigned_agent:profiles!applications_assigned_agent_id_fkey(full_name)
         `)
