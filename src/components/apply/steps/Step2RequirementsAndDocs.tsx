@@ -64,7 +64,7 @@ export default function Step2RequirementsAndDocs() {
   const { t, direction, language } = useLanguage();
   const { applicationData, updateApplicationData, goToNextStep, goToPreviousStep } = useApplication();
   const [uploads, setUploads] = useState<Record<string, FileUploadState>>({});
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [docsOpen, setDocsOpen] = useState(true);
   const isRTL = direction === 'rtl';
 
