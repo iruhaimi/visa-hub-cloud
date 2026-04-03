@@ -118,12 +118,49 @@ export default function PriceSummaryCard({ className, showDetails = true }: Pric
           </div>
           
           {!visaFeesIncluded && governmentTotal > 0 && (
-            <div className="flex justify-between text-xs sm:text-sm mb-2 p-2 rounded-lg bg-warning/10 border border-warning/20">
-              <span className="text-muted-foreground">{visaFeesLabel}</span>
-              <span className="font-medium flex items-center gap-1 text-muted-foreground">
-                {governmentTotal.toLocaleString()}
-                <SARSymbol size="xs" />
-              </span>
+            <div className="space-y-2 mb-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+              <p className="text-xs font-medium text-muted-foreground mb-1">{visaFeesLabel}</p>
+              {travelers.adults > 0 && govFeeAdult > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {isRTL ? 'بالغ' : 'Adult'} × {travelers.adults} × {govFeeAdult.toLocaleString()}
+                  </span>
+                  <span className="font-medium flex items-center gap-1 text-muted-foreground">
+                    {govBreakdown.adults.toLocaleString()}
+                    <SARSymbol size="xs" />
+                  </span>
+                </div>
+              )}
+              {travelers.children > 0 && govFeeChild > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {isRTL ? 'طفل' : 'Child'} × {travelers.children} × {govFeeChild.toLocaleString()}
+                  </span>
+                  <span className="font-medium flex items-center gap-1 text-muted-foreground">
+                    {govBreakdown.children.toLocaleString()}
+                    <SARSymbol size="xs" />
+                  </span>
+                </div>
+              )}
+              {travelers.infants > 0 && govFeeInfant > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {isRTL ? 'رضيع' : 'Infant'} × {travelers.infants} × {govFeeInfant.toLocaleString()}
+                  </span>
+                  <span className="font-medium flex items-center gap-1 text-muted-foreground">
+                    {govBreakdown.infants.toLocaleString()}
+                    <SARSymbol size="xs" />
+                  </span>
+                </div>
+              )}
+              <Separator className="my-1" />
+              <div className="flex justify-between text-xs font-medium">
+                <span className="text-muted-foreground">{isRTL ? 'إجمالي الرسوم الحكومية' : 'Total Gov. Fees'}</span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  {governmentTotal.toLocaleString()}
+                  <SARSymbol size="xs" />
+                </span>
+              </div>
             </div>
           )}
         </>
