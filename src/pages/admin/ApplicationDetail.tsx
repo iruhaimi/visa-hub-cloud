@@ -186,7 +186,7 @@ export default function ApplicationDetail() {
             name,
             price,
             processing_days,
-            country:countries(name, code)
+            country:countries(name, code, expected_appointment_date, expected_appointment_note)
           ),
           profile:profiles!applications_user_id_fkey(
             full_name,
