@@ -286,6 +286,26 @@ export default function MyApplicationDetail() {
               </CardContent>
             </Card>
 
+            {/* Expected Appointment Date */}
+            {application.visa_type?.country?.expected_appointment_date && (
+              <Card className="border-primary/30 bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-primary">
+                        {isRTL ? 'الموعد المتوقع للسفارة' : 'Expected Embassy Appointment'}
+                      </p>
+                      <p className="text-sm mt-1 font-bold">{application.visa_type.country.expected_appointment_date}</p>
+                      {application.visa_type.country.expected_appointment_note && (
+                        <p className="text-xs mt-1 text-muted-foreground">{application.visa_type.country.expected_appointment_note}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Rejection Reason */}
             {application.status === 'rejected' && application.rejection_reason && (
               <Card className="border-destructive/50 bg-destructive/5">
