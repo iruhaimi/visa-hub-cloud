@@ -132,15 +132,17 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const calculateTotal = useCallback(() => {
-    const { travelers, adultPrice, childPrice, infantPrice, governmentFees, visaFeesIncluded } = applicationData;
+    const { travelers, adultPrice, childPrice, infantPrice, govFeeAdult, govFeeChild, govFeeInfant, visaFeesIncluded } = applicationData;
     
     const adultsTotal = travelers.adults * adultPrice;
     const childrenTotal = travelers.children * childPrice;
     const infantsTotal = travelers.infants * infantPrice;
     const serviceTotal = adultsTotal + childrenTotal + infantsTotal;
     
-    const totalTravelers = travelers.adults + travelers.children + travelers.infants;
-    const governmentTotal = visaFeesIncluded ? 0 : (governmentFees * totalTravelers);
+    const govAdultsTotal = travelers.adults * govFeeAdult;
+    const govChildrenTotal = travelers.children * govFeeChild;
+    const govInfantsTotal = travelers.infants * govFeeInfant;
+    const governmentTotal = visaFeesIncluded ? 0 : (govAdultsTotal + govChildrenTotal + govInfantsTotal);
     
     return {
       serviceTotal,
@@ -150,6 +152,11 @@ export function ApplicationProvider({ children }: { children: React.ReactNode })
         adults: adultsTotal,
         children: childrenTotal,
         infants: infantsTotal,
+      },
+      govBreakdown: {
+        adults: govAdultsTotal,
+        children: govChildrenTotal,
+        infants: govInfantsTotal,
       },
     };
   }, [applicationData]);
