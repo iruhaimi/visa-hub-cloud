@@ -61,6 +61,8 @@ interface ApplicationData {
     country: {
       name: string;
       flag_url: string | null;
+      expected_appointment_date: string | null;
+      expected_appointment_note: string | null;
     };
   };
   assigned_agent: {
