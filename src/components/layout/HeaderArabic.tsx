@@ -19,7 +19,7 @@ import logo from '@/assets/logo.jpeg';
 
 export default function HeaderArabic() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, profile, isAdmin, isAgent, signOut } = useAuth();
+  const { user, profile, isAdmin, isAgent, roles, signOut } = useAuth();
   const { language, setLanguage, t, direction } = useLanguage();
   const navigate = useNavigate();
 
