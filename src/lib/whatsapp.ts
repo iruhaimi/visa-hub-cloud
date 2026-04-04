@@ -119,75 +119,50 @@ export function prepareWhatsAppWindow(initialUrl?: string) {
 export function openWhatsAppUrl(url: string, popup?: Window | null) {
   if (typeof window === 'undefined') return;
 
+  const inIframe = isInIframe();
   const targetUrl = unwrapWhatsAppLaunchUrl(url);
-  const launchUrl = getWhatsAppLaunchUrl(targetUrl);
 
+  // Helper: open via launch page (iframe only)
   const openLaunchPopup = () => {
+    const launchUrl = getWhatsAppLaunchUrl(targetUrl);
     const nextPopup = window.open('', '_blank');
     if (!nextPopup) return false;
-
-    try {
-      nextPopup.opener = null;
-    } catch {
-      // Ignore opener access issues.
-    }
-
+    try { nextPopup.opener = null; } catch { /* ignore */ }
     try {
       nextPopup.location.replace(launchUrl);
     } catch {
-      try {
-        nextPopup.location.href = launchUrl;
-      } catch {
-        nextPopup.close();
-        return false;
-      }
+      try { nextPopup.location.href = launchUrl; } catch { nextPopup.close(); return false; }
     }
-
     return true;
   };
 
-  if (isInIframe()) {
-    if (openLaunchPopup()) {
-      return;
+  // Inside iframe → use launch page
+  if (inIframe) {
+    if (popup && !popup.closed) {
+      try { popup.location.replace(getWhatsAppLaunchUrl(targetUrl)); return; } catch { /* fall through */ }
     }
+    if (openLaunchPopup()) return;
+    try { window.top?.location.assign(getWhatsAppLaunchUrl(targetUrl)); return; } catch { /* fall through */ }
+    window.location.assign(getWhatsAppLaunchUrl(targetUrl));
+    return;
   }
 
+  // Not in iframe → open WhatsApp URL directly
   if (popup && !popup.closed) {
-    try {
-      popup.location.replace(launchUrl);
-      return;
-    } catch {
-      // Fallback to standard navigation logic below.
-    }
+    try { popup.location.replace(targetUrl); return; } catch { /* fall through */ }
   }
 
   if (isMobileDevice()) {
-    if (isInIframe()) {
-      try {
-        window.top?.location.assign(launchUrl);
-        return;
-      } catch {
-        // Fallback to same-window navigation below.
-      }
-    }
-
     window.location.assign(targetUrl);
     return;
   }
 
-  if (openLaunchPopup()) {
+  // Desktop: try popup
+  const newPopup = window.open(targetUrl, '_blank');
+  if (newPopup) {
+    try { newPopup.opener = null; } catch { /* ignore */ }
     return;
   }
 
-  if (isInIframe()) {
-    try {
-      window.top?.location.assign(launchUrl);
-      return;
-    } catch {
-      window.location.assign(launchUrl);
-      return;
-    }
-  }
-
-  window.location.assign(launchUrl);
+  window.location.assign(targetUrl);
 }
