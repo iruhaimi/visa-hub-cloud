@@ -26,6 +26,7 @@ export default function HeaderArabic() {
   const navigation = [
     { name: t('nav.home'), href: '/' },
     { name: t('nav.destinations'), href: '/destinations' },
+    { name: language === 'en' ? 'Tour Programs' : 'البرامج السياحية', href: '/tour-programs' },
     { name: 'العروض', href: '/offers', badge: 'جديد' },
     { name: t('nav.pricing'), href: '/pricing' },
     { name: t('nav.track'), href: '/track' },
