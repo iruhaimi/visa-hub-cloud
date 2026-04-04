@@ -43,6 +43,7 @@ export default function HeaderArabic() {
   const getDashboardLink = () => {
     if (isAdmin) return '/admin';
     if (isAgent) return '/agent';
+    if (roles.includes('tour_operator')) return '/tour-operator';
     return '/my-applications';
   };
 
