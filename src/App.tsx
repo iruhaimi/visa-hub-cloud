@@ -70,6 +70,18 @@ const AgentDashboard = lazy(() => import("@/pages/agent/AgentDashboard"));
 const AgentApplicationsList = lazy(() => import("@/pages/agent/AgentApplicationsList"));
 const AgentApplicationDetail = lazy(() => import("@/pages/agent/AgentApplicationDetail"));
 
+// Tour Operator Pages
+import TourOperatorLayout from "@/components/tour-operator/TourOperatorLayout";
+const TourOperatorDashboard = lazy(() => import("@/pages/tour-operator/TourOperatorDashboard"));
+const TourOperatorSetup = lazy(() => import("@/pages/tour-operator/TourOperatorSetup"));
+const TourProgramsList = lazy(() => import("@/pages/tour-operator/TourProgramsList"));
+const TourProgramForm = lazy(() => import("@/pages/tour-operator/TourProgramForm"));
+const TourBookingsList = lazy(() => import("@/pages/tour-operator/TourBookingsList"));
+
+// Public Tour Pages
+const TourPrograms = lazy(() => import("@/pages/TourPrograms"));
+const TourProgramDetail = lazy(() => import("@/pages/TourProgramDetail"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
