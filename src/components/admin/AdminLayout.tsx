@@ -114,6 +114,12 @@ export default function AdminLayout() {
       show: isAdmin,
     },
     {
+      title: 'الشركاء السياحيين',
+      icon: Building2,
+      href: '/admin/tour-operators',
+      show: isAdmin && isSuperAdmin,
+    },
+    {
       title: 'العمليات الحساسة',
       icon: ShieldAlert,
       href: '/admin/sensitive-operations',

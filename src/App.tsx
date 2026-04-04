@@ -64,6 +64,7 @@ const FooterManagement = lazy(() => import("@/pages/admin/FooterManagement"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 const EmailLogs = lazy(() => import("@/pages/admin/EmailLogs"));
 const AppointmentDatesManagement = lazy(() => import("@/pages/admin/AppointmentDatesManagement"));
+const TourOperatorsManagement = lazy(() => import("@/pages/admin/TourOperatorsManagement"));
 
 // Agent Pages
 const AgentDashboard = lazy(() => import("@/pages/agent/AgentDashboard"));
