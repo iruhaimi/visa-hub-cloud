@@ -21,6 +21,7 @@ import {
   Pencil,
   Mail,
   CalendarClock,
+  Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -111,6 +112,12 @@ export default function AdminLayout() {
       icon: ArrowLeftRight,
       href: '/admin/agent-requests',
       show: isAdmin,
+    },
+    {
+      title: 'الشركاء السياحيين',
+      icon: Building2,
+      href: '/admin/tour-operators',
+      show: isAdmin && isSuperAdmin,
     },
     {
       title: 'العمليات الحساسة',

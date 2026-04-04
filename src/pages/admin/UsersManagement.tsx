@@ -481,6 +481,7 @@ export default function UsersManagement() {
       customer: { label: 'عميل', variant: 'secondary' },
       agent: { label: 'وكيل', variant: 'default' },
       admin: { label: 'مشرف', variant: 'destructive' },
+      tour_operator: { label: 'شريك سياحي', variant: 'outline' },
     };
     return (
       <Badge variant={config[role].variant} className="text-xs">

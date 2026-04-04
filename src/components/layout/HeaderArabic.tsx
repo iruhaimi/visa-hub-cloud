@@ -19,13 +19,14 @@ import logo from '@/assets/logo.jpeg';
 
 export default function HeaderArabic() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, profile, isAdmin, isAgent, signOut } = useAuth();
+  const { user, profile, isAdmin, isAgent, roles, signOut } = useAuth();
   const { language, setLanguage, t, direction } = useLanguage();
   const navigate = useNavigate();
 
   const navigation = [
     { name: t('nav.home'), href: '/' },
     { name: t('nav.destinations'), href: '/destinations' },
+    { name: language === 'en' ? 'Tour Programs' : 'البرامج السياحية', href: '/tour-programs' },
     { name: 'العروض', href: '/offers', badge: 'جديد' },
     { name: t('nav.pricing'), href: '/pricing' },
     { name: t('nav.track'), href: '/track' },
@@ -42,6 +43,7 @@ export default function HeaderArabic() {
   const getDashboardLink = () => {
     if (isAdmin) return '/admin';
     if (isAgent) return '/agent';
+    if (roles.includes('tour_operator')) return '/tour-operator';
     return '/my-applications';
   };
 

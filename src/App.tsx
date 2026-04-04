@@ -64,11 +64,24 @@ const FooterManagement = lazy(() => import("@/pages/admin/FooterManagement"));
 const ContentManagement = lazy(() => import("@/pages/admin/ContentManagement"));
 const EmailLogs = lazy(() => import("@/pages/admin/EmailLogs"));
 const AppointmentDatesManagement = lazy(() => import("@/pages/admin/AppointmentDatesManagement"));
+const TourOperatorsManagement = lazy(() => import("@/pages/admin/TourOperatorsManagement"));
 
 // Agent Pages
 const AgentDashboard = lazy(() => import("@/pages/agent/AgentDashboard"));
 const AgentApplicationsList = lazy(() => import("@/pages/agent/AgentApplicationsList"));
 const AgentApplicationDetail = lazy(() => import("@/pages/agent/AgentApplicationDetail"));
+
+// Tour Operator Pages
+import TourOperatorLayout from "@/components/tour-operator/TourOperatorLayout";
+const TourOperatorDashboard = lazy(() => import("@/pages/tour-operator/TourOperatorDashboard"));
+const TourOperatorSetup = lazy(() => import("@/pages/tour-operator/TourOperatorSetup"));
+const TourProgramsList = lazy(() => import("@/pages/tour-operator/TourProgramsList"));
+const TourProgramForm = lazy(() => import("@/pages/tour-operator/TourProgramForm"));
+const TourBookingsList = lazy(() => import("@/pages/tour-operator/TourBookingsList"));
+
+// Public Tour Pages
+const TourPrograms = lazy(() => import("@/pages/TourPrograms"));
+const TourProgramDetail = lazy(() => import("@/pages/TourProgramDetail"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,6 +135,8 @@ const App = () => (
                   <Route path="/my-applications" element={<MyApplications />} />
                   <Route path="/application" element={<MyApplicationDetail />} />
                   <Route path="/offers" element={<SpecialOffers />} />
+                  <Route path="/tour-programs" element={<TourPrograms />} />
+                  <Route path="/tour-programs/:id" element={<TourProgramDetail />} />
                 </Route>
 
                 {/* Auth Routes */}
@@ -162,6 +177,7 @@ const App = () => (
                   <Route path="content" element={<ContentManagement />} />
                   <Route path="email-logs" element={<EmailLogs />} />
                   <Route path="appointment-dates" element={<AppointmentDatesManagement />} />
+                  <Route path="tour-operators" element={<TourOperatorsManagement />} />
                 </Route>
 
                 {/* Agent Routes */}
@@ -177,6 +193,23 @@ const App = () => (
                   <Route path="applications" element={<AgentApplicationsList />} />
                   <Route path="applications/:id" element={<AgentApplicationDetail />} />
                 </Route>
+
+                {/* Tour Operator Routes */}
+                <Route 
+                  path="/tour-operator" 
+                  element={
+                    <ProtectedRoute allowedRoles={['tour_operator', 'admin']}>
+                      <TourOperatorLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<TourOperatorDashboard />} />
+                  <Route path="programs" element={<TourProgramsList />} />
+                  <Route path="programs/new" element={<TourProgramForm />} />
+                  <Route path="programs/:id" element={<TourProgramForm />} />
+                  <Route path="bookings" element={<TourBookingsList />} />
+                </Route>
+                <Route path="/tour-operator/setup" element={<TourOperatorSetup />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
