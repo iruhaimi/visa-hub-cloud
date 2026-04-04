@@ -87,11 +87,9 @@ export function getWhatsAppDesktopUrl(message: string, phoneNumber?: string) {
 }
 
 export function getWhatsAppUrl(message: string, phoneNumber?: string) {
-  const whatsappUrl = isMobileDevice()
+  return isMobileDevice()
     ? getWhatsAppWebUrl(message, phoneNumber)
     : getWhatsAppDesktopUrl(message, phoneNumber);
-
-  return isInIframe() ? getWhatsAppLaunchUrl(whatsappUrl) : whatsappUrl;
 }
 
 export function prepareWhatsAppWindow(initialUrl?: string) {
