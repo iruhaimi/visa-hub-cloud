@@ -134,6 +134,8 @@ const App = () => (
                   <Route path="/my-applications" element={<MyApplications />} />
                   <Route path="/application" element={<MyApplicationDetail />} />
                   <Route path="/offers" element={<SpecialOffers />} />
+                  <Route path="/tour-programs" element={<TourPrograms />} />
+                  <Route path="/tour-programs/:id" element={<TourProgramDetail />} />
                 </Route>
 
                 {/* Auth Routes */}
