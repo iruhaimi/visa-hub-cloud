@@ -1509,6 +1509,307 @@ export type Database = {
         }
         Relationships: []
       }
+      tour_bookings: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          id: string
+          notes: string | null
+          operator_id: string
+          operator_notes: string | null
+          preferred_date: string | null
+          program_id: string
+          status: string
+          travelers_count: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          id?: string
+          notes?: string | null
+          operator_id: string
+          operator_notes?: string | null
+          preferred_date?: string | null
+          program_id: string
+          status?: string
+          travelers_count?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          notes?: string | null
+          operator_id?: string
+          operator_notes?: string | null
+          preferred_date?: string | null
+          program_id?: string
+          status?: string
+          travelers_count?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_bookings_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "tour_operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tour_bookings_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tour_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_operators: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          city: string | null
+          company_name: string
+          company_name_en: string | null
+          country: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          description_en: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          logo_url: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+          website: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          city?: string | null
+          company_name: string
+          company_name_en?: string | null
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          description_en?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+          website?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          city?: string | null
+          company_name?: string
+          company_name_en?: string | null
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          description_en?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+          website?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      tour_program_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          is_approved: boolean
+          program_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          program_id: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          program_id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_program_reviews_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "tour_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_programs: {
+        Row: {
+          available_dates: Json | null
+          cancellation_policy: string | null
+          cancellation_policy_en: string | null
+          cover_image_url: string | null
+          created_at: string
+          currency: string
+          daily_itinerary: Json | null
+          description: string | null
+          description_en: string | null
+          destination: string
+          destination_en: string | null
+          discount_percentage: number | null
+          discounted_price: number | null
+          display_order: number | null
+          duration_days: number
+          duration_nights: number
+          end_date: string | null
+          exclusions: Json | null
+          gallery_images: Json | null
+          hotels: Json | null
+          id: string
+          inclusions: Json | null
+          is_recurring: boolean
+          max_seats: number | null
+          operator_id: string
+          price: number
+          rejection_reason: string | null
+          seats_booked: number
+          start_date: string | null
+          status: string
+          tags: Json | null
+          title: string
+          title_en: string | null
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          available_dates?: Json | null
+          cancellation_policy?: string | null
+          cancellation_policy_en?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          daily_itinerary?: Json | null
+          description?: string | null
+          description_en?: string | null
+          destination: string
+          destination_en?: string | null
+          discount_percentage?: number | null
+          discounted_price?: number | null
+          display_order?: number | null
+          duration_days?: number
+          duration_nights?: number
+          end_date?: string | null
+          exclusions?: Json | null
+          gallery_images?: Json | null
+          hotels?: Json | null
+          id?: string
+          inclusions?: Json | null
+          is_recurring?: boolean
+          max_seats?: number | null
+          operator_id: string
+          price?: number
+          rejection_reason?: string | null
+          seats_booked?: number
+          start_date?: string | null
+          status?: string
+          tags?: Json | null
+          title: string
+          title_en?: string | null
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          available_dates?: Json | null
+          cancellation_policy?: string | null
+          cancellation_policy_en?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          daily_itinerary?: Json | null
+          description?: string | null
+          description_en?: string | null
+          destination?: string
+          destination_en?: string | null
+          discount_percentage?: number | null
+          discounted_price?: number | null
+          display_order?: number | null
+          duration_days?: number
+          duration_nights?: number
+          end_date?: string | null
+          exclusions?: Json | null
+          gallery_images?: Json | null
+          hotels?: Json | null
+          id?: string
+          inclusions?: Json | null
+          is_recurring?: boolean
+          max_seats?: number | null
+          operator_id?: string
+          price?: number
+          rejection_reason?: string | null
+          seats_booked?: number
+          start_date?: string | null
+          status?: string
+          tags?: Json | null
+          title?: string
+          title_en?: string | null
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_programs_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "tour_operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1834,6 +2135,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_tour_operator: { Args: { _user_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
