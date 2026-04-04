@@ -192,6 +192,23 @@ const App = () => (
                   <Route path="applications/:id" element={<AgentApplicationDetail />} />
                 </Route>
 
+                {/* Tour Operator Routes */}
+                <Route 
+                  path="/tour-operator" 
+                  element={
+                    <ProtectedRoute allowedRoles={['tour_operator', 'admin']}>
+                      <TourOperatorLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<TourOperatorDashboard />} />
+                  <Route path="programs" element={<TourProgramsList />} />
+                  <Route path="programs/new" element={<TourProgramForm />} />
+                  <Route path="programs/:id" element={<TourProgramForm />} />
+                  <Route path="bookings" element={<TourBookingsList />} />
+                </Route>
+                <Route path="/tour-operator/setup" element={<TourOperatorSetup />} />
+
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
