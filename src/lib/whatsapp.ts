@@ -95,27 +95,23 @@ export function getWhatsAppUrl(message: string, phoneNumber?: string) {
 export function prepareWhatsAppWindow(initialUrl?: string) {
   if (typeof window === 'undefined' || isMobileDevice()) return null;
 
-  const launchUrl = initialUrl ? getWhatsAppLaunchUrl(initialUrl) : '';
-
-  const popup = window.open(launchUrl || '', '_blank');
-  if (!popup) return null;
-
-  try {
-    popup.opener = null;
-  } catch {
-    // Ignore opener access issues.
-  }
-
-  if (launchUrl) {
+  if (isInIframe() && initialUrl) {
+    const launchUrl = getWhatsAppLaunchUrl(initialUrl);
+    const popup = window.open(launchUrl, '_blank');
+    if (!popup) return null;
+    try { popup.opener = null; } catch { /* ignore */ }
     return popup;
   }
+
+  const popup = window.open('', '_blank');
+  if (!popup) return null;
+
+  try { popup.opener = null; } catch { /* ignore */ }
 
   try {
     popup.document.title = 'Opening WhatsApp';
     popup.document.body.innerHTML = '<p style="font-family: system-ui, sans-serif; padding: 24px; text-align: center;">Opening WhatsApp…</p>';
-  } catch {
-    // Ignore document access issues and continue with the blank tab.
-  }
+  } catch { /* ignore */ }
 
   return popup;
 }
